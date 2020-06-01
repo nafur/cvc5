@@ -28,14 +28,11 @@
 #include "theory/arith/nl/libpoly/value.h"
 #include "theory/arith/nl/libpoly/variable.h"
 
+#include "theory/arith/nl/cad_projections.h"
+
 using namespace CVC4;
 using namespace CVC4::theory::nlarith;
 
-lp_integer_t get_int(int i) {
-    lp_integer_t res;
-    lp_integer_construct_from_int(lp_Z, &res, i);
-    return res;
-}
 libpoly::UPolynomial get_upoly(std::initializer_list<int> init) {
     int coeffs[init.size()];
     std::size_t cur = 0;
@@ -64,8 +61,8 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
 
     TS_ASSERT(roots.size() == 4);
     TS_ASSERT(roots[0] == get_ran({-2, 0, 1}, -2, -1));
-    TS_ASSERT(roots[1] == get_int(-1))
-    TS_ASSERT(roots[2] == get_int(1));
+    TS_ASSERT(roots[1] == libpoly::Integer(-1))
+    TS_ASSERT(roots[2] == libpoly::Integer(1));
     TS_ASSERT(roots[3] == get_ran({-2, 0, 1}, 1, 2));
   }
 
@@ -86,4 +83,32 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
     TS_ASSERT(roots.size() == 1);
     TS_ASSERT(roots[0] == get_ran({-8, 0, 1}, 2, 3));
   }
+
+  void test_univariate_factorization()
+  {
+    libpoly::UPolynomial poly = get_upoly({-24, 44, -18, -1, 1, -3, 1});
+    
+    auto factors = square_free_factors(poly);
+    std::cout << "Factors of " << poly << std::endl;
+    for (const auto& f: factors) {
+      std::cout << "---> " << f << std::endl;
+    }
+  }
+
+  void test_projection()
+  {
+    // Gereon's thesis, Ex 5.1
+    libpoly::Variable x("x");
+    libpoly::Variable y("y");
+
+    libpoly::Polynomial p = (y + 1)*(y + 1) - x*x*x + 3*x - 2;
+    libpoly::Polynomial q = (x + 1)*y - 3;
+
+    std::cout << "Executing McCallum" << std::endl;
+    auto res = cad::projection_mccallum({p, q});
+    for (const auto& r: res) {
+      std::cout << "-> " << r << std::endl;
+    }
+  }
+
 };
