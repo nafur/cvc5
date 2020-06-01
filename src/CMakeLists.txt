@@ -302,6 +302,17 @@ libcvc4_add_sources(
   theory/arith/matrix.h
   theory/arith/nl/cad_solver.cpp
   theory/arith/nl/cad_solver.h
+  theory/arith/nl/libpoly/assignment.h
+  theory/arith/nl/libpoly/interval.h
+  theory/arith/nl/libpoly/polynomial.h
+  theory/arith/nl/libpoly/ran.cpp
+  theory/arith/nl/libpoly/ran.h
+  theory/arith/nl/libpoly/upolynomial.cpp
+  theory/arith/nl/libpoly/upolynomial.h
+  theory/arith/nl/libpoly/utils.cpp
+  theory/arith/nl/libpoly/utils.h
+  theory/arith/nl/libpoly/value.h
+  theory/arith/nl/libpoly/variable.h
   theory/arith/nl/nl_constraint.cpp
   theory/arith/nl/nl_constraint.h
   theory/arith/nl/nl_lemma_utils.cpp
