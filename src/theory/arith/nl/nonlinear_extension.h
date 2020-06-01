@@ -25,6 +25,7 @@
 #include "context/cdlist.h"
 #include "expr/kind.h"
 #include "expr/node.h"
+#include "theory/arith/nl/cad_solver.h"
 #include "theory/arith/nl/nl_lemma_utils.h"
 #include "theory/arith/nl/nl_model.h"
 #include "theory/arith/nl/nl_solver.h"
@@ -315,6 +316,9 @@ class NonlinearExtension
    * constraints involving nonlinear mulitplication.
    */
   NlSolver d_nlSlv;
+  /** The CAD-based solver
+   */
+  CadSolver d_cadSlv;
   /**
    * The lemmas we computed during collectModelInfo. We store two vectors of
    * lemmas to be sent out on the output channel of TheoryArith. The first
