@@ -55,6 +55,12 @@ class Polynomial
     lp_polynomial_construct_simple(
         get(), polynomial_ctx.get(), i.get(), v.get(), n);
   }
+  Polynomial(Integer i)
+      : mPoly(lp_polynomial_alloc(), polynomial_deleter)
+  {
+    lp_polynomial_construct_simple(
+        get(), polynomial_ctx.get(), i.get(), lp_variable_null, 0);
+  }
 
   /** Assign from the given Polynomial. */
   Polynomial& operator=(const Polynomial& p)
@@ -164,6 +170,13 @@ inline Polynomial operator*(const Polynomial& lhs, const Integer& rhs)
 inline Polynomial operator*(const Integer& lhs, const Polynomial& rhs)
 {
   return rhs * lhs;
+}
+
+/** Multiply and assign two polynomials. */
+inline Polynomial& operator*=(Polynomial& lhs, const Polynomial& rhs)
+{
+    lp_polynomial_mul(lhs.get(), lhs.get(), rhs.get());
+    return lhs;
 }
 
 /** Divide a polynomial by a polynomial, assuming that there is no remainder. */
