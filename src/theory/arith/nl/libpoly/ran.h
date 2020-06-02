@@ -16,7 +16,8 @@
 
 namespace CVC4 {
 namespace theory {
-namespace nlarith {
+namespace arith {
+namespace nl {
 namespace libpoly {
 
     /**
@@ -95,6 +96,7 @@ namespace libpoly {
     /** Isolate the real roots of a Polynomial with respect to an Assignment for all but the main variable. */
     std::vector<Value> isolate_real_roots(const Polynomial& p, const Assignment& a);
 
+}
 }
 }
 }

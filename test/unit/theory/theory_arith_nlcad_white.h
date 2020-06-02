@@ -1,5 +1,5 @@
 /*********************                                                        */
-/*! \file theory_nlarith_white.h
+/*! \file theory_nl_white.h
  ** \verbatim
  ** Top contributors (to current version):
  **   Gereon Kremer
@@ -31,7 +31,7 @@
 #include "theory/arith/nl/cad_projections.h"
 
 using namespace CVC4;
-using namespace CVC4::theory::nlarith;
+using namespace CVC4::theory::nl;
 
 libpoly::UPolynomial get_upoly(std::initializer_list<int> init) {
     int coeffs[init.size()];

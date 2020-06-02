@@ -10,7 +10,8 @@
 
 namespace CVC4 {
 namespace theory {
-namespace nlarith {
+namespace arith {
+namespace nl {
 namespace libpoly {
 
     /**
@@ -64,6 +65,7 @@ namespace libpoly {
         return res;
     }
 
+}
 }
 }
 }

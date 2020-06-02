@@ -13,7 +13,8 @@
 
 namespace CVC4 {
 namespace theory {
-namespace nlarith {
+namespace arith {
+namespace nl {
 namespace libpoly {
 
     /** A deleter for an std::unique_ptr holding a lp_upolynomial_t pointer */
@@ -81,6 +82,7 @@ namespace libpoly {
      */
     std::vector<UPolynomial> square_free_factors(const UPolynomial& p, bool with_constant = false);
 
+}
 }
 }
 }
