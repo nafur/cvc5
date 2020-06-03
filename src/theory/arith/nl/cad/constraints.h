@@ -1,14 +1,14 @@
-
 #ifndef CVC4__THEORY__NLARITH__CAD__CONSTRAINTS_H
 #define CVC4__THEORY__NLARITH__CAD__CONSTRAINTS_H
+
+#include "../libpoly/polynomial.h"
+#include "../libpoly/sign_condition.h"
+#include "expr/kind.h"
+#include "expr/node_manager_attributes.h"
 
 #include <iostream>
 #include <map>
 #include <vector>
-
-#include "../libpoly/polynomial.h"
-#include "expr/kind.h"
-#include "expr/node_manager_attributes.h"
 
 namespace CVC4 {
 namespace theory {
@@ -16,19 +16,22 @@ namespace arith {
 namespace nl {
 namespace cad {
 
+using namespace libpoly;
+
 class Constraints
 {
+    using ConstraintVector = std::vector<std::pair<Polynomial, SignCondition>>;
   /** A list of constraints, each comprised of a polynomial and a relation symbol.
    */
-  std::vector<std::pair<libpoly::Polynomial, CVC4::Kind>> mConstraints;
+  ConstraintVector mConstraints;
 
   /** A mapping from CVC4 variables to libpoly variables.
    */
-  std::map<Node, libpoly::Variable> mVariableMap;
+  std::map<Node, Variable> mVariableMap;
 
   /** Get the corresponding variable or create a new one.
    */
-  libpoly::Variable get_variable(const Node& n)
+  Variable get_variable(const Node& n)
   {
     Assert(n.getKind() == Kind::VARIABLE) << "Expect node to be a variable.";
     auto it = mVariableMap.find(n);
@@ -41,7 +44,7 @@ class Constraints
                            << " has no name, using ID instead." << std::endl;
         name = "v_" + std::to_string(n.getId());
       }
-      it = mVariableMap.emplace(n, libpoly::Variable(name.c_str())).first;
+      it = mVariableMap.emplace(n, Variable(name.c_str())).first;
     }
     return it->second;
   }
@@ -57,9 +60,9 @@ class Constraints
   /** Normalizes two denominators.
    * Divides both by their gcd.
    */
-  void normalize_denominators(libpoly::Integer& d1, libpoly::Integer& d2) const
+  void normalize_denominators(Integer& d1, Integer& d2) const
   {
-    libpoly::Integer g = gcd(d1, d2);
+    Integer g = gcd(d1, d2);
     d1 /= g;
     d2 /= g;
   }
@@ -67,81 +70,81 @@ class Constraints
   /** Normalize the given kind, taking negation into account.
    * Always normalizes to EQUAL, DISTINCT, LT or LEQ and adapts the lhs accordingly.
    */
-  Kind normalize_kind(Kind kind, bool negated, libpoly::Polynomial& lhs) const
+  SignCondition normalize_kind(Kind kind, bool negated, Polynomial& lhs) const
   {
     switch (kind)
     {
       case Kind::EQUAL:
       {
-        return negated ? Kind::DISTINCT : Kind::EQUAL;
+        return negated ? SignCondition::NE : SignCondition::EQ;
       }
       case Kind::LT:
       {
         if (negated)
         {
           lhs = -lhs;
-          return Kind::LEQ;
+          return SignCondition::LE;
         }
-        return Kind::LT;
+        return SignCondition::LT;
       }
       case Kind::LEQ:
       {
         if (negated)
         {
           lhs = -lhs;
-          return Kind::LT;
+          return SignCondition::LT;
         }
-        return Kind::LEQ;
+        return SignCondition::LE;
       }
       case Kind::GT:
       {
         if (negated)
         {
-          return Kind::LEQ;
+          return SignCondition::LE;
         }
         lhs = -lhs;
-        return Kind::LT;
+        return SignCondition::LT;
       }
       case Kind::GEQ:
       {
         if (negated)
         {
-          return Kind::LT;
+          return SignCondition::LT;
         }
         lhs = -lhs;
-        return Kind::LEQ;
+        return SignCondition::LE;
       }
       default:
         Assert(false) << "This function only deals with arithmetic relations.";
-        return Kind::EQUAL;
+        return SignCondition::EQ;
     }
   }
 
   /** Constructs a polynomial from the given node.
    * 
-   * While the Node n may contain rationals, libpoly::Polynomial does not.
+   * While the Node n may contain rationals, Polynomial does not.
    * We therefore also store the denominator of the returned polynomial and
    * use it to construct the integer polynomial recursively.
    * Once the polynomial has been fully constructed, we can ignore the
    * denominator (except for its sign).
    */
-  libpoly::Polynomial construct_polynomial(const Node& n,
-                                           libpoly::Integer& denominator)
+  Polynomial construct_polynomial(const Node& n,
+                                           Integer& denominator)
   {
-    denominator = libpoly::Integer(1);
+    denominator = Integer(1);
     switch (n.getKind())
     {
       case Kind::VARIABLE:
       {
-        return libpoly::Polynomial(get_variable(n));
+        return Polynomial(get_variable(n));
       }
       case Kind::CONST_RATIONAL:
       {
         Rational r = n.getConst<Rational>();
 #ifdef CVC4_GMP_IMP
-        denominator = libpoly::Integer(r.getDenominator().getValue());
-        return libpoly::Polynomial(
-            libpoly::Integer(r.getNumerator().getValue()));
+        denominator = Integer(r.getDenominator().getValue());
+        return Polynomial(
+            Integer(r.getNumerator().getValue()));
 #elif CVC4_CLN_IMP
         Assert(false) << "Did not implement number conversion for CLN yet";
 #else
@@ -151,11 +154,11 @@ class Constraints
       }
       case Kind::PLUS:
       {
-        libpoly::Polynomial res;
-        libpoly::Integer denom;
+        Polynomial res;
+        Integer denom;
         for (const auto& child : n)
         {
-          libpoly::Polynomial tmp = construct_polynomial(child, denom);
+          Polynomial tmp = construct_polynomial(child, denom);
           normalize_denominators(denom, denominator);
           res = res * denom + tmp * denominator;
           denominator *= denom;
@@ -165,8 +168,8 @@ class Constraints
       case Kind::MULT:
       case Kind::NONLINEAR_MULT:
       {
-        libpoly::Polynomial res = libpoly::Polynomial(denominator);
-        libpoly::Integer denom;
+        Polynomial res = Polynomial(denominator);
+        Integer denom;
         for (const auto& child : n)
         {
           res *= construct_polynomial(child, denom);
@@ -178,21 +181,21 @@ class Constraints
         Trace("cad-check") << "Unhandled node " << n << " with kind "
                            << n.getKind() << std::endl;
     }
-    return libpoly::Polynomial();
+    return Polynomial();
   }
 
   /** Constructs the lhs polynomial for a node representing a constraints.
    * Assumes the node to have exactly two children.
    */
-  libpoly::Polynomial construct_constraint_polynomial(const Node& n)
+  Polynomial construct_constraint_polynomial(const Node& n)
   {
     Assert(n.getNumChildren() == 2)
         << "Supported relations only have two children.";
     auto childit = n.begin();
-    libpoly::Integer ldenom;
-    libpoly::Polynomial left = construct_polynomial(*childit++, ldenom);
-    libpoly::Integer rdenom;
-    libpoly::Polynomial right = construct_polynomial(*childit++, rdenom);
+    Integer ldenom;
+    Polynomial left = construct_polynomial(*childit++, ldenom);
+    Integer rdenom;
+    Polynomial right = construct_polynomial(*childit++, rdenom);
     Assert(childit == n.end()) << "Screwed up iterator handling.";
 
     normalize_denominators(ldenom, rdenom);
@@ -200,6 +203,9 @@ class Constraints
   }
 
  public:
+    void add_constraint(const Polynomial& lhs, SignCondition sc) {
+        mConstraints.emplace_back(lhs, sc);
+    }
   /** Add a constraints (represented by a node) to the list of constraints.
    */
   void add_constraint(Node n)
@@ -215,12 +221,15 @@ class Constraints
     Assert(is_suitable_relation(n.getKind()))
         << "Found a constraint with unsupported relation " << n.getKind();
 
-    libpoly::Polynomial lhs = construct_constraint_polynomial(n);
-    Kind relation = normalize_kind(n.getKind(), negated, lhs);
-    Trace("cad-check") << "Parsed " << lhs << " " << relation << " 0"
+    Polynomial lhs = construct_constraint_polynomial(n);
+    SignCondition sc = normalize_kind(n.getKind(), negated, lhs);
+    Trace("cad-check") << "Parsed " << lhs << " " << sc << " 0"
                        << std::endl;
+    add_constraint(lhs, sc);
+  }
 
-    mConstraints.emplace_back(lhs, relation);
+  const ConstraintVector& get_constraints() const {
+      return mConstraints;
   }
 };
 
