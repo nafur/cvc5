@@ -306,6 +306,7 @@ libcvc4_add_sources(
   theory/arith/nl/libpoly/assignment.h
   theory/arith/nl/libpoly/dyadic_interval.h
   theory/arith/nl/libpoly/integer.h
+  theory/arith/nl/libpoly/interval.cpp
   theory/arith/nl/libpoly/interval.h
   theory/arith/nl/libpoly/polynomial.cpp
   theory/arith/nl/libpoly/polynomial.h
