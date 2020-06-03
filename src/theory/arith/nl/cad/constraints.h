@@ -141,11 +141,11 @@ class Constraints
       case Kind::CONST_RATIONAL:
       {
         Rational r = n.getConst<Rational>();
-#ifdef CVC4_GMP_IMP
+#if defined CVC4_GMP_IMP
         denominator = Integer(r.getDenominator().getValue());
         return Polynomial(
             Integer(r.getNumerator().getValue()));
-#elif CVC4_CLN_IMP
+#elif defined CVC4_CLN_IMP
         Assert(false) << "Did not implement number conversion for CLN yet";
 #else
         Assert(false) << "Not sure which number type is used.";
