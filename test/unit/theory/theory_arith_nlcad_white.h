@@ -21,7 +21,6 @@
 #include <vector>
 
 #include "theory/arith/nl/libpoly/assignment.h"
-#include "theory/arith/nl/libpoly/interval.h"
 #include "theory/arith/nl/libpoly/polynomial.h"
 #include "theory/arith/nl/libpoly/ran.h"
 #include "theory/arith/nl/libpoly/upolynomial.h"
@@ -31,7 +30,7 @@
 #include "theory/arith/nl/cad_projections.h"
 
 using namespace CVC4;
-using namespace CVC4::theory::nl;
+using namespace CVC4::theory::arith::nl;
 
 libpoly::UPolynomial get_upoly(std::initializer_list<int> init) {
     int coeffs[init.size()];
@@ -40,13 +39,15 @@ libpoly::UPolynomial get_upoly(std::initializer_list<int> init) {
     return libpoly::UPolynomial(init.size()-1, coeffs);
 }
 libpoly::RAN get_ran(std::initializer_list<int> init, int lower, int upper) {
-    return libpoly::RAN(get_upoly(init), libpoly::Interval(lower, upper));
+    return libpoly::RAN(get_upoly(init), libpoly::DyadicInterval(lower, upper));
 }
 
 class TheoryArithNLCADWhite : public CxxTest::TestSuite
 {
  public:
-  TheoryArithNLCADWhite() {}
+  TheoryArithNLCADWhite() {
+    Trace.on("cad-check");
+  }
 
   void setUp() override
   {
