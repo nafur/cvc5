@@ -132,6 +132,7 @@ jobs:
         ${{ matrix.env }} ./configure.sh ${{ matrix.config }} \
           --python3 \
           --poly \
+          --assertions \
           --prefix=$(pwd)/build/install \
           --unit-testing
 
