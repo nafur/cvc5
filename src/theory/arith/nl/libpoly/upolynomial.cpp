@@ -24,7 +24,6 @@ std::vector<UPolynomial> square_free_factors(const UPolynomial& p,
     std::size_t multiplicity = 0;
     res.emplace_back(
         lp_upolynomial_factors_get_factor(factors, i, &multiplicity));
-    std::cout << res.back() << std::endl;
   }
 
   lp_upolynomial_factors_destruct(factors, 0);
