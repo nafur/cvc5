@@ -8,7 +8,10 @@
 #include <iostream>
 #include <vector>
 
+#include "assignment.h"
 #include "integer.h"
+#include "interval.h"
+#include "sign_condition.h"
 #include "utils.h"
 #include "variable.h"
 
@@ -197,6 +200,10 @@ inline std::size_t degree(const Polynomial& p)
 {
   return lp_polynomial_degree(p.get());
 }
+/** Obtain the main variable of the given polynomial. */
+inline Variable main_variable(const Polynomial& p) {
+    return lp_polynomial_top_variable(p.get());
+}
 /** Obtain the k'th coefficient of a polynomial. */
 inline Polynomial coefficient(const Polynomial& p, std::size_t k)
 {
@@ -265,6 +272,12 @@ inline std::vector<Polynomial> square_free_factors(const Polynomial& p)
 
   return res;
 }
+
+inline bool evaluate_polynomial_constraint(const Polynomial& p, const Assignment& a, SignCondition sc) {
+    return evaluate_sign_condition(sc, lp_polynomial_sgn(p.get(), a.get()));
+}
+
+std::vector<Interval> infeasible_regions(const Polynomial& p, const Assignment& a, SignCondition sc);
 
 }  // namespace libpoly
 }  // namespace nl
