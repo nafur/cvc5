@@ -13,6 +13,7 @@
  **/
 
 #include "theory/arith/nl/cad_solver.h"
+#include "theory/arith/nl/cad/constraints.h"
 
 #include "options/arith_options.h"
 #include "options/smt_options.h"
@@ -64,6 +65,11 @@ void CadSolver::initLastCall(const std::vector<Node>& assertions,
     }
   }
   // store or process assertions
+  cad::Constraints constraints;
+  for (const Node& a : assertions)
+  {
+    constraints.add_constraint(a);
+  }
 }
 
 std::vector<Node> CadSolver::checkInitialRefine()
@@ -82,6 +88,8 @@ std::vector<Node> CadSolver::checkFullRefine()
   Trace("cad-check") << "CadSolver::checkFullRefine";
   std::vector<Node> lems;
 
+  // Do full theory check here
+
   // Run a complete check on assertions/terms given in initLastCall. In other
   // words, do not return any lemmas if 
   
@@ -90,7 +98,7 @@ std::vector<Node> CadSolver::checkFullRefine()
 
 void CadSolver::preprocessAssertionsCheckModel(std::vector<Node>& assertions)
 {
-  
+  // Report model into assertions
 }
 
 }  // namespace nl
