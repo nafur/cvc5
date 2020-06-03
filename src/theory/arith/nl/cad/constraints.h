@@ -1,14 +1,14 @@
 #ifndef CVC4__THEORY__NLARITH__CAD__CONSTRAINTS_H
 #define CVC4__THEORY__NLARITH__CAD__CONSTRAINTS_H
 
+#include <iostream>
+#include <map>
+#include <vector>
+
 #include "../libpoly/polynomial.h"
 #include "../libpoly/sign_condition.h"
 #include "expr/kind.h"
 #include "expr/node_manager_attributes.h"
-
-#include <iostream>
-#include <map>
-#include <vector>
 
 namespace CVC4 {
 namespace theory {
@@ -20,8 +20,9 @@ using namespace libpoly;
 
 class Constraints
 {
-    using ConstraintVector = std::vector<std::pair<Polynomial, SignCondition>>;
-  /** A list of constraints, each comprised of a polynomial and a relation symbol.
+  using ConstraintVector = std::vector<std::pair<Polynomial, SignCondition>>;
+  /** A list of constraints, each comprised of a polynomial and a relation
+   * symbol.
    */
   ConstraintVector mConstraints;
 
@@ -68,7 +69,8 @@ class Constraints
   }
 
   /** Normalize the given kind, taking negation into account.
-   * Always normalizes to EQUAL, DISTINCT, LT or LEQ and adapts the lhs accordingly.
+   * Always normalizes to EQUAL, DISTINCT, LT or LEQ and adapts the lhs
+   * accordingly.
    */
   SignCondition normalize_kind(Kind kind, bool negated, Polynomial& lhs) const
   {
@@ -121,15 +123,14 @@ class Constraints
   }
 
   /** Constructs a polynomial from the given node.
-   * 
+   *
    * While the Node n may contain rationals, Polynomial does not.
    * We therefore also store the denominator of the returned polynomial and
    * use it to construct the integer polynomial recursively.
    * Once the polynomial has been fully constructed, we can ignore the
    * denominator (except for its sign).
    */
-  Polynomial construct_polynomial(const Node& n,
-                                           Integer& denominator)
+  Polynomial construct_polynomial(const Node& n, Integer& denominator)
   {
     denominator = Integer(1);
     switch (n.getKind())
@@ -142,9 +143,7 @@ class Constraints
       {
         Rational r = n.getConst<Rational>();
         denominator = Integer(r.getDenominator().getValue());
-        return Polynomial(
-            Integer(r.getNumerator().getValue()));
-        break;
+        return Polynomial(Integer(r.getNumerator().getValue()));
       }
       case Kind::PLUS:
       {
@@ -197,9 +196,10 @@ class Constraints
   }
 
  public:
-    void add_constraint(const Polynomial& lhs, SignCondition sc) {
-        mConstraints.emplace_back(lhs, sc);
-    }
+  void add_constraint(const Polynomial& lhs, SignCondition sc)
+  {
+    mConstraints.emplace_back(lhs, sc);
+  }
   /** Add a constraints (represented by a node) to the list of constraints.
    */
   void add_constraint(Node n)
@@ -217,14 +217,11 @@ class Constraints
 
     Polynomial lhs = construct_constraint_polynomial(n);
     SignCondition sc = normalize_kind(n.getKind(), negated, lhs);
-    Trace("cad-check") << "Parsed " << lhs << " " << sc << " 0"
-                       << std::endl;
+    Trace("cad-check") << "Parsed " << lhs << " " << sc << " 0" << std::endl;
     add_constraint(lhs, sc);
   }
 
-  const ConstraintVector& get_constraints() const {
-      return mConstraints;
-  }
+  const ConstraintVector& get_constraints() const { return mConstraints; }
 };
 
 }  // namespace cad
