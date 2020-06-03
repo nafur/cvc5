@@ -24,6 +24,10 @@ class Variable
   lp_variable_t mVariable;
 
  public:
+  /** Construct with a null variable. */
+  Variable(): mVariable(lp_variable_null) {}
+  /** Construct from a lp_variable_t. */
+  Variable(lp_variable_t var): mVariable(var) {}
   /** Construct a new variable with the given name. */
   Variable(const char* name)
       : mVariable(lp_variable_db_new_variable(variable_db.get(), name))
@@ -39,6 +43,15 @@ class Variable
 inline std::ostream& operator<<(std::ostream& os, const Variable& v)
 {
   return os << lp_variable_db_get_name(variable_db.get(), v.get());
+}
+
+/** Compare two variables for equality. */
+inline bool operator==(const Variable& lhs, const Variable& rhs) {
+  return lhs.get() == rhs.get();
+}
+/** Compare two variables for inequality. */
+inline bool operator!=(const Variable& lhs, const Variable& rhs) {
+  return lhs.get() != rhs.get();
 }
 
 }  // namespace libpoly
