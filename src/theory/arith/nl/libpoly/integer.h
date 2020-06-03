@@ -32,9 +32,25 @@ class Integer
   /** Copy from the given Integer. */
   Integer(const Integer& i) { lp_integer_construct_copy(lp_Z, &mInt, i.get()); }
 #ifdef CVC4_GMP_IMP
+  /** Constructs from a gmp integer. */
   Integer(const mpz_class& m)
   {
     lp_integer_construct_copy(lp_Z, &mInt, m.get_mpz_t());
+  }
+#endif
+#ifdef CVC4_CLN_IMP
+  /** Constructs from a cln integer. */
+  Integer(const cln::cl_I& i)
+  {
+    // TODO(Gereon): Check whether we can do better when converting from cln::cl_I to mpz_t
+    if (std::numeric_limits<long>::min() <= i && i <= std::numeric_limits<long>::max()) {
+      lp_integer_construct_from_int(lp_Z, &mInt, cln::cl_I_to_long(i));
+    }
+    std::stringstream s;
+    s << i;
+    mpz_t tmp;
+    mpz_set_str(tmp, s.str().c_str(), 0);
+    lp_integer_construct_copy(lp_Z, &mInt, tmp);
   }
 #endif
   /** Custom destructor. */
