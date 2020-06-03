@@ -1,4 +1,3 @@
-
 #ifndef CVC4__THEORY__NLARITH__LIBPOLY__INTEGER_H
 #define CVC4__THEORY__NLARITH__LIBPOLY__INTEGER_H
 
@@ -6,7 +5,9 @@
 
 #include <iostream>
 
+#include "util/integer.h"
 #include "utils.h"
+#include "value.h"
 
 namespace CVC4 {
 namespace theory {
@@ -43,6 +44,12 @@ class Integer
   {
     std::swap(mInt, i.mInt);
     return *this;
+  }
+
+  /** Implicitly convert to a Value. */
+  operator Value() const
+  {
+    return Value(lp_value_new(lp_value_type_t::LP_VALUE_INTEGER, &mInt));
   }
 
   /** Get a non-const pointer to the internal lp_integer_t. Handle with care! */
