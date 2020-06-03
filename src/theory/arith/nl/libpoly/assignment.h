@@ -49,6 +49,9 @@ class Assignment
   {
     lp_assignment_set_value(get(), var.get(), value.get());
   }
+  void unset(const Variable& var) {
+    lp_assignment_set_value(get(), var.get(), nullptr);
+  }
 };
 /** Stream the given Assignment to an output stream. */
 inline std::ostream& operator<<(std::ostream& os, const Assignment& a)
