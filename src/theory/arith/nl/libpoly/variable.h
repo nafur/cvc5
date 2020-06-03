@@ -19,40 +19,29 @@ namespace libpoly {
  */
 class Variable
 {
-  friend std::ostream& operator<<(std::ostream& os, const Variable& v);
   /** The actual variable. */
   lp_variable_t mVariable;
 
  public:
   /** Construct with a null variable. */
-  Variable(): mVariable(lp_variable_null) {}
+  Variable();
   /** Construct from a lp_variable_t. */
-  Variable(lp_variable_t var): mVariable(var) {}
+  Variable(lp_variable_t var);
   /** Construct a new variable with the given name. */
-  Variable(const char* name)
-      : mVariable(lp_variable_db_new_variable(variable_db.get(), name))
-  {
-  }
+  Variable(const char* name);
 
   /** Get the internal lp_variable_t. Note that it's only a type alias for long.
    */
-  lp_variable_t get() const { return mVariable; }
+  lp_variable_t get() const;
 };
 
 /** Stream the given Variable to an output stream. */
-inline std::ostream& operator<<(std::ostream& os, const Variable& v)
-{
-  return os << lp_variable_db_get_name(variable_db.get(), v.get());
-}
+std::ostream& operator<<(std::ostream& os, const Variable& v);
 
 /** Compare two variables for equality. */
-inline bool operator==(const Variable& lhs, const Variable& rhs) {
-  return lhs.get() == rhs.get();
-}
+bool operator==(const Variable& lhs, const Variable& rhs);
 /** Compare two variables for inequality. */
-inline bool operator!=(const Variable& lhs, const Variable& rhs) {
-  return lhs.get() != rhs.get();
-}
+bool operator!=(const Variable& lhs, const Variable& rhs);
 
 }  // namespace libpoly
 }  // namespace nl

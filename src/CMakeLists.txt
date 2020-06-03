@@ -317,12 +317,15 @@ libcvc4_add_sources(
   theory/arith/nl/libpoly/polynomial.h
   theory/arith/nl/libpoly/ran.cpp
   theory/arith/nl/libpoly/ran.h
+  theory/arith/nl/libpoly/sign_condition.cpp
   theory/arith/nl/libpoly/sign_condition.h
   theory/arith/nl/libpoly/upolynomial.cpp
   theory/arith/nl/libpoly/upolynomial.h
   theory/arith/nl/libpoly/utils.cpp
   theory/arith/nl/libpoly/utils.h
+  theory/arith/nl/libpoly/value.cpp
   theory/arith/nl/libpoly/value.h
+  theory/arith/nl/libpoly/variable.cpp
   theory/arith/nl/libpoly/variable.h
   theory/arith/nl/nl_constraint.cpp
   theory/arith/nl/nl_constraint.h

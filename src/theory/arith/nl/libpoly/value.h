@@ -14,101 +14,65 @@ namespace arith {
 namespace nl {
 namespace libpoly {
 
-/** A deleter for an std::unique_ptr holding a lp_value_t pointer */
-inline void value_deleter(lp_value_t* ptr) { lp_value_delete(ptr); }
-
 /**
  * Implements a wrapper for lp_value_t from libpoly.
  */
 class Value
 {
-  friend std::ostream& operator<<(std::ostream& os, const Value& v);
   /** The actual value. */
   deleting_unique_ptr<lp_value_t> mValue;
 
  public:
   /** Construct a none value. */
-  Value() : mValue(lp_value_new(LP_VALUE_NONE, nullptr), value_deleter) {}
+  Value();
   /** Create from a lp_value_t, creating a copy. */
-  Value(const lp_value_t& val) : mValue(lp_value_new_copy(&val), value_deleter) {}
+  Value(const lp_value_t& val);
   /** Create from a lp_value_t pointer, claiming it's ownership. */
-  Value(lp_value_t* ptr) : mValue(ptr, value_deleter) {}
+  Value(lp_value_t* ptr);
   /** Copy from the given Value. */
-  Value(const Value& val) : Value(lp_value_new_copy(val.get())) {}
+  Value(const Value& val);
   /** Move from the given Value. */
-  Value(Value&& val) : Value(val.release()) {}
-  
+  Value(Value&& val);
+
   /** Copy from the given Value. */
-  Value& operator=(const Value& v)
-  {
-    mValue.reset(lp_value_new_copy(v.get()));
-    return *this;
-  }
+  Value& operator=(const Value& v);
   /** Move from the given Value. */
-  Value& operator=(Value&& v)
-  {
-    mValue = std::move(v.mValue);
-    return *this;
-  }
+  Value& operator=(Value&& v);
   /** Assign from the given lp_value_t pointer, claiming it's ownership. */
-  Value& operator=(lp_value_t* v)
-  {
-    mValue.reset(v);
-    return *this;
-  }
+  Value& operator=(lp_value_t* v);
 
   /** Get a non-const pointer to the internal lp_value_t. Handle with care! */
-  lp_value_t* get() { return mValue.get(); }
+  lp_value_t* get();
   /** Get a const pointer to the internal lp_value_t. */
-  const lp_value_t* get() const { return mValue.get(); }
-  /** Release the lp_value_t pointer. This yields ownership of the returned pointer. */
-  lp_value_t* release() {
-      return mValue.release();
-  }
+  const lp_value_t* get() const;
+  /** Release the lp_value_t pointer. This yields ownership of the returned
+   * pointer. */
+  lp_value_t* release();
 
   /** Return -infty */
-  static Value minus_infty() {
-    return Value(lp_value_new(LP_VALUE_MINUS_INFINITY, nullptr));
-  }
+  static Value minus_infty();
   /** Return +infty */
-  static Value plus_infty() {
-    return Value(lp_value_new(LP_VALUE_PLUS_INFINITY, nullptr));
-  }
+  static Value plus_infty();
 };
 
 /** Stream the given Value to an output stream. */
-inline std::ostream& operator<<(std::ostream& os, const Value& v)
-{
-  return os << lp_value_to_string(v.get());
-}
+std::ostream& operator<<(std::ostream& os, const Value& v);
 /** Compare values for equality. */
-inline bool operator==(const Value& lhs, const Value& rhs)
-{
-  return lp_value_cmp(lhs.get(), rhs.get()) == 0;
-}
+bool operator==(const Value& lhs, const Value& rhs);
 /** Compare values for disequality. */
-inline bool operator!=(const Value& lhs, const Value& rhs)
-{
-  if (lhs.get()->type == LP_VALUE_NONE) return true;
-  if (rhs.get()->type == LP_VALUE_NONE) return true;
-  return lp_value_cmp(lhs.get(), rhs.get()) != 0;
-}
+bool operator!=(const Value& lhs, const Value& rhs);
 /** Compare two values. */
-inline bool operator<(const Value& lhs, const Value& rhs)
-{
-  return lp_value_cmp(lhs.get(), rhs.get()) < 0;
-}
+bool operator<(const Value& lhs, const Value& rhs);
 
-inline Value sample_between(const lp_value_t* lhs, bool l_strict, const lp_value_t* rhs, bool r_strict) {
-  Value res;
-  lp_value_get_value_between(lhs, l_strict ? 1 : 0, rhs, r_strict ? 1 : 0, res.get());
-  return res;
-}
+Value sample_between(const lp_value_t* lhs,
+                     bool l_strict,
+                     const lp_value_t* rhs,
+                     bool r_strict);
 
-inline Value sample_between(const Value& lhs, bool l_strict, const Value& rhs, bool r_strict) {
-  return sample_between(lhs.get(), l_strict, rhs.get(), r_strict);
-}
-
+Value sample_between(const Value& lhs,
+                     bool l_strict,
+                     const Value& rhs,
+                     bool r_strict);
 
 }  // namespace libpoly
 }  // namespace nl
