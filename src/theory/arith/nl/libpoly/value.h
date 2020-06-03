@@ -29,15 +29,39 @@ class Value
  public:
   /** Construct a none value. */
   Value() : mValue(lp_value_new(LP_VALUE_NONE, nullptr), value_deleter) {}
+  /** Create from a lp_value_t, creating a copy. */
+  Value(const lp_value_t& val) : mValue(lp_value_new_copy(&val), value_deleter) {}
   /** Create from a lp_value_t pointer, claiming it's ownership. */
   Value(lp_value_t* ptr) : mValue(ptr, value_deleter) {}
   /** Copy from the given Value. */
   Value(const Value& val) : Value(lp_value_new_copy(val.get())) {}
+  
+  /** Move from the given Value. */
+  Value& operator=(Value&& v)
+  {
+    mValue = std::move(v.mValue);
+    return *this;
+  }
+  /** Assign from the given lp_value_t pointer, claiming it's ownership. */
+  Value& operator=(lp_value_t* v)
+  {
+    mValue.reset(v);
+    return *this;
+  }
 
   /** Get a non-const pointer to the internal lp_value_t. Handle with care! */
   lp_value_t* get() { return mValue.get(); }
   /** Get a const pointer to the internal lp_value_t. */
   const lp_value_t* get() const { return mValue.get(); }
+
+  /** Return -infty */
+  static Value minus_infty() {
+    return Value(lp_value_new(LP_VALUE_MINUS_INFINITY, nullptr));
+  }
+  /** Return +infty */
+  static Value plus_infty() {
+    return Value(lp_value_new(LP_VALUE_PLUS_INFINITY, nullptr));
+  }
 };
 
 /** Stream the given Value to an output stream. */
@@ -50,6 +74,22 @@ inline bool operator==(const Value& lhs, const Value& rhs)
 {
   return lp_value_cmp(lhs.get(), rhs.get()) == 0;
 }
+/** Compare two values. */
+inline bool operator<(const Value& lhs, const Value& rhs)
+{
+  return lp_value_cmp(lhs.get(), rhs.get()) < 0;
+}
+
+inline Value sample_between(const lp_value_t* lhs, bool l_strict, const lp_value_t* rhs, bool r_strict) {
+  Value res;
+  lp_value_get_value_between(lhs, l_strict ? 1 : 0, rhs, r_strict ? 1 : 0, res.get());
+  return res;
+}
+
+inline Value sample_between(const Value& lhs, bool l_strict, const Value& rhs, bool r_strict) {
+  return sample_between(lhs.get(), l_strict, rhs.get(), r_strict);
+}
+
 
 }  // namespace libpoly
 }  // namespace nl
