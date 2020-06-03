@@ -6,7 +6,7 @@
 #include <iostream>
 #include <vector>
 
-#include "libpoly/polynomial.h"
+#include "../libpoly/polynomial.h"
 
 namespace CVC4 {
 namespace theory {
@@ -36,6 +36,11 @@ void add_polynomial(std::vector<Polynomial>& polys, const Polynomial& poly)
     polys.emplace_back(p);
     polys.back().simplify();
   }
+}
+
+void add_polynomials(std::vector<Polynomial>& polys, const std::vector<Polynomial>& p)
+{
+  for (const auto& q: p) add_polynomial(polys, q);
 }
 
 /**
