@@ -507,6 +507,12 @@ endif()
 if(USE_POLY)
   find_package(Poly REQUIRED)
   add_definitions(-DCVC4_USE_POLY)
+  # TODO(Gereon): Figure out how to do this properly.
+  install(DIRECTORY
+    ${CMAKE_SOURCE_DIR}/deps/install/lib/
+    DESTINATION ${LIBRARY_INSTALL_DIR}/
+    FILES_MATCHING PATTERN "libpoly.*"
+  )
 endif()
 
 if(USE_READLINE)
