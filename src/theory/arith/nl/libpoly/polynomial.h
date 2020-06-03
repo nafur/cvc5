@@ -182,6 +182,13 @@ inline Polynomial& operator*=(Polynomial& lhs, const Polynomial& rhs)
     return lhs;
 }
 
+/** Compute a polynomial to some power. */
+inline Polynomial pow(const Polynomial& lhs, unsigned exp) {
+  Polynomial res;
+  lp_polynomial_pow(res.get(), lhs.get(), exp);
+  return res;
+}
+
 /** Divide a polynomial by a polynomial, assuming that there is no remainder. */
 inline Polynomial div(const Polynomial& lhs, const Polynomial& rhs)
 {
@@ -216,7 +223,7 @@ inline Polynomial leading_coefficient(const Polynomial& p)
 {
   return coefficient(p, degree(p));
 }
-/** Obtain all coefficients of a polynomial. */
+/** Obtain all non-constant coefficients of a polynomial. */
 inline std::vector<Polynomial> coefficients(const Polynomial& p)
 {
   std::vector<Polynomial> res;
@@ -255,26 +262,11 @@ inline Polynomial discriminant(const Polynomial& p)
  * Compute a square-free factorization of a polynomial.
  * Attention: this does not yield a full factorization!
  */
-inline std::vector<Polynomial> square_free_factors(const Polynomial& p)
-{
-  lp_polynomial_t** factors = nullptr;
-  std::size_t* multiplicities = nullptr;
-  std::size_t size = 0;
-  lp_polynomial_factor_square_free(p.get(), &factors, &multiplicities, &size);
-
-  std::vector<Polynomial> res;
-  for (std::size_t i = 0; i < size; ++i)
-  {
-    res.emplace_back(factors[i]);
-  }
-  free(factors);
-  free(multiplicities);
-
-  return res;
-}
+std::vector<Polynomial> square_free_factors(const Polynomial& p);
 
 inline bool evaluate_polynomial_constraint(const Polynomial& p, const Assignment& a, SignCondition sc) {
-    return evaluate_sign_condition(sc, lp_polynomial_sgn(p.get(), a.get()));
+  //Trace("cad-check") << "Get sign of " << p << " over " << a << std::endl;
+  return evaluate_sign_condition(sc, lp_polynomial_sgn(p.get(), a.get()));
 }
 
 std::vector<Interval> infeasible_regions(const Polynomial& p, const Assignment& a, SignCondition sc);
