@@ -35,7 +35,15 @@ class Value
   Value(lp_value_t* ptr) : mValue(ptr, value_deleter) {}
   /** Copy from the given Value. */
   Value(const Value& val) : Value(lp_value_new_copy(val.get())) {}
+  /** Move from the given Value. */
+  Value(Value&& val) : Value(val.release()) {}
   
+  /** Copy from the given Value. */
+  Value& operator=(const Value& v)
+  {
+    mValue.reset(lp_value_new_copy(v.get()));
+    return *this;
+  }
   /** Move from the given Value. */
   Value& operator=(Value&& v)
   {
@@ -53,6 +61,10 @@ class Value
   lp_value_t* get() { return mValue.get(); }
   /** Get a const pointer to the internal lp_value_t. */
   const lp_value_t* get() const { return mValue.get(); }
+  /** Release the lp_value_t pointer. This yields ownership of the returned pointer. */
+  lp_value_t* release() {
+      return mValue.release();
+  }
 
   /** Return -infty */
   static Value minus_infty() {
@@ -73,6 +85,13 @@ inline std::ostream& operator<<(std::ostream& os, const Value& v)
 inline bool operator==(const Value& lhs, const Value& rhs)
 {
   return lp_value_cmp(lhs.get(), rhs.get()) == 0;
+}
+/** Compare values for disequality. */
+inline bool operator!=(const Value& lhs, const Value& rhs)
+{
+  if (lhs.get()->type == LP_VALUE_NONE) return true;
+  if (rhs.get()->type == LP_VALUE_NONE) return true;
+  return lp_value_cmp(lhs.get(), rhs.get()) != 0;
 }
 /** Compare two values. */
 inline bool operator<(const Value& lhs, const Value& rhs)
