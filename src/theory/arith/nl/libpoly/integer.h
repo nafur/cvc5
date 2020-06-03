@@ -20,94 +20,51 @@ namespace libpoly {
  */
 class Integer
 {
-  friend std::ostream& operator<<(std::ostream& os, const Integer& i);
   /** The actual integer. */
   lp_integer_t mInt;
 
  public:
   /** Construct a zero integer. */
-  Integer() { lp_integer_construct(&mInt); }
+  Integer();
   /** Construct from the given integer. */
-  Integer(long i) { lp_integer_construct_from_int(lp_Z, &mInt, i); }
+  Integer(long i);
   /** Copy from the given Integer. */
-  Integer(const Integer& i) { lp_integer_construct_copy(lp_Z, &mInt, i.get()); }
+  Integer(const Integer& i);
 #ifdef CVC4_GMP_IMP
   /** Constructs from a gmp integer. */
-  Integer(const mpz_class& m)
-  {
-    lp_integer_construct_copy(lp_Z, &mInt, m.get_mpz_t());
-  }
+  Integer(const mpz_class& m);
 #endif
 #ifdef CVC4_CLN_IMP
   /** Constructs from a cln integer. */
-  Integer(const cln::cl_I& i)
-  {
-    // TODO(Gereon): Check whether we can do better when converting from cln::cl_I to mpz_t
-    if (std::numeric_limits<long>::min() <= i && i <= std::numeric_limits<long>::max()) {
-      lp_integer_construct_from_int(lp_Z, &mInt, cln::cl_I_to_long(i));
-    }
-    std::stringstream s;
-    s << i;
-    mpz_t tmp;
-    mpz_set_str(tmp, s.str().c_str(), 0);
-    lp_integer_construct_copy(lp_Z, &mInt, tmp);
-  }
+  Integer(const cln::cl_I& i);
 #endif
   /** Custom destructor. */
-  ~Integer() { lp_integer_destruct(&mInt); }
+  ~Integer();
   /** Assign from the given Integer. */
-  Integer& operator=(Integer i)
-  {
-    std::swap(mInt, i.mInt);
-    return *this;
-  }
+  Integer& operator=(Integer i);
 
   /** Implicitly convert to a Value. */
-  operator Value() const
-  {
-    return Value(lp_value_new(lp_value_type_t::LP_VALUE_INTEGER, &mInt));
-  }
+  operator Value() const;
 
   /** Get a non-const pointer to the internal lp_integer_t. Handle with care! */
-  lp_integer_t* get() { return &mInt; }
+  lp_integer_t* get();
   /** Get a const pointer to the internal lp_integer_t. */
-  const lp_integer_t* get() const { return &mInt; }
+  const lp_integer_t* get() const;
 };
 /** Stream the given Integer to an output stream. */
-inline std::ostream& operator<<(std::ostream& os, const Integer& i)
-{
-  return os << lp_integer_to_string(i.get());
-}
+std::ostream& operator<<(std::ostream& os, const Integer& i);
 
 /** Unary negation for an Integer. */
-inline Integer operator-(const Integer& i)
-{
-  Integer res;
-  lp_integer_neg(lp_Z, res.get(), i.get());
-  return res;
-}
+Integer operator-(const Integer& i);
 
 /** Multiply and assign two Integers. */
-inline Integer& operator*=(Integer& lhs, const Integer& rhs)
-{
-  lp_integer_mul(lp_Z, lhs.get(), lhs.get(), rhs.get());
-  return lhs;
-}
+Integer& operator*=(Integer& lhs, const Integer& rhs);
 
 /** Divide and assign two Integers. Assumes the division is exact! */
-inline Integer& operator/=(Integer& lhs, const Integer& rhs)
-{
-    lp_integer_div_exact(lp_Z, lhs.get(), lhs.get(), rhs.get());
-  return lhs;
-}
+Integer& operator/=(Integer& lhs, const Integer& rhs);
 
 /** Compute the GCD of two Integers. */
-inline Integer gcd(const Integer& a, const Integer& b)
-{
-  Integer res;
-  lp_integer_gcd_Z(res.get(), a.get(), b.get());
-  return res;
-}
+Integer gcd(const Integer& a, const Integer& b);
 
 }  // namespace libpoly
 }  // namespace nl
