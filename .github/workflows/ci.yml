@@ -16,7 +16,7 @@ jobs:
 
         include:
           - name: production
-            config: production
+            config: production --language-bindings=java --lfsc --python-bindings
             cache-key: production
             python-bindings: true
             check-examples: true
@@ -132,7 +132,6 @@ jobs:
         ${{ matrix.env }} ./configure.sh ${{ matrix.config }} \
           --python3 \
           --poly \
-          --assertions \
           --prefix=$(pwd)/build/install \
           --unit-testing
 
