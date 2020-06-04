@@ -20,6 +20,7 @@
 
 #include "context/cdhashset.h"
 #include "expr/node.h"
+#include "theory/arith/nl/cad/cdcac.h"
 #include "theory/arith/nl/nl_model.h"
 #include "theory/arith/theory_arith.h"
 
@@ -34,6 +35,8 @@ namespace nl {
 class CadSolver
 {
   typedef context::CDHashSet<Node, NodeHashFunction> NodeSet;
+
+  cad::CDCAC mCAC;
 
  public:
   CadSolver(TheoryArith& containing, NlModel& model);

@@ -65,19 +65,12 @@ void CadSolver::initLastCall(const std::vector<Node>& assertions,
     }
   }
   // store or process assertions
-  cad::CDCAC cac;
+  mCAC.reset();
   for (const Node& a : assertions)
   {
-    cac.get_constraints().add_constraint(a);
+    mCAC.get_constraints().add_constraint(a);
   }
-  cac.compute_variable_ordering();
-  auto covering = cac.get_unsat_cover();
-  if (covering.empty()) {
-    Trace("cad-check") << "SAT: " << cac.get_model() << std::endl;
-  } else {
-    auto mis = cac.collect_constraints(covering);
-    Trace("cad-check") << "UNSAT with MIS: " << mis << std::endl;
-  }
+  mCAC.compute_variable_ordering();
 }
 
 std::vector<Node> CadSolver::checkInitialRefine()
@@ -98,8 +91,18 @@ std::vector<Node> CadSolver::checkFullRefine()
 
   // Do full theory check here
 
-  // Run a complete check on assertions/terms given in initLastCall. In other
-  // words, do not return any lemmas if 
+  auto covering = mCAC.get_unsat_cover();
+  if (covering.empty()) {
+    Trace("cad-check") << "SAT: " << mCAC.get_model() << std::endl;
+  } else {
+    auto mis = mCAC.collect_constraints(covering);
+    auto* nm = NodeManager::currentNM();
+    for (auto& n: mis) {
+      n = nm->mkNode(Kind::NOT, n);
+    }
+    lems.emplace_back(nm->mkNode(Kind::OR, mis));
+    Trace("cad-check") << "UNSAT with MIS: " << lems.back() << std::endl;
+  } 
   
   return lems;
 }
