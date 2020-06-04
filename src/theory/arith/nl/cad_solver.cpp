@@ -13,7 +13,7 @@
  **/
 
 #include "theory/arith/nl/cad_solver.h"
-#include "theory/arith/nl/cad/constraints.h"
+#include "theory/arith/nl/cad/cdcac.h"
 
 #include "options/arith_options.h"
 #include "options/smt_options.h"
@@ -65,10 +65,18 @@ void CadSolver::initLastCall(const std::vector<Node>& assertions,
     }
   }
   // store or process assertions
-  cad::Constraints constraints;
+  cad::CDCAC cac;
   for (const Node& a : assertions)
   {
-    constraints.add_constraint(a);
+    cac.get_constraints().add_constraint(a);
+  }
+  cac.compute_variable_ordering();
+  auto covering = cac.get_unsat_cover();
+  if (covering.empty()) {
+    Trace("cad-check") << "SAT: " << cac.get_model() << std::endl;
+  } else {
+    auto mis = cac.collect_constraints(covering);
+    Trace("cad-check") << "UNSAT with MIS: " << mis << std::endl;
   }
 }
 
