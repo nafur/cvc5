@@ -218,7 +218,6 @@ std::vector<Polynomial> CDCAC::construct_characterization(
     for (const auto& p : i.mMainPolys)
     {
       add_polynomial(res, discriminant(p));
-      // TODO(Gereon): Only add required coefficients
       add_polynomials(res, required_coefficients(p));
       // TODO(Gereon): Only add if p(s \times a) = a for some a <= l
       for (const auto& q : i.mLowerPolys)
