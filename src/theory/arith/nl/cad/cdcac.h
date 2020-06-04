@@ -59,6 +59,9 @@ class CDCAC
    */
   CDCAC(const std::vector<Variable>& ordering);
 
+  /** Reset this instance. */
+  void reset();
+
   /** Collect variables from the constraints and compute a variable ordering. */
   void compute_variable_ordering();
 

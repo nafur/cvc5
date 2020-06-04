@@ -116,6 +116,11 @@ CDCAC::CDCAC(const std::vector<Variable>& ordering)
 {
 }
 
+void CDCAC::reset() {
+    mConstraints.reset();
+    mAssignment.clear();
+}
+
 void CDCAC::compute_variable_ordering()
 {
   VariableCollector vc;
