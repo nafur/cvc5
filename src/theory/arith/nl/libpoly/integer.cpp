@@ -70,6 +70,23 @@ std::ostream& operator<<(std::ostream& os, const Integer& i)
   return os << lp_integer_to_string(i.get());
 }
 
+bool operator==(Integer& lhs, const Integer& rhs)
+{
+  return lp_integer_cmp(lp_Z, lhs.get(), rhs.get()) == 0;
+}
+bool operator!=(Integer& lhs, const Integer& rhs)
+{
+  return lp_integer_cmp(lp_Z, lhs.get(), rhs.get()) != 0;
+}
+bool operator<(Integer& lhs, const Integer& rhs)
+{
+  return lp_integer_cmp(lp_Z, lhs.get(), rhs.get()) < 0;
+}
+bool operator>(Integer& lhs, const Integer& rhs)
+{
+  return lp_integer_cmp(lp_Z, lhs.get(), rhs.get()) > 0;
+}
+
 Integer operator-(const Integer& i)
 {
   Integer res;

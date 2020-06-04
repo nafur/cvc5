@@ -149,7 +149,7 @@ Polynomial Constraints::construct_constraint_polynomial(const Node& n)
   Integer rdenom;
   Polynomial right = construct_polynomial(*childit++, rdenom);
   Assert(childit == n.end()) << "Screwed up iterator handling.";
-  Assert(ldenom > 0 && rdenom > 0)
+  Assert(ldenom > Integer(0) && rdenom > Integer(0))
       << "Expected denominators to be always positive.";
 
   normalize_denominators(ldenom, rdenom);

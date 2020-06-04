@@ -54,6 +54,15 @@ class Integer
 /** Stream the given Integer to an output stream. */
 std::ostream& operator<<(std::ostream& os, const Integer& i);
 
+/** Compare two Integers. */
+bool operator==(Integer& lhs, const Integer& rhs);
+/** Compare two Integers. */
+bool operator!=(Integer& lhs, const Integer& rhs);
+/** Compare two Integers. */
+bool operator<(Integer& lhs, const Integer& rhs);
+/** Compare two Integers. */
+bool operator>(Integer& lhs, const Integer& rhs);
+
 /** Unary negation for an Integer. */
 Integer operator-(const Integer& i);
 
