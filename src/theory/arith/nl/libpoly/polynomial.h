@@ -4,6 +4,7 @@
 
 #include <poly/monomial.h>
 #include <poly/polynomial.h>
+#include <poly/variable_list.h>
 
 #include <iostream>
 #include <vector>
@@ -133,6 +134,23 @@ bool evaluate_polynomial_constraint(const Polynomial& p,
 std::vector<Interval> infeasible_regions(const Polynomial& p,
                                          const Assignment& a,
                                          SignCondition sc);
+
+/** Utility class to collect all variables from a sequence of polynomials.
+ */
+class VariableCollector {
+private:
+  /** Internal variable list. */
+  lp_variable_list_t mVarList;
+public:
+  /** Default constructor, create the variable list. */
+  VariableCollector();
+  /** Destructs the variable list. */
+  ~VariableCollector();
+  /** Adds the variables of the given polynomial to the list. */
+  void operator()(const Polynomial& p);
+  /** Returns the list of variables as a vector of Variables. */
+  std::vector<Variable> get_variables() const;
+};
 
 }  // namespace libpoly
 }  // namespace nl

@@ -321,6 +321,24 @@ std::vector<Interval> infeasible_regions(const Polynomial& p,
   return regions;
 }
 
+VariableCollector::VariableCollector() {
+  lp_variable_list_construct(&mVarList);
+}
+VariableCollector::~VariableCollector() {
+  lp_variable_list_destruct(&mVarList);
+}
+void VariableCollector::operator()(const Polynomial& p) {
+  lp_polynomial_get_variables(p.get(), &mVarList);
+}
+std::vector<Variable> VariableCollector::get_variables() const {
+  std::vector<Variable> res;
+  for (std::size_t i = 0; i < lp_variable_list_size(&mVarList); ++i) {
+    res.emplace_back(mVarList.list[i]);
+  }
+  return res;
+}
+
+
 }  // namespace libpoly
 }  // namespace nl
 }  // namespace arith
