@@ -46,19 +46,22 @@ libpoly::RAN get_ran(std::initializer_list<int> init, int lower, int upper)
 
 class TheoryArithNLCADWhite : public CxxTest::TestSuite
 {
-  ExprManager* d_exprManager;
   NodeManager* d_nodeManager;
+  NodeManagerScope* d_scope;
 
  public:
   TheoryArithNLCADWhite() { Trace.on("cad-check"); }
 
   void setUp() override
   {
-    d_exprManager = new ExprManager();
-    d_nodeManager = NodeManager::fromExprManager(d_exprManager);
+    d_nodeManager = new NodeManager(nullptr);
+    d_scope = new NodeManagerScope(d_nodeManager);
   }
 
-  void tearDown() override { delete d_exprManager; }
+  void tearDown() override {
+    delete d_scope;
+    delete d_nodeManager;
+  }
 
   Node dummy(int i) const { return d_nodeManager->mkConst(Rational(i)); }
 
