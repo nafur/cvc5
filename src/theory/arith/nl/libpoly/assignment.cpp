@@ -18,10 +18,8 @@ Assignment::Assignment()
 }
 
 lp_assignment_t* Assignment::get() { return mAssignment.get(); }
-/** Get a const pointer to the internal lp_assignment_t. */
 const lp_assignment_t* Assignment::get() const { return mAssignment.get(); }
 
-/** Assign var to the given value. */
 void Assignment::set(const Variable& var, const Value& value)
 {
   lp_assignment_set_value(get(), var.get(), value.get());
@@ -30,8 +28,12 @@ void Assignment::unset(const Variable& var)
 {
   lp_assignment_set_value(get(), var.get(), nullptr);
 }
+void Assignment::clear()
+{
+  lp_assignment_destruct(mAssignment.get());
+  lp_assignment_construct(mAssignment.get(), variable_db.get());
+}
 
-/** Stream the given Assignment to an output stream. */
 std::ostream& operator<<(std::ostream& os, const Assignment& a)
 {
   return os << lp_assignment_to_string(a.get());

@@ -38,6 +38,8 @@ class Assignment
   void set(const Variable& var, const Value& value);
   /** Unassign the given variable. */
   void unset(const Variable& var);
+  /** Clear the assignment. */
+  void clear();
 };
 /** Stream the given Assignment to an output stream. */
 std::ostream& operator<<(std::ostream& os, const Assignment& a);
