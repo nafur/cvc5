@@ -98,7 +98,7 @@ std::vector<Node> CadSolver::checkFullRefine()
     auto mis = mCAC.collect_constraints(covering);
     auto* nm = NodeManager::currentNM();
     for (auto& n: mis) {
-      n = nm->mkNode(Kind::NOT, n);
+      n = n.negate();
     }
     lems.emplace_back(nm->mkNode(Kind::OR, mis));
     Trace("cad-check") << "UNSAT with MIS: " << lems.back() << std::endl;
