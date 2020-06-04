@@ -304,6 +304,8 @@ libcvc4_add_sources(
   theory/arith/nl/cad_solver.h
   theory/arith/nl/cad/cdcac.cpp
   theory/arith/nl/cad/cdcac.h
+  theory/arith/nl/cad/constraints.h
+  theory/arith/nl/cad/projections.cpp
   theory/arith/nl/cad/projections.h
   theory/arith/nl/libpoly/assignment.cpp
   theory/arith/nl/libpoly/assignment.h
