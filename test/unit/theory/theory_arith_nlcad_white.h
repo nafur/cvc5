@@ -117,30 +117,28 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
     libpoly::Variable x("x");
     libpoly::Variable y("y");
 
-    cad::CDCAC cac;
-    cac.mVariableOrdering = {x, y};
+    cad::CDCAC cac({x, y});
 
-    cac.mConstraints.add_constraint(4*y-x*x+4, libpoly::SignCondition::LT);
-    cac.mConstraints.add_constraint(4*y-4+(x-1)*(x-1), libpoly::SignCondition::GT);
-    cac.mConstraints.add_constraint(4*y-x-2, libpoly::SignCondition::GT);
+    cac.get_constraints().add_constraint(4*y-x*x+4, libpoly::SignCondition::LT);
+    cac.get_constraints().add_constraint(4*y-4+(x-1)*(x-1), libpoly::SignCondition::GT);
+    cac.get_constraints().add_constraint(4*y-x-2, libpoly::SignCondition::GT);
 
     auto cover = cac.get_unsat_cover();
     TS_ASSERT(cover.empty());
-    std::cout << "SAT: " << cac.mAssignment << std::endl;
+    std::cout << "SAT: " << cac.get_model() << std::endl;
   }
 
   void test_cdcac_2() {
     libpoly::Variable x("x");
     libpoly::Variable y("y");
 
-    cad::CDCAC cac;
-    cac.mVariableOrdering = {x, y};
+    cad::CDCAC cac({x, y});
 
-    cac.mConstraints.add_constraint(y - pow(-x-3, 11) + pow(-x-3, 10) + 1, libpoly::SignCondition::GT);
-    cac.mConstraints.add_constraint(2*y - x + 2, libpoly::SignCondition::LT);
-    cac.mConstraints.add_constraint(2*y - 1 + x*x, libpoly::SignCondition::GT);
-    cac.mConstraints.add_constraint(3*y + x + 2, libpoly::SignCondition::LT);
-    cac.mConstraints.add_constraint(y*y*y - pow(x-2, 11) + pow(x-2, 10) + 1, libpoly::SignCondition::GT);
+    cac.get_constraints().add_constraint(y - pow(-x-3, 11) + pow(-x-3, 10) + 1, libpoly::SignCondition::GT);
+    cac.get_constraints().add_constraint(2*y - x + 2, libpoly::SignCondition::LT);
+    cac.get_constraints().add_constraint(2*y - 1 + x*x, libpoly::SignCondition::GT);
+    cac.get_constraints().add_constraint(3*y + x + 2, libpoly::SignCondition::LT);
+    cac.get_constraints().add_constraint(y*y*y - pow(x-2, 11) + pow(x-2, 10) + 1, libpoly::SignCondition::GT);
 
     auto cover = cac.get_unsat_cover();
     TS_ASSERT(!cover.empty());
@@ -155,15 +153,14 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
     libpoly::Variable y("y");
     libpoly::Variable z("z");
 
-    cad::CDCAC cac;
-    cac.mVariableOrdering = {x, y, z};
+    cad::CDCAC cac({x, y, z});
 
-    cac.mConstraints.add_constraint(x*x + y*y + z*z - 1, libpoly::SignCondition::LT);
-    cac.mConstraints.add_constraint(4*x*x + (2*y - 3)*(2*y - 3) + 4*z*z - 4, libpoly::SignCondition::LT);
+    cac.get_constraints().add_constraint(x*x + y*y + z*z - 1, libpoly::SignCondition::LT);
+    cac.get_constraints().add_constraint(4*x*x + (2*y - 3)*(2*y - 3) + 4*z*z - 4, libpoly::SignCondition::LT);
 
     auto cover = cac.get_unsat_cover();
     TS_ASSERT(cover.empty());
-    std::cout << "SAT: " << cac.mAssignment << std::endl;
+    std::cout << "SAT: " << cac.get_model() << std::endl;
   }
 
   void test_cdcac_4() {
@@ -171,15 +168,14 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
     libpoly::Variable y("y");
     libpoly::Variable z("z");
 
-    cad::CDCAC cac;
-    cac.mVariableOrdering = {x, y, z};
+    cad::CDCAC cac({x, y, z});
 
-    cac.mConstraints.add_constraint(-z*z + y*y + x*x - 25, libpoly::SignCondition::GT);
-    cac.mConstraints.add_constraint((y - x - 6)*z*z - 9*y*y + x*x - 1, libpoly::SignCondition::GT);
-    cac.mConstraints.add_constraint(y*y - 100, libpoly::SignCondition::LT);
+    cac.get_constraints().add_constraint(-z*z + y*y + x*x - 25, libpoly::SignCondition::GT);
+    cac.get_constraints().add_constraint((y - x - 6)*z*z - 9*y*y + x*x - 1, libpoly::SignCondition::GT);
+    cac.get_constraints().add_constraint(y*y - 100, libpoly::SignCondition::LT);
 
     auto cover = cac.get_unsat_cover();
     TS_ASSERT(cover.empty());
-    std::cout << "SAT: " << cac.mAssignment << std::endl;
+    std::cout << "SAT: " << cac.get_model() << std::endl;
   }
 };
