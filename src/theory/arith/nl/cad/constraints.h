@@ -2,6 +2,7 @@
 #define CVC4__THEORY__NLARITH__CAD__CONSTRAINTS_H
 
 #include <map>
+#include <tuple>
 #include <vector>
 
 #include "../libpoly/polynomial.h"
@@ -18,8 +19,8 @@ namespace cad {
 class Constraints
 {
   /** Type alias for a list of constraints. */
-  using ConstraintVector =
-      std::vector<std::pair<libpoly::Polynomial, libpoly::SignCondition>>;
+  using ConstraintVector = std::vector<
+      std::tuple<libpoly::Polynomial, libpoly::SignCondition, Node>>;
   /** A list of constraints, each comprised of a polynomial and a sign
    * condition.
    */
@@ -72,7 +73,8 @@ class Constraints
    * list of constraints.
    */
   void add_constraint(const libpoly::Polynomial& lhs,
-                      libpoly::SignCondition sc);
+                      libpoly::SignCondition sc,
+                      Node n);
 
   /** Add a constraints (represented by a node) to the list of constraints.
    * The given node can either be a negation (NOT) or a suitable relation symbol

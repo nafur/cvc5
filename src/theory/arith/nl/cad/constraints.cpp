@@ -156,9 +156,11 @@ Polynomial Constraints::construct_constraint_polynomial(const Node& n)
   return left * rdenom - right * ldenom;
 }
 
-void Constraints::add_constraint(const Polynomial& lhs, SignCondition sc)
+void Constraints::add_constraint(const Polynomial& lhs,
+                                 SignCondition sc,
+                                 Node n)
 {
-  mConstraints.emplace_back(lhs, sc);
+  mConstraints.emplace_back(lhs, sc, n);
 }
 
 void Constraints::add_constraint(Node n)
@@ -177,7 +179,7 @@ void Constraints::add_constraint(Node n)
   Polynomial lhs = construct_constraint_polynomial(n);
   SignCondition sc = normalize_kind(n.getKind(), negated, lhs);
   Trace("cad-check") << "Parsed " << lhs << " " << sc << " 0" << std::endl;
-  add_constraint(lhs, sc);
+  add_constraint(lhs, sc, n);
 }
 
 const Constraints::ConstraintVector& Constraints::get_constraints() const

@@ -9,6 +9,19 @@ namespace arith {
 namespace nl {
 namespace cad {
 
+template <typename T>
+void remove_duplicates(std::vector<T>& v)
+{
+  std::sort(v.begin(), v.end());
+  v.erase(std::unique(v.begin(), v.end()), v.end());
+}
+template <typename T, typename C, typename P>
+void remove_duplicates(std::vector<T>& v, C&& c, P&& p)
+{
+  std::sort(v.begin(), v.end(), c);
+  v.erase(std::unique(v.begin(), v.end(), p), v.end());
+}
+
 inline bool compare_for_cleanup(const Interval& lhs, const Interval& rhs)
 {
   const lp_value_t* ll = &(lhs.get()->a);
@@ -96,9 +109,21 @@ void clean_intervals(std::vector<CACInterval>& intervals)
   }
 }
 
+CDCAC::CDCAC() {}
+
 CDCAC::CDCAC(const std::vector<Variable>& ordering)
     : mVariableOrdering(ordering)
 {
+}
+
+void CDCAC::compute_variable_ordering()
+{
+  VariableCollector vc;
+  for (const auto& c : mConstraints.get_constraints())
+  {
+    vc(std::get<0>(c));
+  }
+  mVariableOrdering = vc.get_variables();
 }
 
 Constraints& CDCAC::get_constraints() { return mConstraints; }
@@ -112,8 +137,9 @@ std::vector<CACInterval> CDCAC::get_unsat_intervals(
   std::vector<CACInterval> res;
   for (const auto& c : mConstraints.get_constraints())
   {
-    const Polynomial& p = c.first;
-    SignCondition sc = c.second;
+    const Polynomial& p = std::get<0>(c);
+    SignCondition sc = std::get<1>(c);
+    const Node& n = std::get<2>(c);
 
     if (main_variable(p) != mVariableOrdering[cur_variable])
     {
@@ -130,7 +156,7 @@ std::vector<CACInterval> CDCAC::get_unsat_intervals(
       if (!lower_is_infty(i)) l.emplace_back(p);
       if (!upper_is_infty(i)) u.emplace_back(p);
       m.emplace_back(p);
-      res.emplace_back(CACInterval{i, l, u, m, d});
+      res.emplace_back(CACInterval{i, l, u, m, d, {n}});
     }
   }
   clean_intervals(res);
@@ -203,31 +229,51 @@ std::vector<Polynomial> CDCAC::required_coefficients(const Polynomial& p) const
   return res;
 }
 
-std::vector<Polynomial> CDCAC::construct_characterization(
-    const std::vector<CACInterval>& intervals)
+void add_polynomial(
+    std::vector<std::pair<Polynomial, std::vector<Node>>>& polys,
+    const Polynomial& poly,
+    const std::vector<Node>& origin)
+{
+  for (const auto& p : square_free_factors(poly))
+  {
+    if (is_constant(p)) continue;
+    polys.emplace_back(p, origin);
+    polys.back().first.simplify();
+  }
+}
+
+std::vector<std::pair<Polynomial, std::vector<Node>>>
+CDCAC::construct_characterization(const std::vector<CACInterval>& intervals)
 {
   Assert(!intervals.empty()) << "A covering can not be empty";
   // TODO(Gereon): We might want to reduce the covering by removing redundancies
   // as of section 4.5.2
   Trace("cad-check") << "Constructing characterization now" << std::endl;
-  std::vector<Polynomial> res;
+  std::vector<std::pair<Polynomial, std::vector<Node>>> res;
 
   for (const auto& i : intervals)
   {
-    add_polynomials(res, i.mDownPolys);
+    for (const auto& p : i.mDownPolys)
+    {
+      add_polynomial(res, p, i.mOrigins);
+    }
     for (const auto& p : i.mMainPolys)
     {
-      add_polynomial(res, discriminant(p));
-      add_polynomials(res, required_coefficients(p));
+      add_polynomial(res, discriminant(p), i.mOrigins);
+
+      for (const auto& q : required_coefficients(p))
+      {
+        add_polynomial(res, q, i.mOrigins);
+      }
       // TODO(Gereon): Only add if p(s \times a) = a for some a <= l
       for (const auto& q : i.mLowerPolys)
       {
-        add_polynomial(res, resultant(p, q));
+        add_polynomial(res, resultant(p, q), i.mOrigins);
       }
       // TODO(Gereon): Only add if p(s \times a) = a for some a >= u
       for (const auto& q : i.mUpperPolys)
       {
-        add_polynomial(res, resultant(p, q));
+        add_polynomial(res, resultant(p, q), i.mOrigins);
       }
     }
   }
@@ -238,18 +284,33 @@ std::vector<Polynomial> CDCAC::construct_characterization(
     {
       for (const auto& q : intervals[i + 1].mLowerPolys)
       {
-        add_polynomial(res, resultant(p, q));
+        std::vector<Node> origins = intervals[i].mOrigins;
+        origins.insert(origins.end(),
+                       intervals[i + 1].mOrigins.begin(),
+                       intervals[i + 1].mOrigins.end());
+        remove_duplicates(origins);
+        add_polynomial(res, resultant(p, q), origins);
       }
     }
   }
 
-  reduce_projection_polynomials(res);
+  remove_duplicates(
+      res,
+      [](const std::pair<Polynomial, std::vector<Node>>& a,
+         const std::pair<Polynomial, std::vector<Node>>& b) {
+        return a.first < b.first;
+      },
+      [](const std::pair<Polynomial, std::vector<Node>>& a,
+         const std::pair<Polynomial, std::vector<Node>>& b) {
+        return a.first == b.first;
+      });
 
   return res;
 }
 
 CACInterval CDCAC::interval_from_characterization(
-    const std::vector<Polynomial>& characterization,
+    const std::vector<std::pair<Polynomial, std::vector<Node>>>&
+        characterization,
     std::size_t cur_variable,
     const Value& sample)
 {
@@ -257,17 +318,19 @@ CACInterval CDCAC::interval_from_characterization(
   std::vector<Polynomial> u;
   std::vector<Polynomial> m;
   std::vector<Polynomial> d;
+  std::vector<Node> o;
 
   for (const auto& p : characterization)
   {
-    if (main_variable(p) == mVariableOrdering[cur_variable])
+    if (main_variable(p.first) == mVariableOrdering[cur_variable])
     {
-      m.emplace_back(p);
+      m.emplace_back(p.first);
     }
     else
     {
-      d.emplace_back(p);
+      d.emplace_back(p.first);
     }
+    o.insert(o.end(), p.second.begin(), p.second.end());
   }
 
   std::vector<Value> roots;
@@ -326,7 +389,7 @@ CACInterval CDCAC::interval_from_characterization(
     mAssignment.unset(mVariableOrdering[cur_variable]);
   }
 
-  return CACInterval{Interval(lower, upper), l, u, m, d};
+  return CACInterval{Interval(lower, upper), l, u, m, d, o};
 }
 
 std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable)
@@ -383,6 +446,20 @@ std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable)
   for (const auto& i : intervals)
     Trace("cad-check") << "-> " << i.mInterval << std::endl;
   return intervals;
+}
+
+std::vector<Node> CDCAC::collect_constraints(
+    const std::vector<CACInterval>& intervals) const
+{
+  std::vector<Node> res;
+  for (const auto& i : intervals)
+  {
+    res.insert(res.end(), i.mOrigins.begin(), i.mOrigins.end());
+  }
+  std::sort(res.begin(), res.end());
+  auto it = std::unique(res.begin(), res.end());
+  res.erase(it, res.end());
+  return res;
 }
 
 }  // namespace cad

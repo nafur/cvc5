@@ -25,6 +25,7 @@ struct CACInterval
   std::vector<Polynomial> mUpperPolys;
   std::vector<Polynomial> mMainPolys;
   std::vector<Polynomial> mDownPolys;
+  std::vector<Node> mOrigins;
 };
 inline bool operator==(const CACInterval& lhs, const CACInterval& rhs)
 {
@@ -52,9 +53,14 @@ class CDCAC
   std::vector<Variable> mVariableOrdering;
 
  public:
+  /** Initialize without a variable ordering. */
+  CDCAC();
   /** Initialize this method with the given variable ordering.
    */
   CDCAC(const std::vector<Variable>& ordering);
+
+  /** Collect variables from the constraints and compute a variable ordering. */
+  void compute_variable_ordering();
 
   /** Returns the constraints as a non-const reference. Can be used to add new
    * constraints. */
@@ -89,14 +95,15 @@ class CDCAC
    * A characterization contains polynomials whose roots bound the region around
    * the current assignment. Implements Algorithm 4.
    */
-  std::vector<Polynomial> construct_characterization(
-      const std::vector<CACInterval>& intervals);
+  std::vector<std::pair<Polynomial, std::vector<Node>>>
+  construct_characterization(const std::vector<CACInterval>& intervals);
 
   /** Constructs an infeasible interval from a characterization.
    * Implements Algorithm 5.
    */
   CACInterval interval_from_characterization(
-      const std::vector<Polynomial>& characterization,
+      const std::vector<std::pair<Polynomial, std::vector<Node>>>&
+          characterization,
       std::size_t cur_variable,
       const Value& sample);
 
@@ -109,6 +116,9 @@ class CDCAC
    * Implements Algorithm 2.
    */
   std::vector<CACInterval> get_unsat_cover(std::size_t cur_variable = 0);
+
+  std::vector<Node> collect_constraints(
+      const std::vector<CACInterval>& intervals) const;
 };
 
 }  // namespace cad
