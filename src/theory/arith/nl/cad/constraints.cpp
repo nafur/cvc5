@@ -166,6 +166,7 @@ void Constraints::add_constraint(const Polynomial& lhs,
 void Constraints::add_constraint(Node n)
 {
   bool negated = false;
+  Node origin = n;
   if (n.getKind() == Kind::NOT)
   {
     Assert(n.getNumChildren() == 1)
@@ -179,7 +180,7 @@ void Constraints::add_constraint(Node n)
   Polynomial lhs = construct_constraint_polynomial(n);
   SignCondition sc = normalize_kind(n.getKind(), negated, lhs);
   Trace("cad-check") << "Parsed " << lhs << " " << sc << " 0" << std::endl;
-  add_constraint(lhs, sc, n);
+  add_constraint(lhs, sc, origin);
 }
 
 const Constraints::ConstraintVector& Constraints::get_constraints() const
