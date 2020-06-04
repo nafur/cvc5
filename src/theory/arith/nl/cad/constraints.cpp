@@ -187,6 +187,10 @@ const Constraints::ConstraintVector& Constraints::get_constraints() const
   return mConstraints;
 }
 
+void Constraints::reset() {
+    mConstraints.clear();
+}
+
 }  // namespace cad
 }  // namespace nl
 }  // namespace arith

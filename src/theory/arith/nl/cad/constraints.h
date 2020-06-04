@@ -85,6 +85,9 @@ class Constraints
   /** Gives the list of added constraints.
    */
   const ConstraintVector& get_constraints() const;
+
+  /** Remove all constraints. */
+  void reset();
 };
 
 }  // namespace cad
