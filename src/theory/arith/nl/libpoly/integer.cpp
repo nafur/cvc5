@@ -37,11 +37,14 @@ Integer::Integer(const cln::cl_I& i)
   {
     lp_integer_construct_from_int(lp_Z, &mInt, cln::cl_I_to_long(i));
   }
-  std::stringstream s;
-  s << i;
-  mpz_t tmp;
-  mpz_set_str(tmp, s.str().c_str(), 0);
-  lp_integer_construct_copy(lp_Z, &mInt, tmp);
+  else
+  {
+    std::stringstream s;
+    s << i;
+    mpz_t tmp;
+    mpz_set_str(tmp, s.str().c_str(), 0);
+    lp_integer_construct_copy(lp_Z, &mInt, tmp);
+  }
 }
 #endif
 
