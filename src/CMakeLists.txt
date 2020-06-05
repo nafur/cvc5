@@ -310,6 +310,8 @@ libcvc4_add_sources(
   theory/arith/nl/cad/projections.h
   theory/arith/nl/libpoly/assignment.cpp
   theory/arith/nl/libpoly/assignment.h
+  theory/arith/nl/libpoly/conversion.cpp
+  theory/arith/nl/libpoly/conversion.h
   theory/arith/nl/libpoly/dyadic_interval.cpp
   theory/arith/nl/libpoly/dyadic_interval.h
   theory/arith/nl/libpoly/integer.cpp
