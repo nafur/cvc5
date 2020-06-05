@@ -437,8 +437,6 @@ std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable)
     Trace("cdcac") << "-> " << i.mInterval << " from " << i.mOrigins << std::endl;
   Value sample;
 
-  std::size_t iterations = 0;
-
   while (sample_outside(intervals, sample))
   {
     mAssignment.set(mVariableOrdering[cur_variable], sample);
@@ -469,10 +467,7 @@ std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable)
     Trace("cdcac") << "Now we have for " << mVariableOrdering[cur_variable]
                        << ":" << std::endl;
     for (const auto& i : intervals)
-      Trace("cdcac") << "-> " << i.mInterval << std::endl;
-
-    if (iterations > 2) break;
-    ++iterations;
+      Trace("cdcac") << "-> " << i.mInterval << " (from " << i.mOrigins << ")" << std::endl;
   }
 
   Trace("cdcac") << "Returning intervals for "
