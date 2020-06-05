@@ -304,7 +304,7 @@ std::vector<Interval> infeasible_regions(const Polynomial& p,
     if (cur.is_point)
     {
       last_value = std::move(lower);
-      last_open = true;
+      last_open = false;
     }
     else
     {
