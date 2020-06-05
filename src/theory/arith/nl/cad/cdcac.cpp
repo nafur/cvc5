@@ -160,7 +160,7 @@ std::vector<CACInterval> CDCAC::get_unsat_intervals(
       continue;
     }
 
-    Trace("cdcac") << "Infeasible intervals for " << p << " over " << mAssignment << std::endl;
+    Trace("cdcac") << "Infeasible intervals for " << p << " " << sc << " 0 over " << mAssignment << std::endl;
     auto intervals = infeasible_regions(p, mAssignment, sc);
     for (const auto& i : intervals)
     {
@@ -282,20 +282,26 @@ CDCAC::construct_characterization(const std::vector<CACInterval>& intervals)
     }
     for (const auto& p : i.mMainPolys)
     {
+      Trace("cdcac") << "Discriminant of " << p << " -> " << discriminant(p) << std::endl;
       add_polynomial(res, discriminant(p), i.mOrigins);
 
       for (const auto& q : required_coefficients(p))
       {
+        Trace("cdcac") << "Coeff of " << p << " -> " << q << std::endl;
         add_polynomial(res, q, i.mOrigins);
       }
       // TODO(Gereon): Only add if p(s \times a) = a for some a <= l
       for (const auto& q : i.mLowerPolys)
       {
+        if (p == q) continue;
+        Trace("cdcac") << "Resultant of " << p << " and " << q << " -> " << resultant(p, q) << std::endl;
         add_polynomial(res, resultant(p, q), i.mOrigins);
       }
       // TODO(Gereon): Only add if p(s \times a) = a for some a >= u
       for (const auto& q : i.mUpperPolys)
       {
+        if (p == q) continue;
+        Trace("cdcac") << "Resultant of " << p << " and " << q << " -> " << resultant(p, q) << std::endl;
         add_polynomial(res, resultant(p, q), i.mOrigins);
       }
     }
@@ -312,6 +318,7 @@ CDCAC::construct_characterization(const std::vector<CACInterval>& intervals)
                        intervals[i + 1].mOrigins.begin(),
                        intervals[i + 1].mOrigins.end());
         remove_duplicates(origins);
+        Trace("cdcac") << "Resultant of " << p << " and " << q << " -> " << resultant(p, q) << std::endl;
         add_polynomial(res, resultant(p, q), origins);
       }
     }
@@ -422,7 +429,7 @@ std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable)
       Trace("cdcac") << "-> " << std::get<0>(c) << " " << std::get<1>(c) << " 0 from " << std::get<2>(c) << std::endl;
     }
   }
-  Trace("cdcac") << "Unsat cover with " << cur_variable << " from " << mVariableOrdering << std::endl;
+  Trace("cdcac") << "Looking for unsat cover for " << mVariableOrdering[cur_variable] << " from " << mVariableOrdering << std::endl;
   std::vector<CACInterval> intervals = get_unsat_intervals(cur_variable);
   Trace("cdcac") << "Unsat intervals for "
                      << mVariableOrdering[cur_variable] << ":" << std::endl;
@@ -434,10 +441,8 @@ std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable)
 
   while (sample_outside(intervals, sample))
   {
-    Trace("cdcac") << "Sample " << mVariableOrdering[cur_variable] << " = "
-                       << sample << std::endl;
     mAssignment.set(mVariableOrdering[cur_variable], sample);
-    Trace("cdcac") << "Now: " << mAssignment << std::endl;
+    Trace("cdcac") << "Sample: " << mAssignment << std::endl;
     if (cur_variable == mVariableOrdering.size() - 1)
     {
       // We have a full assignment. SAT!
