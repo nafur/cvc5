@@ -34,11 +34,6 @@ RAN& RAN::operator=(RAN r)
   return *this;
 }
 
-RAN::operator Value() const
-{
-  return Value(lp_value_new(lp_value_type_t::LP_VALUE_ALGEBRAIC, &mValue));
-}
-
 lp_algebraic_number_t* RAN::get() { return &mValue; }
 const lp_algebraic_number_t* RAN::get() const { return &mValue; }
 

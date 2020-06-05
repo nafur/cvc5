@@ -44,9 +44,6 @@ class RAN
   /** Assign from the given RAN. */
   RAN& operator=(RAN r);
 
-  /** Implicitly convert to a Value. */
-  operator Value() const;
-
   /** Get a non-const pointer to the internal lp_algebraic_number_t. Handle with
    * care! */
   lp_algebraic_number_t* get();
