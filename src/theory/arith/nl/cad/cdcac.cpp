@@ -147,6 +147,10 @@ const Constraints& CDCAC::get_constraints() const { return mConstraints; }
 
 const Assignment& CDCAC::get_model() const { return mAssignment; }
 
+const std::vector<Variable>& CDCAC::get_variable_ordering() const {
+  return mVariableOrdering;
+}
+
 std::vector<CACInterval> CDCAC::get_unsat_intervals(
     std::size_t cur_variable) const
 {

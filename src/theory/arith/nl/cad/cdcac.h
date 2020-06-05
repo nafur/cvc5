@@ -75,6 +75,9 @@ class CDCAC
    * get_unsat_cover() returned an empty vector. */
   const Assignment& get_model() const;
 
+  /** Returns the current variable ordering. */
+  const std::vector<Variable>& get_variable_ordering() const;
+
   /** Collect all unsatisfiable intervals.
    * Combines unsatisfiable regions from mConstraints evaluated over
    * mAssignment. Implements Algorithm 2.
