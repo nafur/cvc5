@@ -159,8 +159,10 @@ bool interval_connect(const Interval& lhs, const Interval& rhs)
   if (c > 0) return true;
   Assert(c == 0);
   if (lhs.get()->is_point || rhs.get()->is_point || !lhs.get()->b_open
-      || rhs.get()->a_open)
+      || !rhs.get()->a_open) {
+    Trace("libpoly::interval_connect") << lhs << " and " << rhs << " touch and the intermediate point is covered." << std::endl;
     return true;
+  }
   return false;
 }
 
