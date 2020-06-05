@@ -33,25 +33,25 @@ namespace nl {
     auto* nm = NodeManager::currentNM();
     switch (value.get()->type) {
       case LP_VALUE_INTEGER: {
-        Trace("cad-check") << value << " is an integer" << std::endl;
+        //Trace("cad-check") << value << " is an integer" << std::endl;
         lower = nm->mkConst(Rational(libpoly::as_cvc_integer(&value.get()->value.z)));
         upper = lower;
         return true;
       }
       case LP_VALUE_RATIONAL: {
-        Trace("cad-check") << value << " is a rational" << std::endl;
+        //Trace("cad-check") << value << " is a rational" << std::endl;
         lower = nm->mkConst(libpoly::as_cvc_rational(&value.get()->value.q));
         upper = lower;
         return true;
       }
       case LP_VALUE_DYADIC_RATIONAL: {
-        Trace("cad-check") << value << " is a dyadic rational" << std::endl;
+        //Trace("cad-check") << value << " is a dyadic rational" << std::endl;
         lower = nm->mkConst(libpoly::as_cvc_rational(&value.get()->value.dy_q));
         upper = lower;
         return true;
       }
       case LP_VALUE_ALGEBRAIC: {
-        Trace("cad-check") << value << " is an algebraic" << std::endl;
+        //Trace("cad-check") << value << " is an algebraic" << std::endl;
         // For the sake of it...
         const lp_algebraic_number_t& a = value.get()->value.a;
         for (std::size_t i = 0; i < 10; ++i) {
@@ -76,12 +76,12 @@ namespace nl {
   bool CadSolver::construct_model() const {
     for (const auto& v: mCAC.get_variable_ordering()) {
       libpoly::Value val = mCAC.get_model().retrieve(v);
-      Trace("cad-check") << "-> " << v << " = " << val << std::endl;
+      //Trace("cad-check") << "-> " << v << " = " << val << std::endl;
 
       Node lower;
       Node upper;
       if (extract_bounds(val, lower, upper)) {
-        Trace("cad-check") << "Extracted " << val << " in " << lower << " .. " << upper << std::endl;
+        //Trace("cad-check") << "Extracted " << val << " in " << lower << " .. " << upper << std::endl;
         d_model.addCheckModelBound(
           mCAC.get_constraints().var_poly_to_cvc(v),
           lower, upper
@@ -138,18 +138,18 @@ void CadSolver::initLastCall(const std::vector<Node>& assertions,
 
 std::vector<Node> CadSolver::checkInitialRefine()
 {
-  Trace("cad-check") << "CadSolver::checkInitialRefine" << std::endl;
+  Chat() << "CadSolver::checkInitialRefine" << std::endl;
   std::vector<Node> lems;
   
   // add lemmas corresponding to easy conflicts or refinements based on
   // the assertions/terms given in initLastCall.
-  
+
   return lems;
 }
 
 std::vector<Node> CadSolver::checkFullRefine()
 {
-  Trace("cad-check") << "CadSolver::checkFullRefine";
+  Notice() << "CadSolver::checkFullRefine" << std::endl;
   std::vector<Node> lems;
 
   // Do full theory check here
