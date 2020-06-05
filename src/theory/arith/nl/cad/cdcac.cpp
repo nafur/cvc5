@@ -116,9 +116,10 @@ CDCAC::CDCAC(const std::vector<Variable>& ordering)
 {
 }
 
-void CDCAC::reset() {
-    mConstraints.reset();
-    mAssignment.clear();
+void CDCAC::reset()
+{
+  mConstraints.reset();
+  mAssignment.clear();
 }
 
 void CDCAC::compute_variable_ordering()
@@ -129,6 +130,7 @@ void CDCAC::compute_variable_ordering()
     vc(std::get<0>(c));
   }
   mVariableOrdering = vc.get_variables();
+  // TODO(Gereon): Figure out how to set custom variable ordering in libpoly
   std::sort(mVariableOrdering.begin(),
             mVariableOrdering.end(),
             [](const Variable& a, const Variable& b) {
@@ -136,6 +138,8 @@ void CDCAC::compute_variable_ordering()
                          variable_order.get(), a.get(), b.get())
                      < 0;
             });
+  Trace("cad-check") << "Variable ordering is: " << mVariableOrdering
+                     << std::endl;
 }
 
 Constraints& CDCAC::get_constraints() { return mConstraints; }
