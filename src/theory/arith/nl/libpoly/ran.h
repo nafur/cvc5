@@ -6,13 +6,10 @@
 
 #include <iostream>
 
-#include "assignment.h"
 #include "dyadic_interval.h"
 #include "integer.h"
-#include "polynomial.h"
 #include "upolynomial.h"
 #include "utils.h"
-#include "value.h"
 
 namespace CVC4 {
 namespace theory {
@@ -59,12 +56,6 @@ bool operator==(const RAN& lhs, const RAN& rhs);
 bool operator==(const RAN& lhs, const Integer& rhs);
 /** Compare an Integer and a RAN for equality. */
 bool operator==(const Integer& lhs, const RAN& rhs);
-
-/** Isolate the real roots of a UPolynomial. */
-std::vector<RAN> isolate_real_roots(const UPolynomial& p);
-/** Isolate the real roots of a Polynomial with respect to an Assignment for all
- * but the main variable. */
-std::vector<Value> isolate_real_roots(const Polynomial& p, const Assignment& a);
 
 }  // namespace libpoly
 }  // namespace nl

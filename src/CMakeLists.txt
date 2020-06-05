@@ -322,6 +322,8 @@ libcvc4_add_sources(
   theory/arith/nl/libpoly/polynomial.h
   theory/arith/nl/libpoly/ran.cpp
   theory/arith/nl/libpoly/ran.h
+  theory/arith/nl/libpoly/root_isolation.cpp
+  theory/arith/nl/libpoly/root_isolation.h
   theory/arith/nl/libpoly/sign_condition.cpp
   theory/arith/nl/libpoly/sign_condition.h
   theory/arith/nl/libpoly/upolynomial.cpp
