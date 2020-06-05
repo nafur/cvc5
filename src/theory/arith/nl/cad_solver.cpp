@@ -28,6 +28,14 @@ namespace theory {
 namespace arith {
 namespace nl {
 
+  bool CadSolver::construct_model() const {
+    for (const auto& v: mCAC.get_variable_ordering()) {
+      libpoly::Value val = mCAC.get_model().retrieve(v);
+      std::cout << "-> " << v << " = " << val << std::endl;
+    }
+    return true;
+  }
+
 CadSolver::CadSolver(TheoryArith& containing, NlModel& model)
     : d_containing(containing),
       d_model(model)
@@ -93,7 +101,8 @@ std::vector<Node> CadSolver::checkFullRefine()
 
   auto covering = mCAC.get_unsat_cover();
   if (covering.empty()) {
-    Trace("cad-check") << "SAT: " << mCAC.get_model() << std::endl;
+    Notice() << "SAT: " << mCAC.get_model() << std::endl;
+    construct_model();
   } else {
     auto mis = mCAC.collect_constraints(covering);
     auto* nm = NodeManager::currentNM();
@@ -101,7 +110,7 @@ std::vector<Node> CadSolver::checkFullRefine()
       n = n.negate();
     }
     lems.emplace_back(nm->mkNode(Kind::OR, mis));
-    Trace("cad-check") << "UNSAT with MIS: " << lems.back() << std::endl;
+    Notice() << "UNSAT with MIS: " << lems.back() << std::endl;
   } 
   
   return lems;
@@ -109,6 +118,7 @@ std::vector<Node> CadSolver::checkFullRefine()
 
 void CadSolver::preprocessAssertionsCheckModel(std::vector<Node>& assertions)
 {
+  Notice() << "##### Asking for model." << std::endl;
   // Report model into assertions
 }
 

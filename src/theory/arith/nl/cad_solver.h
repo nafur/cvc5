@@ -38,6 +38,8 @@ class CadSolver
 
   cad::CDCAC mCAC;
 
+  bool construct_model() const;
+
  public:
   CadSolver(TheoryArith& containing, NlModel& model);
   ~CadSolver();
