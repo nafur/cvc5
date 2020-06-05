@@ -52,8 +52,18 @@ namespace nl {
       }
       case LP_VALUE_ALGEBRAIC: {
         Trace("cad-check") << value << " is an algebraic" << std::endl;
-        lower = nm->mkConst(libpoly::as_cvc_rational(&value.get()->value.a.I.a));
-        upper = nm->mkConst(libpoly::as_cvc_rational(&value.get()->value.a.I.b));
+        // For the sake of it...
+        const lp_algebraic_number_t& a = value.get()->value.a;
+        for (std::size_t i = 0; i < 10; ++i) {
+          lp_algebraic_number_refine_const(&a);
+        }
+        if (a.I.is_point) {
+          lower = nm->mkConst(libpoly::as_cvc_rational(&a.I.a));
+          upper = nm->mkConst(libpoly::as_cvc_rational(&a.I.a));
+        } else {
+          lower = nm->mkConst(libpoly::as_cvc_rational(&a.I.a));
+          upper = nm->mkConst(libpoly::as_cvc_rational(&a.I.b));
+        }
         return true;
       }
       default: {
@@ -66,7 +76,7 @@ namespace nl {
   bool CadSolver::construct_model() const {
     for (const auto& v: mCAC.get_variable_ordering()) {
       libpoly::Value val = mCAC.get_model().retrieve(v);
-      std::cout << "-> " << v << " = " << val << std::endl;
+      Trace("cad-check") << "-> " << v << " = " << val << std::endl;
 
       Node lower;
       Node upper;
