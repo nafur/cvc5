@@ -352,6 +352,7 @@ CACInterval CDCAC::interval_from_characterization(
       d.emplace_back(p.first);
     }
     o.insert(o.end(), p.second.begin(), p.second.end());
+    remove_duplicates(o);
   }
 
   std::vector<Value> roots;
