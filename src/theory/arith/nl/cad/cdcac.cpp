@@ -1,6 +1,7 @@
 #include "cdcac.h"
 
 #include "../libpoly/ran.h"
+#include "../libpoly/root_isolation.h"
 #include "projections.h"
 
 namespace CVC4 {
