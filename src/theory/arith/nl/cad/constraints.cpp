@@ -8,11 +8,11 @@ namespace cad {
 
 using namespace libpoly;
 
-Variable Constraints::get_variable(const Node& n)
+Variable Constraints::var_cvc_to_poly(const Node& n)
 {
   Assert(n.getKind() == Kind::VARIABLE) << "Expect node to be a variable.";
-  auto it = mVariableMap.find(n);
-  if (it == mVariableMap.end())
+  auto it = mVarCVCpoly.find(n);
+  if (it == mVarCVCpoly.end())
   {
     std::string name;
     if (!n.getAttribute(expr::VarNameAttr(), name))
@@ -21,8 +21,15 @@ Variable Constraints::get_variable(const Node& n)
                          << " has no name, using ID instead." << std::endl;
       name = "v_" + std::to_string(n.getId());
     }
-    it = mVariableMap.emplace(n, Variable(name.c_str())).first;
+    it = mVarCVCpoly.emplace(n, Variable(name.c_str())).first;
+    mVarpolyCVC.emplace(it->second, n);
   }
+  return it->second;
+}
+
+Node Constraints::var_poly_to_cvc(const Variable& n) const {
+  auto it = mVarpolyCVC.find(n);
+  Assert(it != mVarpolyCVC.end()) << "Expect variable to be added already.";
   return it->second;
 }
 
@@ -99,7 +106,7 @@ Polynomial Constraints::construct_polynomial(const Node& n,
   {
     case Kind::VARIABLE:
     {
-      return Polynomial(get_variable(n));
+      return Polynomial(var_cvc_to_poly(n));
     }
     case Kind::CONST_RATIONAL:
     {

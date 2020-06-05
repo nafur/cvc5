@@ -28,12 +28,14 @@ class Constraints
 
   /** A mapping from CVC4 variables to libpoly variables.
    */
-  std::map<Node, libpoly::Variable> mVariableMap;
+  std::map<Node, libpoly::Variable> mVarCVCpoly;
+  /** A mapping from libpoly variables to CVC4 variables. */
+  std::map<libpoly::Variable, Node> mVarpolyCVC;
 
   /** Get the corresponding libpoly variable or create a new one.
    * Expects the given node to be a Kind::VARIABLE.
    */
-  libpoly::Variable get_variable(const Node& n);
+  libpoly::Variable var_cvc_to_poly(const Node& n);
 
   /** Checks whether the given relation can be handled by CAD.
    * Returns true if the given Kind is one of EQUAL, GT, GEQ, LT or LEQ.
@@ -69,6 +71,12 @@ class Constraints
   libpoly::Polynomial construct_constraint_polynomial(const Node& n);
 
  public:
+
+  /** Get the corresponding CVC4 variable.
+   * Expects that it was added to the internal mapping via var_cvc_to_poly beforehand.
+   */
+  Node var_poly_to_cvc(const libpoly::Variable& n) const;
+  
   /** Add a constraing (represented by a polynomial and a sign condition) to the
    * list of constraints.
    */
