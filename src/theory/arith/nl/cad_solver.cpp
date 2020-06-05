@@ -76,12 +76,12 @@ namespace nl {
   bool CadSolver::construct_model() const {
     for (const auto& v: mCAC.get_variable_ordering()) {
       libpoly::Value val = mCAC.get_model().retrieve(v);
-      //Trace("cad-check") << "-> " << v << " = " << val << std::endl;
+      Trace("cad-check") << "-> " << v << " = " << val << std::endl;
 
       Node lower;
       Node upper;
       if (extract_bounds(val, lower, upper)) {
-        //Trace("cad-check") << "Extracted " << val << " in " << lower << " .. " << upper << std::endl;
+        Trace("cad-check") << "Extracted " << val << " in " << lower << " .. " << upper << std::endl;
         d_model.addCheckModelBound(
           mCAC.get_constraints().var_poly_to_cvc(v),
           lower, upper
@@ -174,7 +174,26 @@ std::vector<Node> CadSolver::checkFullRefine()
 void CadSolver::preprocessAssertionsCheckModel(std::vector<Node>& assertions)
 {
   Notice() << "##### Asking for model." << std::endl;
-  // Report model into assertions
+  auto* nm = NodeManager::currentNM();
+  for (const auto& v: mCAC.get_variable_ordering()) {
+      libpoly::Value val = mCAC.get_model().retrieve(v);
+      Trace("cad-check") << "-> " << v << " = " << val << std::endl;
+
+      Node var = mCAC.get_constraints().var_poly_to_cvc(v);
+      Node lower;
+      Node upper;
+      if (extract_bounds(val, lower, upper)) {
+        if (lower == upper) {
+          assertions.emplace_back(nm->mkNode(Kind::EQUAL, var, lower));
+          Trace("cad-check") << "\tadded " << assertions.back() << std::endl;
+        } else {
+          assertions.emplace_back(nm->mkNode(Kind::LEQ, lower, var));
+          Trace("cad-check") << "\tadded " << assertions.back() << std::endl;
+          assertions.emplace_back(nm->mkNode(Kind::LEQ, var, upper));
+          Trace("cad-check") << "\tadded " << assertions.back() << std::endl;
+        }
+      }
+    }
 }
 
 }  // namespace nl
