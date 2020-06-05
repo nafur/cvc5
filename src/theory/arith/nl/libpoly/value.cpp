@@ -1,5 +1,7 @@
 #include "value.h"
 
+#include "util/rational.h"
+
 namespace CVC4 {
 namespace theory {
 namespace arith {
@@ -16,6 +18,11 @@ Value::Value(const lp_value_t& val)
 Value::Value(lp_value_t* ptr) : mValue(ptr, value_deleter) {}
 Value::Value(const Value& val) : Value(lp_value_new_copy(val.get())) {}
 Value::Value(Value&& val) : Value(val.release()) {}
+
+Value::Value(const Integer& i): Value(lp_value_new(lp_value_type_t::LP_VALUE_INTEGER, i.get())) {
+}
+Value::Value(const RAN& r): Value(lp_value_new(lp_value_type_t::LP_VALUE_ALGEBRAIC, r.get())) {
+}
 
 Value& Value::operator=(const Value& v)
 {
@@ -44,6 +51,14 @@ Value Value::minus_infty()
 Value Value::plus_infty()
 {
   return Value(lp_value_new(LP_VALUE_PLUS_INFINITY, nullptr));
+}
+
+Integer Value::as_integer() const {
+  return Integer(get()->value.z);
+}
+
+RAN Value::as_ran() const {
+  return RAN(get()->value.a);
 }
 
 std::ostream& operator<<(std::ostream& os, const Value& v)

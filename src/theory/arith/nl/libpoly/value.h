@@ -6,6 +6,8 @@
 
 #include <iostream>
 
+#include "integer.h"
+#include "ran.h"
 #include "utils.h"
 
 namespace CVC4 {
@@ -34,6 +36,11 @@ class Value
   /** Move from the given Value. */
   Value(Value&& val);
 
+  /** Construct from an integer. */
+  Value(const Integer& i);
+  /** Construct from an algebraic number. */
+  Value(const RAN& r);
+
   /** Copy from the given Value. */
   Value& operator=(const Value& v);
   /** Move from the given Value. */
@@ -53,6 +60,9 @@ class Value
   static Value minus_infty();
   /** Return +infty */
   static Value plus_infty();
+
+  Integer as_integer() const;
+  RAN as_ran() const;
 };
 
 /** Stream the given Value to an output stream. */
