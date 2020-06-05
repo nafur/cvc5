@@ -1,5 +1,8 @@
 #include "interval.h"
 
+#include "base/check.h"
+#include "base/output.h"
+
 namespace CVC4 {
 namespace theory {
 namespace arith {
@@ -155,12 +158,25 @@ bool interval_connect(const Interval& lhs, const Interval& rhs)
       lhs.get()->is_point ? &(lhs.get()->a) : &(lhs.get()->b);
   const lp_value_t* rl = &(rhs.get()->a);
   int c = lp_value_cmp(lu, rl);
-  if (c < 0) return false;
-  if (c > 0) return true;
+  if (c < 0)
+  {
+    Trace("libpoly::interval_connect")
+        << lhs << " and " << rhs << " are separated." << std::endl;
+    return false;
+  }
+  if (c > 0)
+  {
+    Trace("libpoly::interval_connect")
+        << lhs << " and " << rhs << " overlap." << std::endl;
+    return true;
+  }
   Assert(c == 0);
   if (lhs.get()->is_point || rhs.get()->is_point || !lhs.get()->b_open
-      || !rhs.get()->a_open) {
-    Trace("libpoly::interval_connect") << lhs << " and " << rhs << " touch and the intermediate point is covered." << std::endl;
+      || !rhs.get()->a_open)
+  {
+    Trace("libpoly::interval_connect")
+        << lhs << " and " << rhs
+        << " touch and the intermediate point is covered." << std::endl;
     return true;
   }
   return false;

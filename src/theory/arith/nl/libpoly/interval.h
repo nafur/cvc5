@@ -6,10 +6,6 @@
 
 #include <iostream>
 
-#include "base/check.h"
-#include "base/output.h"
-#include "integer.h"
-#include "utils.h"
 #include "value.h"
 
 namespace CVC4 {
