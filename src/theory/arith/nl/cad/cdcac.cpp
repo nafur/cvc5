@@ -129,6 +129,13 @@ void CDCAC::compute_variable_ordering()
     vc(std::get<0>(c));
   }
   mVariableOrdering = vc.get_variables();
+  std::sort(mVariableOrdering.begin(),
+            mVariableOrdering.end(),
+            [](const Variable& a, const Variable& b) {
+              return lp_variable_order_cmp(
+                         variable_order.get(), a.get(), b.get())
+                     < 0;
+            });
 }
 
 Constraints& CDCAC::get_constraints() { return mConstraints; }
