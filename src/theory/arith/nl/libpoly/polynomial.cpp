@@ -260,7 +260,6 @@ bool evaluate_polynomial_constraint(const Polynomial& p,
                                     const Assignment& a,
                                     SignCondition sc)
 {
-  // Trace("cad-check") << "Get sign of " << p << " over " << a << std::endl;
   return evaluate_sign_condition(sc, lp_polynomial_sgn(p.get(), a.get()));
 }
 
@@ -268,6 +267,7 @@ std::vector<Interval> infeasible_regions(const Polynomial& p,
                                          const Assignment& a,
                                          SignCondition sc)
 {
+  Trace("libpoly::infeasible_regions") << p << " " << sc << " 0 over " << a << std::endl;
   lp_feasibility_set_t* feasible = lp_polynomial_constraint_get_feasible_set(
       p.get(), to_sign_condition(sc), 0, a.get());
 
@@ -281,22 +281,25 @@ std::vector<Interval> infeasible_regions(const Polynomial& p,
     const lp_interval_t& cur = feasible->intervals[i];
     Value lower(lp_value_new_copy(&cur.a));
 
-    // Trace("cad-check") << "Feasible region: " << lp_interval_to_string(&cur)
-    // << std::endl;
+    Trace("libpoly::infeasible_regions") << "Feasible: " << lp_interval_to_string(&cur)
+     << std::endl;
 
     if (lower.get()->type == LP_VALUE_MINUS_INFINITY)
     {
       // Do nothing if we start at -infty.
+      Trace("libpoly::infeasible_regions") << "Ignore region starting at -oo" << std::endl;
     }
     else if (last_value < lower)
     {
       // There is an infeasible open interval
       regions.emplace_back(last_value, !last_open, lower, !cur.a_open);
+      Trace("libpoly::infeasible_regions") << "Add intermediate interval: " << regions.back() << std::endl;
     }
     else if (last_open && cur.a_open && last_value == lower)
     {
       // There is an infeasible point interval
       regions.emplace_back(last_value);
+      Trace("libpoly::infeasible_regions") << "Add point interval: " << regions.back() << std::endl;
     }
     if (cur.is_point)
     {
@@ -314,6 +317,7 @@ std::vector<Interval> infeasible_regions(const Polynomial& p,
   {
     // Add missing interval to +infty
     regions.emplace_back(last_value, !last_open, Value::plus_infty(), true);
+    Trace("libpoly::infeasible_regions") << "Add interval to oo: " << regions.back() << std::endl;
   }
 
   lp_feasibility_set_delete(feasible);
