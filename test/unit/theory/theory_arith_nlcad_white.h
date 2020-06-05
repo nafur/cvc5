@@ -25,6 +25,7 @@
 #include "theory/arith/nl/libpoly/assignment.h"
 #include "theory/arith/nl/libpoly/polynomial.h"
 #include "theory/arith/nl/libpoly/ran.h"
+#include "theory/arith/nl/libpoly/root_isolation.h"
 #include "theory/arith/nl/libpoly/upolynomial.h"
 #include "theory/arith/nl/libpoly/value.h"
 #include "theory/arith/nl/libpoly/variable.h"
