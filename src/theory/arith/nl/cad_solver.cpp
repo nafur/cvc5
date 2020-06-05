@@ -180,7 +180,7 @@ std::vector<Node> CadSolver::checkFullRefine()
 
 void CadSolver::preprocessAssertionsCheckModel(std::vector<Node>& assertions)
 {
-  Notice() << "##### Asking for model." << std::endl;
+  /*Notice() << "##### Asking for model." << std::endl;
   auto* nm = NodeManager::currentNM();
   for (const auto& v: mCAC.get_variable_ordering()) {
       libpoly::Value val = mCAC.get_model().retrieve(v);
@@ -200,7 +200,7 @@ void CadSolver::preprocessAssertionsCheckModel(std::vector<Node>& assertions)
           Trace("cad-check") << "\tadded " << assertions.back() << std::endl;
         }
       }
-    }
+    }*/
 }
 
 }  // namespace nl
