@@ -14,6 +14,7 @@
 
 #include "theory/arith/nl/cad_solver.h"
 #include "theory/arith/nl/cad/cdcac.h"
+#include "theory/arith/nl/libpoly/conversion.h"
 
 #include "options/arith_options.h"
 #include "options/smt_options.h"
@@ -28,10 +29,54 @@ namespace theory {
 namespace arith {
 namespace nl {
 
+  bool CadSolver::extract_bounds(const libpoly::Value& value, Node& lower, Node& upper) const {
+    auto* nm = NodeManager::currentNM();
+    switch (value.get()->type) {
+      case LP_VALUE_INTEGER: {
+        Trace("cad-check") << value << " is an integer" << std::endl;
+        lower = nm->mkConst(Rational(libpoly::as_cvc_integer(&value.get()->value.z)));
+        upper = lower;
+        return true;
+      }
+      case LP_VALUE_RATIONAL: {
+        Trace("cad-check") << value << " is a rational" << std::endl;
+        lower = nm->mkConst(libpoly::as_cvc_rational(&value.get()->value.q));
+        upper = lower;
+        return true;
+      }
+      case LP_VALUE_DYADIC_RATIONAL: {
+        Trace("cad-check") << value << " is a dyadic rational" << std::endl;
+        lower = nm->mkConst(libpoly::as_cvc_rational(&value.get()->value.dy_q));
+        upper = lower;
+        return true;
+      }
+      case LP_VALUE_ALGEBRAIC: {
+        Trace("cad-check") << value << " is an algebraic" << std::endl;
+        lower = nm->mkConst(libpoly::as_cvc_rational(&value.get()->value.a.I.a));
+        upper = nm->mkConst(libpoly::as_cvc_rational(&value.get()->value.a.I.b));
+        return true;
+      }
+      default: {
+        Trace("cad-check") << value << " is weird" << std::endl;
+        return false;
+      }
+    }
+  }
+
   bool CadSolver::construct_model() const {
     for (const auto& v: mCAC.get_variable_ordering()) {
       libpoly::Value val = mCAC.get_model().retrieve(v);
       std::cout << "-> " << v << " = " << val << std::endl;
+
+      Node lower;
+      Node upper;
+      if (extract_bounds(val, lower, upper)) {
+        Trace("cad-check") << "Extracted " << val << " in " << lower << " .. " << upper << std::endl;
+        d_model.addCheckModelBound(
+          mCAC.get_constraints().var_poly_to_cvc(v),
+          lower, upper
+        );
+      }
     }
     return true;
   }

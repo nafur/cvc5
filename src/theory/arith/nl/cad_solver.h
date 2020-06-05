@@ -38,6 +38,7 @@ class CadSolver
 
   cad::CDCAC mCAC;
 
+  bool extract_bounds(const libpoly::Value& value, Node& lower, Node& upper) const;
   bool construct_model() const;
 
  public:
