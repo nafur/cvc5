@@ -66,9 +66,6 @@ void clean_intervals(std::vector<CACInterval>& intervals)
             [](const CACInterval& lhs, const CACInterval& rhs) {
               return compare_for_cleanup(lhs.mInterval, rhs.mInterval);
             });
-  // Trace("cad-check") << "Ordered intervals:" << std::endl;
-  // for (const auto& i: intervals) Trace("cad-check") << "-> " << i.mInterval
-  // << std::endl;
 
   // Remove intervals that are covered by others.
   // Implementation roughly follows
@@ -80,7 +77,6 @@ void clean_intervals(std::vector<CACInterval>& intervals)
     if (interval_covers(intervals[first].mInterval,
                         intervals[first + 1].mInterval))
     {
-      // Trace("cad-check") << first << " covers " << (first+1) << std::endl;
       break;
     }
   }
@@ -92,15 +88,10 @@ void clean_intervals(std::vector<CACInterval>& intervals)
       if (!interval_covers(intervals[first].mInterval, intervals[i].mInterval))
       {
         // Interval is not covered. Move it to the front and bump front.
-        // Trace("cad-check") << first << " does not cover " << i << std::endl;
         ++first;
         intervals[first] = std::move(intervals[i]);
       }
       // Else: Interval is covered as well.
-      else
-      {
-        // Trace("cad-check") << first << " also covers " << i << std::endl;
-      }
     }
     // Erase trailing values
     while (intervals.size() > first + 1)
@@ -139,7 +130,7 @@ void CDCAC::compute_variable_ordering()
                          variable_order.get(), a.get(), b.get())
                      < 0;
             });
-  Trace("cad-check") << "Variable ordering is: " << mVariableOrdering
+  Trace("cdcac") << "Variable ordering is now " << mVariableOrdering
                      << std::endl;
 }
 
@@ -164,14 +155,16 @@ std::vector<CACInterval> CDCAC::get_unsat_intervals(
 
     if (main_variable(p) != mVariableOrdering[cur_variable])
     {
-      Trace("cad-check") << "Skipping " << p << " as it is not univariate."
+      Trace("cdcac") << "Skipping " << p << " as it is not univariate."
                          << std::endl;
       continue;
     }
 
+    Trace("cdcac") << "Infeasible intervals for " << p << " over " << mAssignment << std::endl;
     auto intervals = infeasible_regions(p, mAssignment, sc);
     for (const auto& i : intervals)
     {
+      Trace("cdcac") << "-> " << i << std::endl;
       std::vector<Polynomial> l, u, m, d;
       // TODO(Gereon): Factorize polynomials here.
       if (!lower_is_infty(i)) l.emplace_back(p);
@@ -194,6 +187,7 @@ bool CDCAC::sample_outside(const std::vector<CACInterval>& infeasible,
   }
   if (!lower_is_infty(infeasible.front().mInterval))
   {
+    Trace("cdcac") << "Sample before " << infeasible.front().mInterval << std::endl;
     const auto* i = infeasible.front().mInterval.get();
     sample =
         sample_between(Value::minus_infty().get(), true, &i->a, !i->a_open);
@@ -206,6 +200,8 @@ bool CDCAC::sample_outside(const std::vector<CACInterval>& infeasible,
       const auto* l = infeasible[i].mInterval.get();
       const auto* r = infeasible[i + 1].mInterval.get();
 
+      Trace("cdcac") << "Sample between " << infeasible[i].mInterval << " and " << infeasible[i+1].mInterval << std::endl;
+
       if (l->is_point)
       {
         sample = sample_between(&l->a, true, &r->a, !r->a_open);
@@ -215,10 +211,13 @@ bool CDCAC::sample_outside(const std::vector<CACInterval>& infeasible,
         sample = sample_between(&l->b, !l->b_open, &r->a, !r->a_open);
       }
       return true;
+    } else {
+      Trace("cdcac") << infeasible[i].mInterval << " and " << infeasible[i+1].mInterval << " connect" << std::endl;
     }
   }
   if (!upper_is_infty(infeasible.back().mInterval))
   {
+    Trace("cdcac") << "Sample above " << infeasible.back().mInterval << std::endl;
     const auto* i = infeasible.back().mInterval.get();
     if (i->is_point)
     {
@@ -269,11 +268,14 @@ CDCAC::construct_characterization(const std::vector<CACInterval>& intervals)
   Assert(!intervals.empty()) << "A covering can not be empty";
   // TODO(Gereon): We might want to reduce the covering by removing redundancies
   // as of section 4.5.2
-  Trace("cad-check") << "Constructing characterization now" << std::endl;
+  Trace("cdcac") << "Constructing characterization now" << std::endl;
   std::vector<std::pair<Polynomial, std::vector<Node>>> res;
 
   for (const auto& i : intervals)
   {
+    Trace("cdcac") << "Considering " << i.mInterval << std::endl;
+    Trace("cdcac") << "-> " << i.mLowerPolys << " / " << i.mUpperPolys << " and " << i.mMainPolys << " / " << i.mDownPolys << std::endl;
+    Trace("cdcac") << "-> " << i.mOrigins << std::endl;
     for (const auto& p : i.mDownPolys)
     {
       add_polynomial(res, p, i.mOrigins);
@@ -365,8 +367,6 @@ CACInterval CDCAC::interval_from_characterization(
   roots.emplace_back(Value::plus_infty());
   std::sort(roots.begin(), roots.end());
 
-  Trace("cad-check") << "Roots: " << roots << std::endl;
-
   Value lower;
   Value upper;
   for (std::size_t i = 0; i < roots.size(); ++i)
@@ -416,25 +416,32 @@ CACInterval CDCAC::interval_from_characterization(
 
 std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable)
 {
+  if (cur_variable == 0) {
+    Trace("cdcac") << "******************** CDCAC Check" << std::endl;
+    for (const auto& c: mConstraints.get_constraints()) {
+      Trace("cdcac") << "-> " << std::get<0>(c) << " " << std::get<1>(c) << " 0 from " << std::get<2>(c) << std::endl;
+    }
+  }
+  Trace("cdcac") << "Unsat cover with " << cur_variable << " from " << mVariableOrdering << std::endl;
   std::vector<CACInterval> intervals = get_unsat_intervals(cur_variable);
-  Trace("cad-check") << "Unsat intervals for "
+  Trace("cdcac") << "Unsat intervals for "
                      << mVariableOrdering[cur_variable] << ":" << std::endl;
   for (const auto& i : intervals)
-    Trace("cad-check") << "-> " << i.mInterval << std::endl;
+    Trace("cdcac") << "-> " << i.mInterval << " from " << i.mOrigins << std::endl;
   Value sample;
 
   std::size_t iterations = 0;
 
   while (sample_outside(intervals, sample))
   {
-    Trace("cad-check") << "Sample " << mVariableOrdering[cur_variable] << " = "
+    Trace("cdcac") << "Sample " << mVariableOrdering[cur_variable] << " = "
                        << sample << std::endl;
     mAssignment.set(mVariableOrdering[cur_variable], sample);
-    Trace("cad-check") << "Now: " << mAssignment << std::endl;
+    Trace("cdcac") << "Now: " << mAssignment << std::endl;
     if (cur_variable == mVariableOrdering.size() - 1)
     {
       // We have a full assignment. SAT!
-      Trace("cad-check") << "Found full assignment: " << mAssignment
+      Trace("cdcac") << "Found full assignment: " << mAssignment
                          << std::endl;
       return {};
     }
@@ -442,11 +449,11 @@ std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable)
     if (cov.empty())
     {
       // Found SAT!
-      Trace("cad-check") << "SAT!" << std::endl;
+      Trace("cdcac") << "SAT!" << std::endl;
       return {};
     }
     auto characterization = construct_characterization(cov);
-    Trace("cad-check") << "Characterization: " << characterization << std::endl;
+    Trace("cdcac") << "Characterization: " << characterization << std::endl;
 
     mAssignment.unset(mVariableOrdering[cur_variable]);
 
@@ -454,19 +461,19 @@ std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable)
         interval_from_characterization(characterization, cur_variable, sample);
     intervals.emplace_back(new_interval);
     clean_intervals(intervals);
-    Trace("cad-check") << "Now we have for " << mVariableOrdering[cur_variable]
+    Trace("cdcac") << "Now we have for " << mVariableOrdering[cur_variable]
                        << ":" << std::endl;
     for (const auto& i : intervals)
-      Trace("cad-check") << "-> " << i.mInterval << std::endl;
+      Trace("cdcac") << "-> " << i.mInterval << std::endl;
 
     if (iterations > 2) break;
     ++iterations;
   }
 
-  Trace("cad-check") << "Returning intervals for "
+  Trace("cdcac") << "Returning intervals for "
                      << mVariableOrdering[cur_variable] << ":" << std::endl;
   for (const auto& i : intervals)
-    Trace("cad-check") << "-> " << i.mInterval << std::endl;
+    Trace("cdcac") << "-> " << i.mInterval << std::endl;
   return intervals;
 }
 
