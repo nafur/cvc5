@@ -82,10 +82,17 @@ namespace nl {
       Node upper;
       if (extract_bounds(val, lower, upper)) {
         Trace("cad-check") << "Extracted " << val << " in " << lower << " .. " << upper << std::endl;
-        d_model.addCheckModelBound(
-          mCAC.get_constraints().var_poly_to_cvc(v),
-          lower, upper
-        );
+        if (lower == upper) {
+          d_model.addCheckModelSubstitution(
+            mCAC.get_constraints().var_poly_to_cvc(v),
+            lower
+          );
+        } else {
+          d_model.addCheckModelBound(
+            mCAC.get_constraints().var_poly_to_cvc(v),
+            lower, upper
+          );
+        }
       }
     }
     return true;
