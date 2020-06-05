@@ -7,7 +7,6 @@
 
 #include "util/integer.h"
 #include "utils.h"
-#include "value.h"
 
 namespace CVC4 {
 namespace theory {
@@ -30,6 +29,8 @@ class Integer
   Integer(long i);
   /** Copy from the given Integer. */
   Integer(const Integer& i);
+  /** Copy from the given lp_integer_t. */
+  Integer(const lp_integer_t& i);
 #ifdef CVC4_GMP_IMP
   /** Constructs from a gmp integer. */
   Integer(const mpz_class& m);
@@ -42,9 +43,6 @@ class Integer
   ~Integer();
   /** Assign from the given Integer. */
   Integer& operator=(Integer i);
-
-  /** Implicitly convert to a Value. */
-  operator Value() const;
 
   /** Get a non-const pointer to the internal lp_integer_t. Handle with care! */
   lp_integer_t* get();

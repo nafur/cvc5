@@ -21,6 +21,10 @@ Integer::Integer(const Integer& i)
   lp_integer_construct_copy(lp_Z, &mInt, i.get());
 }
 
+Integer::Integer(const lp_integer_t& i) {
+  lp_integer_construct_copy(lp_Z, &mInt, &i);
+}
+
 #ifdef CVC4_GMP_IMP
 Integer::Integer(const mpz_class& m)
 {
@@ -54,11 +58,6 @@ Integer& Integer::operator=(Integer i)
 {
   std::swap(mInt, i.mInt);
   return *this;
-}
-
-Integer::operator Value() const
-{
-  return Value(lp_value_new(lp_value_type_t::LP_VALUE_INTEGER, &mInt));
 }
 
 lp_integer_t* Integer::get() { return &mInt; }
