@@ -17,7 +17,7 @@ Variable Constraints::var_cvc_to_poly(const Node& n)
     std::string name;
     if (!n.getAttribute(expr::VarNameAttr(), name))
     {
-      Trace("cad-check") << "Variable " << n
+      Trace("cdcac") << "Variable " << n
                          << " has no name, using ID instead." << std::endl;
       name = "v_" + std::to_string(n.getId());
     }
@@ -140,7 +140,7 @@ Polynomial Constraints::construct_polynomial(const Node& n,
       return res;
     }
     default:
-      Trace("cad-check") << "Unhandled node " << n << " with kind "
+      Warning() << "Unhandled node " << n << " with kind "
                          << n.getKind() << std::endl;
   }
   return Polynomial();
@@ -186,7 +186,7 @@ void Constraints::add_constraint(Node n)
 
   Polynomial lhs = construct_constraint_polynomial(n);
   SignCondition sc = normalize_kind(n.getKind(), negated, lhs);
-  Trace("cad-check") << "Parsed " << lhs << " " << sc << " 0" << std::endl;
+  Trace("cdcac") << "Parsed " << lhs << " " << sc << " 0" << std::endl;
   add_constraint(lhs, sc, origin);
 }
 
