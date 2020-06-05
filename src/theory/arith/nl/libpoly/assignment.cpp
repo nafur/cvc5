@@ -28,6 +28,9 @@ void Assignment::unset(const Variable& var)
 {
   lp_assignment_set_value(get(), var.get(), nullptr);
 }
+Value Assignment::retrieve(const Variable& var) const {
+  return *lp_assignment_get_value(get(), var.get());
+}
 void Assignment::clear()
 {
   lp_assignment_destruct(mAssignment.get());

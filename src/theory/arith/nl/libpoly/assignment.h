@@ -38,6 +38,8 @@ class Assignment
   void set(const Variable& var, const Value& value);
   /** Unassign the given variable. */
   void unset(const Variable& var);
+  /** Retrieve a value from the Assignment. */
+  Value retrieve(const Variable& var) const;
   /** Clear the assignment. */
   void clear();
 };
