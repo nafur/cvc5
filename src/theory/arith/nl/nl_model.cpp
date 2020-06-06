@@ -416,6 +416,23 @@ bool NlModel::addCheckModelBound(TNode v, TNode l, TNode u)
   return true;
 }
 
+bool NlModel::addCheckModelWitness(TNode v, TNode w)
+{
+  Trace("nl-ext-model") << "* check model witness : " << v << " -> " << w << std::endl;
+  // should not set a witness for a value that is already set
+  if (std::find(d_check_model_vars.begin(), d_check_model_vars.end(), v)
+      != d_check_model_vars.end())
+  {
+    Trace("nl-ext-model")
+        << "...ERROR: setting witness for variable that already has a constant value."
+        << std::endl;
+    Assert(false);
+    return false;
+  }
+  d_model->recordApproximation(v, w);
+  return true;
+}
+
 bool NlModel::hasCheckModelAssignment(Node v) const
 {
   if (d_check_model_bounds.find(v) != d_check_model_bounds.end())

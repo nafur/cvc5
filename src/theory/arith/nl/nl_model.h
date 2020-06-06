@@ -127,6 +127,14 @@ class NlModel
    * bounds.
    */
   bool addCheckModelBound(TNode v, TNode l, TNode u);
+  /** add check model witness
+   *
+   * Adds a model witness v -> w to the underlying theory model.
+   * The witness should only contain a single variable v and evaluate to true
+   * for exactly one value of v. The variable v is then (implicitly,
+   * declaratively) assigned to this single value that satisfies the witness w.
+   */
+  bool addCheckModelWitness(TNode v, TNode w);
   /** has check model assignment
    *
    * Have we assigned v in the current checkModel(...) call?
