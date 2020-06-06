@@ -38,8 +38,9 @@ class CadSolver
 
   cad::CDCAC mCAC;
 
+  bool assign_model_variable(const Node& variable, const libpoly::Value& value) const;
   bool extract_bounds(const libpoly::Value& value, Node& lower, Node& upper) const;
-  bool construct_model() const;
+  bool construct_model();
 
  public:
   CadSolver(TheoryArith& containing, NlModel& model);

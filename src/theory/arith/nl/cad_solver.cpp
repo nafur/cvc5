@@ -12,6 +12,8 @@
  ** \brief Implementation of new non-linear solver
  **/
 
+#include <poly/upolynomial.h>
+
 #include "theory/arith/nl/cad_solver.h"
 #include "theory/arith/nl/cad/cdcac.h"
 #include "theory/arith/nl/libpoly/conversion.h"
@@ -29,25 +31,28 @@ namespace theory {
 namespace arith {
 namespace nl {
 
-  bool CadSolver::extract_bounds(const libpoly::Value& value, Node& lower, Node& upper) const {
+  bool CadSolver::assign_model_variable(const Node& variable, const libpoly::Value& value) const {
     auto* nm = NodeManager::currentNM();
     switch (value.get()->type) {
       case LP_VALUE_INTEGER: {
-        //Trace("cad-check") << value << " is an integer" << std::endl;
-        lower = nm->mkConst(Rational(libpoly::as_cvc_integer(&value.get()->value.z)));
-        upper = lower;
+        d_model.addCheckModelSubstitution(
+          variable,
+          nm->mkConst(Rational(libpoly::as_cvc_integer(&value.get()->value.z)))
+        );
         return true;
       }
       case LP_VALUE_RATIONAL: {
-        //Trace("cad-check") << value << " is a rational" << std::endl;
-        lower = nm->mkConst(libpoly::as_cvc_rational(&value.get()->value.q));
-        upper = lower;
+        d_model.addCheckModelSubstitution(
+          variable,
+          nm->mkConst(libpoly::as_cvc_rational(&value.get()->value.q))
+        );
         return true;
       }
       case LP_VALUE_DYADIC_RATIONAL: {
-        //Trace("cad-check") << value << " is a dyadic rational" << std::endl;
-        lower = nm->mkConst(libpoly::as_cvc_rational(&value.get()->value.dy_q));
-        upper = lower;
+        d_model.addCheckModelSubstitution(
+          variable,
+          nm->mkConst(libpoly::as_cvc_rational(&value.get()->value.dy_q))
+        );
         return true;
       }
       case LP_VALUE_ALGEBRAIC: {
@@ -58,11 +63,27 @@ namespace nl {
           lp_algebraic_number_refine_const(&a);
         }
         if (a.I.is_point) {
-          lower = nm->mkConst(libpoly::as_cvc_rational(&a.I.a));
-          upper = nm->mkConst(libpoly::as_cvc_rational(&a.I.a));
+          d_model.addCheckModelSubstitution(
+            variable,
+            nm->mkConst(libpoly::as_cvc_rational(&a.I.a))
+          );
         } else {
-          lower = nm->mkConst(libpoly::as_cvc_rational(&a.I.a));
-          upper = nm->mkConst(libpoly::as_cvc_rational(&a.I.b));
+          Node poly = libpoly::as_cvc_polynomial(libpoly::UPolynomial(lp_upolynomial_construct_copy(a.f)), variable);
+          // Construct witness:
+          // a.f(x) == 0  &&  a.I.a < x  &&  x < a.I.b
+          Node witness = nm->mkNode(Kind::AND,
+            nm->mkNode(Kind::EQUAL, poly, nm->mkConst(Rational(0))),
+            nm->mkNode(Kind::LT,
+              nm->mkConst(libpoly::as_cvc_rational(&a.I.a)),
+              variable
+            ),
+            nm->mkNode(Kind::LT,
+              variable,
+              nm->mkConst(libpoly::as_cvc_rational(&a.I.b))
+            )
+          );
+          Trace("cad-check") << "Adding witness: " << witness << std::endl;
+          d_model.addCheckModelWitness(variable, witness);
         }
         return true;
       }
@@ -73,26 +94,14 @@ namespace nl {
     }
   }
 
-  bool CadSolver::construct_model() const {
+  bool CadSolver::construct_model() {
     for (const auto& v: mCAC.get_variable_ordering()) {
       libpoly::Value val = mCAC.get_model().retrieve(v);
-      Trace("cad-check") << "-> " << v << " = " << val << std::endl;
-
-      Node lower;
-      Node upper;
-      if (extract_bounds(val, lower, upper)) {
-        Trace("cad-check") << "Extracted " << val << " in " << lower << " .. " << upper << std::endl;
-        if (lower == upper) {
-          d_model.addCheckModelSubstitution(
-            mCAC.get_constraints().var_poly_to_cvc(v),
-            lower
-          );
-        } else {
-          d_model.addCheckModelBound(
-            mCAC.get_constraints().var_poly_to_cvc(v),
-            lower, upper
-          );
-        }
+      Node variable = mCAC.get_constraints().var_mapper()(v);
+      if (assign_model_variable(variable, val)) {
+        Trace("cad-check") << "-> " << v << " = " << val << std::endl;
+      } else {
+        Trace("cad-check") << "Failed to set " << v << " = " << val << std::endl;
       }
     }
     return true;
@@ -180,27 +189,6 @@ std::vector<Node> CadSolver::checkFullRefine()
 
 void CadSolver::preprocessAssertionsCheckModel(std::vector<Node>& assertions)
 {
-  /*Notice() << "##### Asking for model." << std::endl;
-  auto* nm = NodeManager::currentNM();
-  for (const auto& v: mCAC.get_variable_ordering()) {
-      libpoly::Value val = mCAC.get_model().retrieve(v);
-      Trace("cad-check") << "-> " << v << " = " << val << std::endl;
-
-      Node var = mCAC.get_constraints().var_poly_to_cvc(v);
-      Node lower;
-      Node upper;
-      if (extract_bounds(val, lower, upper)) {
-        if (lower == upper) {
-          assertions.emplace_back(nm->mkNode(Kind::EQUAL, var, lower));
-          Trace("cad-check") << "\tadded " << assertions.back() << std::endl;
-        } else {
-          assertions.emplace_back(nm->mkNode(Kind::LEQ, lower, var));
-          Trace("cad-check") << "\tadded " << assertions.back() << std::endl;
-          assertions.emplace_back(nm->mkNode(Kind::LEQ, var, upper));
-          Trace("cad-check") << "\tadded " << assertions.back() << std::endl;
-        }
-      }
-    }*/
 }
 
 }  // namespace nl
