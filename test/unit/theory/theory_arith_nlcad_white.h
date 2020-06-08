@@ -173,7 +173,7 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
     {
       std::cout << "-> " << c.mInterval << std::endl;
     }
-    auto nodes = cac.collect_constraints(cover);
+    auto nodes = cad::collect_constraints(cover);
     std::cout << "MIS:" << std::endl;
     for (const auto& c : nodes)
     {
