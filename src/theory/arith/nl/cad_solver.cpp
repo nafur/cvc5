@@ -174,7 +174,7 @@ std::vector<NlLemma> CadSolver::checkFullRefine()
   if (covering.empty()) {
     Notice() << "SAT: " << mCAC.get_model() << std::endl;
   } else {
-    auto mis = mCAC.collect_constraints(covering);
+    auto mis = collect_constraints(covering);
     Notice() << "Collected MIS: " << mis << std::endl;
     auto* nm = NodeManager::currentNM();
     for (auto& n: mis) {

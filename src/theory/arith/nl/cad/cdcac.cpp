@@ -323,20 +323,6 @@ std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable)
   return intervals;
 }
 
-std::vector<Node> CDCAC::collect_constraints(
-    const std::vector<CACInterval>& intervals) const
-{
-  std::vector<Node> res;
-  for (const auto& i : intervals)
-  {
-    res.insert(res.end(), i.mOrigins.begin(), i.mOrigins.end());
-  }
-  std::sort(res.begin(), res.end());
-  auto it = std::unique(res.begin(), res.end());
-  res.erase(it, res.end());
-  return res;
-}
-
 }  // namespace cad
 }  // namespace nl
 }  // namespace arith

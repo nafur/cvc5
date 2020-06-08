@@ -44,7 +44,6 @@ void clean_intervals(std::vector<CACInterval>& intervals);
 std::vector<Node> collect_constraints(
     const std::vector<CACInterval>& intervals);
 
-
 /** Sample a point outside of the infeasible intervals.
  * Stores the sample in sample, returns whether such a sample exists.
  * If false is returned, the infeasible intervals cover the real line.
