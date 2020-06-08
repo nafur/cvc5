@@ -212,7 +212,8 @@ class NlModel
    */
   void getModelValueRepair(
       std::map<Node, Node>& arithModel,
-      std::map<Node, std::pair<Node, Node>>& approximations);
+      std::map<Node, std::pair<Node, Node>>& approximations,
+      std::map<Node, Node>& witnesses);
 
  private:
   /** The current model */
@@ -318,6 +319,13 @@ class NlModel
    * involves approximations of square roots.
    */
   std::map<Node, std::pair<Node, Node>> d_check_model_bounds;
+  /** witnesses for check model
+   *
+   * Stores witnesses for vatiables that define implicit variable assignments.
+   * For some variable v, we map to a formulas that is true for exactly one
+   * value of v.
+   */
+  std::map<Node, Node> d_check_model_witnesses;
   /**
    * The map from literals that our model construction solved, to the variable
    * that was solved for. Examples of such literals are:

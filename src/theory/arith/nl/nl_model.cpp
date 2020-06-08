@@ -57,6 +57,7 @@ void NlModel::resetCheck()
   d_used_approx = false;
   d_check_model_solved.clear();
   d_check_model_bounds.clear();
+  d_check_model_witnesses.clear();
   d_check_model_vars.clear();
   d_check_model_subs.clear();
 }
@@ -363,6 +364,10 @@ bool NlModel::addCheckModelSubstitution(TNode v, TNode s)
       return false;
     }
   }
+  auto itw = d_check_model_witnesses.find(v);
+  if (itw != d_check_model_witnesses.end()) {
+    // TODO(Gereon): Check whether s satisfies itw->second.
+  }
   std::vector<Node> varsTmp;
   varsTmp.push_back(v);
   std::vector<Node> subsTmp;
@@ -429,13 +434,17 @@ bool NlModel::addCheckModelWitness(TNode v, TNode w)
     Assert(false);
     return false;
   }
-  d_model->recordApproximation(v, w);
+  d_check_model_witnesses.emplace(v, w);
   return true;
 }
 
 bool NlModel::hasCheckModelAssignment(Node v) const
 {
   if (d_check_model_bounds.find(v) != d_check_model_bounds.end())
+  {
+    return true;
+  }
+  if (d_check_model_witnesses.find(v) != d_check_model_witnesses.end())
   {
     return true;
   }
@@ -1104,6 +1113,13 @@ bool NlModel::simpleCheckModelMsum(const std::map<Node, Node>& msum, bool pol)
         }
         else
         {
+          auto wit =
+            d_check_model_witnesses.find(vc);
+          if (wit != d_check_model_witnesses.end()) {
+            //TODO(Gereon): Should do something here.
+            std::cout << "Do something with " << vc << " = " << wit->second << std::endl;
+          } else {
+
           Trace("nl-ext-cms-debug") << std::endl;
           Trace("nl-ext-cms")
               << "  failed due to unknown bound for " << vc << std::endl;
@@ -1111,6 +1127,7 @@ bool NlModel::simpleCheckModelMsum(const std::map<Node, Node>& msum, bool pol)
           // via substitution
           Assert(false);
           return false;
+          }
         }
       }
       // whether we will try to minimize/maximize (-1/1) the absolute value
@@ -1293,7 +1310,8 @@ void NlModel::printModelValue(const char* c, Node n, unsigned prec) const
 
 void NlModel::getModelValueRepair(
     std::map<Node, Node>& arithModel,
-    std::map<Node, std::pair<Node, Node>>& approximations)
+    std::map<Node, std::pair<Node, Node>>& approximations,
+    std::map<Node, Node>& witnesses)
 {
   Trace("nl-model") << "NlModel::getModelValueRepair:" << std::endl;
 
@@ -1330,6 +1348,10 @@ void NlModel::getModelValueRepair(
       arithModel[v] = l;
       Trace("nl-model") << v << " exact approximation is " << l << std::endl;
     }
+  }
+  for (const auto& vw: d_check_model_witnesses) {
+    Trace("nl-model") << vw.first << " witness is " << vw.second << std::endl;
+    witnesses.emplace(vw.first, vw.second);
   }
   // Also record the exact values we used. An exact value can be seen as a
   // special kind approximation of the form (witness x. x = exact_value).
