@@ -16,12 +16,12 @@ namespace libpoly {
 
 enum class SignCondition
 {
-  LT,
-  LE,
-  EQ,
-  NE,
-  GT,
-  GE
+  LT = LP_SGN_LT_0,
+  LE = LP_SGN_LE_0,
+  EQ = LP_SGN_EQ_0,
+  NE = LP_SGN_NE_0,
+  GT = LP_SGN_GT_0,
+  GE = LP_SGN_GE_0
 };
 
 lp_sign_condition_t to_sign_condition(SignCondition sc);
