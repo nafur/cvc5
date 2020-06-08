@@ -42,6 +42,8 @@ class CadSolver
   bool extract_bounds(const libpoly::Value& value, Node& lower, Node& upper) const;
   bool construct_model();
 
+  bool found_satisfiability = false;
+
  public:
   CadSolver(TheoryArith& containing, NlModel& model);
   ~CadSolver();

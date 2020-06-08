@@ -172,8 +172,10 @@ std::vector<NlLemma> CadSolver::checkFullRefine()
 
   auto covering = mCAC.get_unsat_cover();
   if (covering.empty()) {
+    found_satisfiability = true;
     Notice() << "SAT: " << mCAC.get_model() << std::endl;
   } else {
+    found_satisfiability = false;
     auto mis = collect_constraints(covering);
     Notice() << "Collected MIS: " << mis << std::endl;
     auto* nm = NodeManager::currentNM();
@@ -194,9 +196,11 @@ std::vector<NlLemma> CadSolver::checkFullRefine()
 
 void CadSolver::preprocessAssertionsCheckModel(std::vector<Node>& assertions)
 {
-    Notice() << "Storing " << mCAC.get_model() << std::endl;
-    construct_model();
-    assertions.clear();
+    if (found_satisfiability) {
+      Notice() << "Storing " << mCAC.get_model() << std::endl;
+      construct_model();
+      assertions.clear();
+    }
 }
 
 }  // namespace nl
