@@ -152,10 +152,10 @@ void CadSolver::initLastCall(const std::vector<Node>& assertions,
   mCAC.compute_variable_ordering();
 }
 
-std::vector<Node> CadSolver::checkInitialRefine()
+std::vector<NlLemma> CadSolver::checkInitialRefine()
 {
   Chat() << "CadSolver::checkInitialRefine" << std::endl;
-  std::vector<Node> lems;
+  std::vector<NlLemma> lems;
   
   // add lemmas corresponding to easy conflicts or refinements based on
   // the assertions/terms given in initLastCall.
@@ -163,17 +163,16 @@ std::vector<Node> CadSolver::checkInitialRefine()
   return lems;
 }
 
-std::vector<Node> CadSolver::checkFullRefine()
+std::vector<NlLemma> CadSolver::checkFullRefine()
 {
   Notice() << "CadSolver::checkFullRefine" << std::endl;
-  std::vector<Node> lems;
+  std::vector<NlLemma> lems;
 
   // Do full theory check here
 
   auto covering = mCAC.get_unsat_cover();
   if (covering.empty()) {
     Notice() << "SAT: " << mCAC.get_model() << std::endl;
-    construct_model();
   } else {
     auto mis = mCAC.collect_constraints(covering);
     auto* nm = NodeManager::currentNM();
@@ -181,7 +180,7 @@ std::vector<Node> CadSolver::checkFullRefine()
       n = n.negate();
     }
     lems.emplace_back(nm->mkNode(Kind::OR, mis));
-    Notice() << "UNSAT with MIS: " << lems.back() << std::endl;
+    Notice() << "UNSAT with MIS: " << lems.back().d_lemma << std::endl;
   } 
   
   return lems;
@@ -189,6 +188,8 @@ std::vector<Node> CadSolver::checkFullRefine()
 
 void CadSolver::preprocessAssertionsCheckModel(std::vector<Node>& assertions)
 {
+    Notice() << "Storing " << mCAC.get_model() << std::endl;
+    construct_model();
 }
 
 }  // namespace nl
