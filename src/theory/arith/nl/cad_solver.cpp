@@ -59,9 +59,9 @@ namespace nl {
         //Trace("cad-check") << value << " is an algebraic" << std::endl;
         // For the sake of it...
         const lp_algebraic_number_t& a = value.get()->value.a;
-        for (std::size_t i = 0; i < 10; ++i) {
-          lp_algebraic_number_refine_const(&a);
-        }
+        //for (std::size_t i = 0; i < 10; ++i) {
+        //  lp_algebraic_number_refine_const(&a);
+        //}
         if (a.I.is_point) {
           d_model.addCheckModelSubstitution(
             variable,
@@ -196,6 +196,7 @@ void CadSolver::preprocessAssertionsCheckModel(std::vector<Node>& assertions)
 {
     Notice() << "Storing " << mCAC.get_model() << std::endl;
     construct_model();
+    assertions.clear();
 }
 
 }  // namespace nl
