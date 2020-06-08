@@ -101,14 +101,14 @@ class CDCAC
    * A characterization contains polynomials whose roots bound the region around
    * the current assignment. Implements Algorithm 4.
    */
-  std::vector<std::pair<Polynomial, std::vector<Node>>>
+  std::vector<Polynomial>
   construct_characterization(const std::vector<CACInterval>& intervals);
 
   /** Constructs an infeasible interval from a characterization.
    * Implements Algorithm 5.
    */
   CACInterval interval_from_characterization(
-      const std::vector<std::pair<Polynomial, std::vector<Node>>>&
+      const std::vector<Polynomial>&
           characterization,
       std::size_t cur_variable,
       const Value& sample);

@@ -262,14 +262,14 @@ void add_polynomial(
   }
 }
 
-std::vector<std::pair<Polynomial, std::vector<Node>>>
+std::vector<Polynomial>
 CDCAC::construct_characterization(const std::vector<CACInterval>& intervals)
 {
   Assert(!intervals.empty()) << "A covering can not be empty";
   // TODO(Gereon): We might want to reduce the covering by removing redundancies
   // as of section 4.5.2
   Trace("cdcac") << "Constructing characterization now" << std::endl;
-  std::vector<std::pair<Polynomial, std::vector<Node>>> res;
+  std::vector<Polynomial> res;
 
   for (const auto& i : intervals)
   {
@@ -278,31 +278,31 @@ CDCAC::construct_characterization(const std::vector<CACInterval>& intervals)
     Trace("cdcac") << "-> " << i.mOrigins << std::endl;
     for (const auto& p : i.mDownPolys)
     {
-      add_polynomial(res, p, i.mOrigins);
+      add_polynomial(res, p);
     }
     for (const auto& p : i.mMainPolys)
     {
       Trace("cdcac") << "Discriminant of " << p << " -> " << discriminant(p) << std::endl;
-      add_polynomial(res, discriminant(p), i.mOrigins);
+      add_polynomial(res, discriminant(p));
 
       for (const auto& q : required_coefficients(p))
       {
         Trace("cdcac") << "Coeff of " << p << " -> " << q << std::endl;
-        add_polynomial(res, q, i.mOrigins);
+        add_polynomial(res, q);
       }
       // TODO(Gereon): Only add if p(s \times a) = a for some a <= l
       for (const auto& q : i.mLowerPolys)
       {
         if (p == q) continue;
         Trace("cdcac") << "Resultant of " << p << " and " << q << " -> " << resultant(p, q) << std::endl;
-        add_polynomial(res, resultant(p, q), i.mOrigins);
+        add_polynomial(res, resultant(p, q));
       }
       // TODO(Gereon): Only add if p(s \times a) = a for some a >= u
       for (const auto& q : i.mUpperPolys)
       {
         if (p == q) continue;
         Trace("cdcac") << "Resultant of " << p << " and " << q << " -> " << resultant(p, q) << std::endl;
-        add_polynomial(res, resultant(p, q), i.mOrigins);
+        add_polynomial(res, resultant(p, q));
       }
     }
   }
@@ -313,33 +313,19 @@ CDCAC::construct_characterization(const std::vector<CACInterval>& intervals)
     {
       for (const auto& q : intervals[i + 1].mLowerPolys)
       {
-        std::vector<Node> origins = intervals[i].mOrigins;
-        origins.insert(origins.end(),
-                       intervals[i + 1].mOrigins.begin(),
-                       intervals[i + 1].mOrigins.end());
-        remove_duplicates(origins);
         Trace("cdcac") << "Resultant of " << p << " and " << q << " -> " << resultant(p, q) << std::endl;
-        add_polynomial(res, resultant(p, q), origins);
+        add_polynomial(res, resultant(p, q));
       }
     }
   }
 
-  remove_duplicates(
-      res,
-      [](const std::pair<Polynomial, std::vector<Node>>& a,
-         const std::pair<Polynomial, std::vector<Node>>& b) {
-        return a.first < b.first;
-      },
-      [](const std::pair<Polynomial, std::vector<Node>>& a,
-         const std::pair<Polynomial, std::vector<Node>>& b) {
-        return a.first == b.first;
-      });
+  remove_duplicates(res);
 
   return res;
 }
 
 CACInterval CDCAC::interval_from_characterization(
-    const std::vector<std::pair<Polynomial, std::vector<Node>>>&
+    const std::vector<Polynomial>&
         characterization,
     std::size_t cur_variable,
     const Value& sample)
@@ -348,20 +334,17 @@ CACInterval CDCAC::interval_from_characterization(
   std::vector<Polynomial> u;
   std::vector<Polynomial> m;
   std::vector<Polynomial> d;
-  std::vector<Node> o;
 
   for (const auto& p : characterization)
   {
-    if (main_variable(p.first) == mVariableOrdering[cur_variable])
+    if (main_variable(p) == mVariableOrdering[cur_variable])
     {
-      m.emplace_back(p.first);
+      m.emplace_back(p);
     }
     else
     {
-      d.emplace_back(p.first);
+      d.emplace_back(p);
     }
-    o.insert(o.end(), p.second.begin(), p.second.end());
-    remove_duplicates(o);
   }
 
   std::vector<Value> roots;
@@ -418,7 +401,7 @@ CACInterval CDCAC::interval_from_characterization(
     mAssignment.unset(mVariableOrdering[cur_variable]);
   }
 
-  return CACInterval{Interval(lower, upper), l, u, m, d, o};
+  return CACInterval{Interval(lower, upper), l, u, m, d, {}};
 }
 
 std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable)
@@ -462,6 +445,9 @@ std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable)
 
     auto new_interval =
         interval_from_characterization(characterization, cur_variable, sample);
+    new_interval.mOrigins = collect_constraints(cov);
+    Trace("cdcac") << "Collected origins: " << new_interval.mOrigins << std::endl;
+    
     intervals.emplace_back(new_interval);
     clean_intervals(intervals);
     Trace("cdcac") << "Now we have for " << mVariableOrdering[cur_variable]
