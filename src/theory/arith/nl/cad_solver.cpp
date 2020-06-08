@@ -175,11 +175,17 @@ std::vector<NlLemma> CadSolver::checkFullRefine()
     Notice() << "SAT: " << mCAC.get_model() << std::endl;
   } else {
     auto mis = mCAC.collect_constraints(covering);
+    Notice() << "Collected MIS: " << mis << std::endl;
     auto* nm = NodeManager::currentNM();
     for (auto& n: mis) {
       n = n.negate();
     }
-    lems.emplace_back(nm->mkNode(Kind::OR, mis));
+    Assert(!mis.empty()) << "Infeasible subset can not be empty";
+    if (mis.size() == 1) {
+      lems.emplace_back(mis.front());
+    } else {
+      lems.emplace_back(nm->mkNode(Kind::OR, mis));
+    }
     Notice() << "UNSAT with MIS: " << lems.back().d_lemma << std::endl;
   } 
   
