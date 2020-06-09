@@ -92,15 +92,6 @@ CVC4::Node as_cvc_polynomial(const UPolynomial& p, const CVC4::Node& var)
   return res;
 }
 
-/** Normalizes two denominators.
- * Divides both by their gcd.
- */
-void normalize_denominators(Integer& d1, Integer& d2)
-{
-  Integer g = gcd(d1, d2);
-  d1 /= g;
-  d2 /= g;
-}
 
 Polynomial as_poly_polynomial_impl(const CVC4::Node& n,
                                    Integer& denominator,
@@ -126,9 +117,11 @@ Polynomial as_poly_polynomial_impl(const CVC4::Node& n,
       for (const auto& child : n)
       {
         Polynomial tmp = as_poly_polynomial_impl(child, denom, vm);
-        normalize_denominators(denom, denominator);
-        res = res * denom + tmp * denominator;
-        denominator *= denom;
+        /** Normalize denominators
+         */
+        Integer g = gcd(denom, denominator);
+        res = res * (denom/g) + tmp * (denominator/g);
+        denominator *= (denom/g);
       }
       return res;
     }
@@ -236,8 +229,8 @@ std::pair<libpoly::Polynomial, libpoly::SignCondition> as_poly_constraint(
   Assert(ldenom > Integer(0) && rdenom > Integer(0))
       << "Expected denominators to be always positive.";
 
-  normalize_denominators(ldenom, rdenom);
-  Polynomial lhs = left * rdenom - right * ldenom;
+  Integer g = gcd(ldenom, rdenom);
+  Polynomial lhs = left * (rdenom/g) - right * (ldenom/g);
   SignCondition sc = normalize_kind(n.getKind(), negated, lhs);
   return {lhs, sc};
 }
