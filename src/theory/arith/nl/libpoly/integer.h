@@ -67,6 +67,8 @@ Integer operator-(const Integer& i);
 /** Multiply and assign two Integers. */
 Integer& operator*=(Integer& lhs, const Integer& rhs);
 
+/** Divide two Integers. Assumes the division is exact! */
+Integer operator/(const Integer& lhs, const Integer& rhs);
 /** Divide and assign two Integers. Assumes the division is exact! */
 Integer& operator/=(Integer& lhs, const Integer& rhs);
 

@@ -99,6 +99,13 @@ Integer& operator*=(Integer& lhs, const Integer& rhs)
   return lhs;
 }
 
+Integer operator/(const Integer& lhs, const Integer& rhs)
+{
+  Integer res;
+  lp_integer_div_exact(lp_Z, res.get(), lhs.get(), rhs.get());
+  return res;
+}
+
 Integer& operator/=(Integer& lhs, const Integer& rhs)
 {
   lp_integer_div_exact(lp_Z, lhs.get(), lhs.get(), rhs.get());
