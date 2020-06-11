@@ -51,6 +51,15 @@ std::vector<Node> collect_constraints(
  */
 bool sample_outside(const std::vector<CACInterval>& infeasible,
                     libpoly::Value& sample);
+
+class CDCACDebugger {
+  std::size_t mCheckCounter = 0;
+  const std::vector<libpoly::Variable>& mVariables;
+  public:
+  CDCACDebugger(const std::vector<libpoly::Variable>& vars): mVariables(vars) {}
+  void check_interval(const libpoly::Assignment& a, const libpoly::Variable& variable, const CACInterval& i);
+};
+
 }  // namespace cad
 }  // namespace nl
 }  // namespace arith

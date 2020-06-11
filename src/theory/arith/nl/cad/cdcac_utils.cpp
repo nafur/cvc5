@@ -1,5 +1,7 @@
 #include "cdcac_utils.h"
 
+#include <fstream>
+
 namespace CVC4 {
 namespace theory {
 namespace arith {
@@ -161,6 +163,107 @@ bool sample_outside(const std::vector<CACInterval>& infeasible, Value& sample)
     return true;
   }
   return false;
+}
+
+void render(std::ostream& os, const Value& val, bool approx_from_below = true) {
+  const lp_value_t* v = val.get();
+  if (v->type == LP_VALUE_INTEGER) {
+    if (lp_integer_sgn(lp_Z, &v->value.z) < 0) {
+      Integer tmp;
+      lp_integer_abs(lp_Z, tmp.get(), &v->value.z);
+      os << "(- " << tmp << ")";
+    } else {
+      os << lp_integer_to_string(&v->value.z);
+    }
+  } else if (v->type == LP_VALUE_RATIONAL) {
+    Integer n, d;
+    lp_rational_get_num(&v->value.q, n.get());
+    lp_rational_get_den(&v->value.q, d.get());
+    lp_integer_abs(lp_Z, n.get(), n.get());
+    if (lp_rational_sgn(&v->value.q) < 0) {
+      os << "(- (/ " << lp_integer_to_string(n.get()) << " " << lp_integer_to_string(d.get()) << "))";
+    } else {
+      os << "(/ " << lp_integer_to_string(n.get()) << " " << lp_integer_to_string(d.get()) << ")";
+    }
+  } else if (v->type == LP_VALUE_DYADIC_RATIONAL) {
+    Integer n, d;
+    lp_dyadic_rational_get_num(&v->value.dy_q, n.get());
+    lp_dyadic_rational_get_den(&v->value.dy_q, d.get());
+    lp_integer_abs(lp_Z, n.get(), n.get());
+    if (lp_dyadic_rational_sgn(&v->value.dy_q) < 0) {
+      os << "(- (/ " << lp_integer_to_string(n.get()) << " " << lp_integer_to_string(d.get()) << "))";
+    } else {
+      os << "(/ " << lp_integer_to_string(n.get()) << " " << lp_integer_to_string(d.get()) << ")";
+    }
+  } else if (v->type == LP_VALUE_ALGEBRAIC) {
+    for (size_t i = 0; i < 10; ++i) {
+      lp_algebraic_number_refine_const(&v->value.a);
+    }
+    if (v->value.a.I.is_point) {
+      Value value;
+      lp_value_construct(value.get(), LP_VALUE_DYADIC_RATIONAL, &v->value.a.I.a);
+      render(os, value);
+    } else {
+      if (approx_from_below) {
+        Value value;
+        lp_value_construct(value.get(), LP_VALUE_DYADIC_RATIONAL, &v->value.a.I.a);
+        render(os, value);
+      } else {
+        Value value;
+        lp_value_construct(value.get(), LP_VALUE_DYADIC_RATIONAL, &v->value.a.I.b);
+        render(os, value);
+      }
+    }
+  } else {
+    std::cout << "Skipping " << val << std::endl;
+  }
+}
+
+void render(std::ostream& os, const Variable& v, const Interval& interval) {
+  const lp_interval_t* i = interval.get();
+  if (i->is_point) {
+    os << "(assert (= " << v << " ";
+    render(os, Value(i->a));
+    os << "))" << std::endl;
+  } else {
+    if (i->a.type != LP_VALUE_MINUS_INFINITY) {
+      os << "(assert (< ";
+      render(os, Value(i->a), false);
+      os << " " << v << "))" << std::endl;
+    }
+    if (i->b.type != LP_VALUE_PLUS_INFINITY) {
+      os << "(assert (< " << v << " ";
+      render(os, Value(i->b), true);
+      os << "))" << std::endl;
+    }
+  }
+}
+
+void CDCACDebugger::check_interval(const Assignment& a, const Variable& variable, const CACInterval& i) {
+  ++mCheckCounter;
+
+  std::cout << "Writing interval to cac-debug-" + std::to_string(mCheckCounter) + ".smt2" << std::endl;
+
+  std::ofstream out("cac-debug-" + std::to_string(mCheckCounter) + ".smt2");
+  out << "(set-logic QF_NRA)" << std::endl;
+  for (const auto& v: mVariables) {
+    out << "(declare-fun " << v << " () Real)" << std::endl;
+  }
+  out << "; Constraints used as origins" << std::endl;
+  for (const auto& o: i.mOrigins) {
+    out << "(assert " << o << ")" << std::endl;
+  }
+  out << "; Current assignment" << std::endl;
+  for (const auto& v: mVariables) {
+    if (a.has(v)) {
+      out << "(assert (= " << v << " ";
+      render(out, a.retrieve(v));
+      out << "))" << std::endl;
+    }
+  }
+  out << "; Excluded interval for " << variable << std::endl;
+  render(out, variable, i.mInterval);
+  out << "(check-sat)" << std::endl;
 }
 
 }  // namespace cad
