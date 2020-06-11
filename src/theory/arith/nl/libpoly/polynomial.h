@@ -121,6 +121,12 @@ Polynomial resultant(const Polynomial& p, const Polynomial& q);
 /** Compute the discriminant of a polynomial. */
 Polynomial discriminant(const Polynomial& p);
 
+inline Polynomial gcd(const Polynomial& p, const Polynomial& q) {
+  Polynomial res;
+  lp_polynomial_gcd(res.get(), p.get(), q.get());
+  return res;
+}
+
 /**
  * Compute a square-free factorization of a polynomial.
  * Attention: this does not yield a full factorization!
