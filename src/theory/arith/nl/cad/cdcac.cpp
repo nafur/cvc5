@@ -17,10 +17,10 @@ void remove_duplicates(std::vector<T>& v)
   v.erase(std::unique(v.begin(), v.end()), v.end());
 }
 
-CDCAC::CDCAC() {}
+CDCAC::CDCAC(): debugger(mVariableOrdering) {}
 
 CDCAC::CDCAC(const std::vector<Variable>& ordering)
-    : mVariableOrdering(ordering)
+    : mVariableOrdering(ordering), debugger(mVariableOrdering)
 {
 }
 
@@ -298,6 +298,7 @@ std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable)
       Trace("cdcac") << "SAT!" << std::endl;
       return {};
     }
+    Trace("cdcac") << "Refuting Sample: " << mAssignment << std::endl;
     auto characterization = construct_characterization(cov);
     Trace("cdcac") << "Characterization: " << characterization << std::endl;
 
@@ -309,6 +310,8 @@ std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable)
     Trace("cdcac") << "Collected origins: " << new_interval.mOrigins << std::endl;
     
     intervals.emplace_back(new_interval);
+    Trace("cdcac") << "Added " << intervals.back().mInterval << std::endl;
+    //debugger.check_interval(mAssignment, mVariableOrdering[cur_variable], intervals.back());
     clean_intervals(intervals);
     Trace("cdcac") << "Now we have for " << mVariableOrdering[cur_variable]
                        << ":" << std::endl;

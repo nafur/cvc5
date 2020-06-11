@@ -29,6 +29,7 @@ class CDCAC
   /** The variable ordering used for this method. */
   std::vector<Variable> mVariableOrdering;
 
+  CDCACDebugger debugger;
  public:
   /** Initialize without a variable ordering. */
   CDCAC();
