@@ -118,7 +118,6 @@ void add_polynomial(
   {
     if (is_constant(p)) continue;
     polys.emplace_back(p, origin);
-    polys.back().first.simplify();
   }
 }
 
@@ -180,6 +179,7 @@ CDCAC::construct_characterization(const std::vector<CACInterval>& intervals)
   }
 
   remove_duplicates(res);
+  make_finest_square_free_basis(res);
 
   return res;
 }
