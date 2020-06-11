@@ -20,6 +20,7 @@
 #include <memory>
 #include <vector>
 
+#include "theory/arith/nl/cad_solver.h"
 #include "theory/arith/nl/cad/cdcac.h"
 #include "theory/arith/nl/cad/projections.h"
 #include "theory/arith/nl/libpoly/assignment.h"
@@ -31,6 +32,7 @@
 #include "theory/arith/nl/libpoly/variable.h"
 
 using namespace CVC4;
+using namespace CVC4::theory::arith;
 using namespace CVC4::theory::arith::nl;
 
 libpoly::UPolynomial get_upoly(std::initializer_list<int> init)
@@ -45,13 +47,37 @@ libpoly::RAN get_ran(std::initializer_list<int> init, int lower, int upper)
   return libpoly::RAN(get_upoly(init), libpoly::DyadicInterval(lower, upper));
 }
 
+
+
+  NodeManager* d_nodeManager;
+
+  Node operator==(const Node& a, const Node& b) {
+    return d_nodeManager->mkNode(Kind::EQUAL, a, b);
+  }
+  Node operator>=(const Node& a, const Node& b) {
+    return d_nodeManager->mkNode(Kind::GEQ, a, b);
+  }
+  Node operator+(const Node& a, const Node& b) {
+    return d_nodeManager->mkNode(Kind::PLUS, a, b);
+  }
+  Node operator*(const Node& a, const Node& b) {
+    return d_nodeManager->mkNode(Kind::NONLINEAR_MULT, a, b);
+  }
+  Node operator!(const Node& a) {
+    return d_nodeManager->mkNode(Kind::NOT, a);
+  }
+  Node make_real_variable(const std::string& s) {
+    return d_nodeManager->mkSkolem(s, d_nodeManager->realType(), "", NodeManager::SKOLEM_EXACT_NAME);
+  }
+
 class TheoryArithNLCADWhite : public CxxTest::TestSuite
 {
-  NodeManager* d_nodeManager;
   NodeManagerScope* d_scope;
 
+
  public:
-  TheoryArithNLCADWhite() { Trace.on("cad-check"); }
+  TheoryArithNLCADWhite() { Trace.on("cad-check");
+   }
 
   void setUp() override
   {
@@ -221,5 +247,84 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
     auto cover = cac.get_unsat_cover();
     TS_ASSERT(cover.empty());
     std::cout << "SAT: " << cac.get_model() << std::endl;
+  }
+
+  void test_delta(const std::vector<Node>& a)
+  {   
+    cad::CDCAC cac;
+    cac.reset();
+    //std::cout << "Constraints:" << std::endl;
+    for (const Node& n : a)
+    {
+      //std::cout << " " << n << std::endl;
+      cac.get_constraints().add_constraint(n);
+    }
+    cac.compute_variable_ordering();
+
+    std::vector<NlLemma> lems;
+    // Do full theory check here
+
+    auto covering = cac.get_unsat_cover();
+    if (covering.empty()) {
+      std::cout << "SAT: " << cac.get_model() << std::endl;
+    } else {
+      auto mis = cad::collect_constraints(covering);
+      std::cout << "Collected MIS: " << mis << std::endl;
+      for (auto& n: mis) {
+        n = n.negate();
+      }
+      Assert(!mis.empty()) << "Infeasible subset can not be empty";
+      if (mis.size() == 1) {
+        lems.emplace_back(mis.front());
+      } else {
+        lems.emplace_back(d_nodeManager->mkNode(Kind::OR, mis));
+      }
+      Notice() << "UNSAT with MIS: " << lems.back().d_lemma << std::endl;
+    } 
+
+  }
+
+  void test_delta_one() {
+    std::vector<Node> a;
+    Node zero = d_nodeManager->mkConst(Rational(0));
+    Node one = d_nodeManager->mkConst(Rational(1));
+    Node mone = d_nodeManager->mkConst(Rational(-1));
+    Node fifth = d_nodeManager->mkConst(Rational(1, 2));
+    Node g = make_real_variable("g");
+    Node l = make_real_variable("l");
+    Node q = make_real_variable("q");
+    Node s = make_real_variable("s");
+    Node u = make_real_variable("u");
+
+    a.emplace_back(l == mone);
+    a.emplace_back(!(g*s == zero));
+    a.emplace_back(q*s == zero);
+    a.emplace_back(u == zero);
+    a.emplace_back(q == (one + (fifth*g*s)));
+    a.emplace_back(l == u + q*s + (fifth*g*s*s));
+
+    test_delta(a);
+  }
+
+  void test_delta_two() {
+    std::vector<Node> a;
+    Node zero = d_nodeManager->mkConst(Rational(0));
+    Node one = d_nodeManager->mkConst(Rational(1));
+    Node mone = d_nodeManager->mkConst(Rational(-1));
+    Node fifth = d_nodeManager->mkConst(Rational(1, 2));
+    Node g = make_real_variable("g");
+    Node l = make_real_variable("l");
+    Node q = make_real_variable("q");
+    Node s = make_real_variable("s");
+    Node u = make_real_variable("u");
+
+    a.emplace_back(l == mone);
+    a.emplace_back(!(g*s == zero));
+    a.emplace_back(u == zero);
+    a.emplace_back(q*s == zero);
+    a.emplace_back(q == (one + (fifth*g*s)));
+    a.emplace_back(l == u + q*s + (fifth*g*s*s));
+
+    test_delta(a);
   }
 };
