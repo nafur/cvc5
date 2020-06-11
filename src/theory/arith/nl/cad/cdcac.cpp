@@ -124,6 +124,7 @@ void add_polynomial(
 std::vector<Polynomial>
 CDCAC::construct_characterization(const std::vector<CACInterval>& intervals)
 {
+  // TODO(Gereon): origins from a single interval are a squarefree basis. What about resultants of polys from different intervals?
   Assert(!intervals.empty()) << "A covering can not be empty";
   // TODO(Gereon): We might want to reduce the covering by removing redundancies
   // as of section 4.5.2
