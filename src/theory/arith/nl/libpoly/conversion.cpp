@@ -17,7 +17,7 @@ namespace libpoly {
 
 libpoly::Variable VariableMapper::operator()(const CVC4::Node& n)
 {
-  Assert(n.getKind() == Kind::VARIABLE) << "Expect node to be a variable.";
+  Assert(n.isVar()) << "Expect node to be a variable.";
   auto it = mVarCVCpoly.find(n);
   if (it == mVarCVCpoly.end())
   {
@@ -98,12 +98,11 @@ Polynomial as_poly_polynomial_impl(const CVC4::Node& n,
                                    VariableMapper& vm)
 {
   denominator = Integer(1);
+  if (n.isVar()) {
+    return Polynomial(vm(n));
+  }
   switch (n.getKind())
   {
-    case Kind::VARIABLE:
-    {
-      return Polynomial(vm(n));
-    }
     case Kind::CONST_RATIONAL:
     {
       Rational r = n.getConst<Rational>();
