@@ -28,6 +28,9 @@ void Assignment::unset(const Variable& var)
 {
   lp_assignment_set_value(get(), var.get(), nullptr);
 }
+bool Assignment::has(const Variable& var) const {
+  return retrieve(var).get()->type != LP_VALUE_NONE;
+}
 Value Assignment::retrieve(const Variable& var) const {
   return *lp_assignment_get_value(get(), var.get());
 }
