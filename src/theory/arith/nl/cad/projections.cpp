@@ -21,13 +21,29 @@ void add_polynomial(std::vector<Polynomial>& polys, const Polynomial& poly)
   {
     if (is_constant(p)) continue;
     polys.emplace_back(p);
-    polys.back().simplify();
   }
 }
 
 void add_polynomials(std::vector<Polynomial>& polys, const std::vector<Polynomial>& p)
 {
   for (const auto& q: p) add_polynomial(polys, q);
+}
+
+void make_finest_square_free_basis(std::vector<libpoly::Polynomial>& polys) {
+  for (std::size_t i = 0; i < polys.size(); ++i) {
+    for (std::size_t j = i + 1; j < polys.size(); ++j) {
+      Polynomial g = gcd(polys[i], polys[j]);
+      if (!is_constant(g)) {
+        polys[i] = div(polys[i], g);
+        polys[j] = div(polys[j], g);
+        polys.emplace_back(g);
+      }
+    }
+  }
+  auto it = std::remove_if(polys.begin(), polys.end(),
+    [](const Polynomial& p){ return is_constant(p); }
+  );
+  polys.erase(it, polys.end());
 }
 
 std::vector<Polynomial> projection_mccallum(

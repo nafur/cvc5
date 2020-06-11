@@ -25,6 +25,8 @@ void add_polynomial(std::vector<libpoly::Polynomial>& polys, const libpoly::Poly
 
 void add_polynomials(std::vector<libpoly::Polynomial>& polys, const std::vector<libpoly::Polynomial>& p);
 
+void make_finest_square_free_basis(std::vector<libpoly::Polynomial>& polys);
+
 /**
  * Computes McCallum's projection operator.
  */
