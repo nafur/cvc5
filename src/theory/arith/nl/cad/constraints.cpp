@@ -1,12 +1,14 @@
 #include "constraints.h"
 
+#include "../poly_conversion.h"
+
 namespace CVC4 {
 namespace theory {
 namespace arith {
 namespace nl {
 namespace cad {
 
-using namespace libpoly;
+using namespace poly;
 
 void Constraints::add_constraint(const Polynomial& lhs,
                                  SignCondition sc,
@@ -17,7 +19,7 @@ void Constraints::add_constraint(const Polynomial& lhs,
 
 void Constraints::add_constraint(Node n)
 {
-  auto c = libpoly::as_poly_constraint(n, mVarMapper);
+  auto c = as_poly_constraint(n, mVarMapper);
   add_constraint(c.first, c.second, n);
 }
 

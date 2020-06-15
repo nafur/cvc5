@@ -5,12 +5,11 @@
 #include <tuple>
 #include <vector>
 
-#include "../libpoly/polynomial.h"
-#include "../libpoly/sign_condition.h"
+#include <poly/polyxx.h>
+#include "../poly_conversion.h"
+
 #include "expr/kind.h"
 #include "expr/node_manager_attributes.h"
-
-#include "../libpoly/conversion.h"
 
 namespace CVC4 {
 namespace theory {
@@ -22,27 +21,27 @@ class Constraints
 {
   /** Type alias for a list of constraints. */
   using ConstraintVector = std::vector<
-      std::tuple<libpoly::Polynomial, libpoly::SignCondition, Node>>;
+      std::tuple<poly::Polynomial, poly::SignCondition, Node>>;
   /** A list of constraints, each comprised of a polynomial and a sign
    * condition.
    */
   ConstraintVector mConstraints;
 
-  /** A mapping from CVC4 variables to libpoly variables.
+  /** A mapping from CVC4 variables to poly variables.
    */
-  libpoly::VariableMapper mVarMapper;
+  VariableMapper mVarMapper;
 
  public:
 
-  libpoly::VariableMapper& var_mapper() {
+  VariableMapper& var_mapper() {
     return mVarMapper;
   }
   
   /** Add a constraing (represented by a polynomial and a sign condition) to the
    * list of constraints.
    */
-  void add_constraint(const libpoly::Polynomial& lhs,
-                      libpoly::SignCondition sc,
+  void add_constraint(const poly::Polynomial& lhs,
+                      poly::SignCondition sc,
                       Node n);
 
   /** Add a constraints (represented by a node) to the list of constraints.

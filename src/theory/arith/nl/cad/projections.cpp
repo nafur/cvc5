@@ -6,7 +6,7 @@ namespace arith {
 namespace nl {
 namespace cad {
 
-using namespace libpoly;
+using namespace poly;
 
 void reduce_projection_polynomials(std::vector<Polynomial>& polys)
 {
@@ -29,7 +29,7 @@ void add_polynomials(std::vector<Polynomial>& polys, const std::vector<Polynomia
   for (const auto& q: p) add_polynomial(polys, q);
 }
 
-void make_finest_square_free_basis(std::vector<libpoly::Polynomial>& polys) {
+void make_finest_square_free_basis(std::vector<Polynomial>& polys) {
   for (std::size_t i = 0; i < polys.size(); ++i) {
     for (std::size_t j = i + 1; j < polys.size(); ++j) {
       Polynomial g = gcd(polys[i], polys[j]);

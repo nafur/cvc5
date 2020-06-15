@@ -8,17 +8,19 @@ namespace arith {
 namespace nl {
 namespace cad {
 
-using namespace libpoly;
+using namespace poly;
 
-/** Induces an ordering on libpoly intervals that is suitable for redundancy
+/** Induces an ordering on poly intervals that is suitable for redundancy
  * removal as implemented in clean_intervals.
  */
 inline bool compare_for_cleanup(const Interval& lhs, const Interval& rhs)
 {
-  const lp_value_t* ll = &(lhs.get()->a);
-  const lp_value_t* lu = lhs.get()->is_point ? ll : &(lhs.get()->b);
-  const lp_value_t* rl = &(rhs.get()->a);
-  const lp_value_t* ru = rhs.get()->is_point ? rl : &(rhs.get()->b);
+  const lp_value_t* ll = &(lhs.get_internal()->a);
+  const lp_value_t* lu =
+      lhs.get_internal()->is_point ? ll : &(lhs.get_internal()->b);
+  const lp_value_t* rl = &(rhs.get_internal()->a);
+  const lp_value_t* ru =
+      rhs.get_internal()->is_point ? rl : &(rhs.get_internal()->b);
 
   int lc = lp_value_cmp(ll, rl);
   // Lower bound is smaller
@@ -26,9 +28,9 @@ inline bool compare_for_cleanup(const Interval& lhs, const Interval& rhs)
   // Lower bound is larger
   if (lc > 0) return false;
   // Lower bound type is smaller
-  if (!lhs.get()->a_open && rhs.get()->a_open) return true;
+  if (!lhs.get_internal()->a_open && rhs.get_internal()->a_open) return true;
   // Lower bound type is larger
-  if (lhs.get()->a_open && !rhs.get()->a_open) return false;
+  if (lhs.get_internal()->a_open && !rhs.get_internal()->a_open) return false;
 
   // Attention: Here it differs from the regular interval ordering!
   int uc = lp_value_cmp(lu, ru);
@@ -37,11 +39,75 @@ inline bool compare_for_cleanup(const Interval& lhs, const Interval& rhs)
   // Upper bound is larger
   if (uc > 0) return true;
   // Upper bound type is smaller
-  if (lhs.get()->b_open && !rhs.get()->b_open) return false;
+  if (lhs.get_internal()->b_open && !rhs.get_internal()->b_open) return false;
   // Upper bound type is larger
-  if (!lhs.get()->b_open && rhs.get()->b_open) return true;
+  if (!lhs.get_internal()->b_open && rhs.get_internal()->b_open) return true;
 
   // Identical
+  return false;
+}
+
+bool interval_covers(const Interval& lhs, const Interval& rhs)
+{
+  const lp_value_t* ll = &(lhs.get_internal()->a);
+  const lp_value_t* lu =
+      lhs.get_internal()->is_point ? ll : &(lhs.get_internal()->b);
+  const lp_value_t* rl = &(rhs.get_internal()->a);
+  const lp_value_t* ru =
+      rhs.get_internal()->is_point ? rl : &(rhs.get_internal()->b);
+
+  int lc = lp_value_cmp(ll, rl);
+  int uc = lp_value_cmp(lu, ru);
+
+  // Lower bound is smaller and upper bound is larger
+  if (lc < 0 && uc > 0) return true;
+  // Lower bound is larger or upper bound is smaller
+  if (lc > 0 || uc < 0) return false;
+
+  // Now both bounds are identical.
+  Assert(lc <= 0 && uc >= 0);
+  Assert(lc == 0 || uc == 0);
+
+  // Lower bound is the same and the bound type is stricter
+  if (lc == 0 && lhs.get_internal()->a_open && !rhs.get_internal()->a_open)
+    return false;
+  // Upper bound is the same and the bound type is stricter
+  if (uc == 0 && lhs.get_internal()->b_open && !rhs.get_internal()->b_open)
+    return false;
+
+  // Both bounds are weaker
+  return true;
+}
+
+bool interval_connect(const Interval& lhs, const Interval& rhs)
+{
+  Assert(lhs < rhs) << "Can only check for a connection if lhs < rhs.";
+  const lp_value_t* lu = lhs.get_internal()->is_point
+                             ? &(lhs.get_internal()->a)
+                             : &(lhs.get_internal()->b);
+  const lp_value_t* rl = &(rhs.get_internal()->a);
+  int c = lp_value_cmp(lu, rl);
+  if (c < 0)
+  {
+    Trace("libpoly::interval_connect")
+        << lhs << " and " << rhs << " are separated." << std::endl;
+    return false;
+  }
+  if (c > 0)
+  {
+    Trace("libpoly::interval_connect")
+        << lhs << " and " << rhs << " overlap." << std::endl;
+    return true;
+  }
+  Assert(c == 0);
+  if (lhs.get_internal()->is_point || rhs.get_internal()->is_point
+      || !lhs.get_internal()->b_open || !rhs.get_internal()->a_open)
+  {
+    Trace("libpoly::interval_connect")
+        << lhs << " and " << rhs
+        << " touch and the intermediate point is covered." << std::endl;
+    return true;
+  }
   return false;
 }
 
@@ -108,35 +174,35 @@ bool sample_outside(const std::vector<CACInterval>& infeasible, Value& sample)
 {
   if (infeasible.empty())
   {
-    sample = Integer(0);
+    sample = poly::Integer();
     return true;
   }
-  if (!lower_is_infty(infeasible.front().mInterval))
+  if (!is_infinity(get_lower(infeasible.front().mInterval)))
   {
     Trace("cdcac") << "Sample before " << infeasible.front().mInterval
                    << std::endl;
-    const auto* i = infeasible.front().mInterval.get();
-    sample =
-        sample_between(Value::minus_infty().get(), true, &i->a, !i->a_open);
+    const auto* i = infeasible.front().mInterval.get_internal();
+    sample = value_between(
+        Value::minus_infty().get_internal(), true, &i->a, !i->a_open);
     return true;
   }
   for (std::size_t i = 0; i < infeasible.size() - 1; ++i)
   {
     if (!interval_connect(infeasible[i].mInterval, infeasible[i + 1].mInterval))
     {
-      const auto* l = infeasible[i].mInterval.get();
-      const auto* r = infeasible[i + 1].mInterval.get();
+      const auto* l = infeasible[i].mInterval.get_internal();
+      const auto* r = infeasible[i + 1].mInterval.get_internal();
 
       Trace("cdcac") << "Sample between " << infeasible[i].mInterval << " and "
                      << infeasible[i + 1].mInterval << std::endl;
 
       if (l->is_point)
       {
-        sample = sample_between(&l->a, true, &r->a, !r->a_open);
+        sample = value_between(&l->a, true, &r->a, !r->a_open);
       }
       else
       {
-        sample = sample_between(&l->b, !l->b_open, &r->a, !r->a_open);
+        sample = value_between(&l->b, !l->b_open, &r->a, !r->a_open);
       }
       return true;
     }
@@ -146,118 +212,159 @@ bool sample_outside(const std::vector<CACInterval>& infeasible, Value& sample)
                      << infeasible[i + 1].mInterval << " connect" << std::endl;
     }
   }
-  if (!upper_is_infty(infeasible.back().mInterval))
+  if (!is_infinity(get_upper(infeasible.back().mInterval)))
   {
     Trace("cdcac") << "Sample above " << infeasible.back().mInterval
                    << std::endl;
-    const auto* i = infeasible.back().mInterval.get();
+    const auto* i = infeasible.back().mInterval.get_internal();
     if (i->is_point)
     {
-      sample = sample_between(&i->a, true, Value::plus_infty().get(), true);
+      sample =
+          value_between(&i->a, true, Value::plus_infty().get_internal(), true);
     }
     else
     {
-      sample =
-          sample_between(&i->b, !i->b_open, Value::plus_infty().get(), true);
+      sample = value_between(
+          &i->b, !i->b_open, Value::plus_infty().get_internal(), true);
     }
     return true;
   }
   return false;
 }
 
-void render(std::ostream& os, const Value& val, bool approx_from_below = true) {
-  const lp_value_t* v = val.get();
-  if (v->type == LP_VALUE_INTEGER) {
-    if (lp_integer_sgn(lp_Z, &v->value.z) < 0) {
-      Integer tmp;
-      lp_integer_abs(lp_Z, tmp.get(), &v->value.z);
-      os << "(- " << tmp << ")";
-    } else {
-      os << lp_integer_to_string(&v->value.z);
+void render(std::ostream& os, const Value& val, bool approx_from_below = true)
+{
+  const lp_value_t* v = val.get_internal();
+  if (v->type == LP_VALUE_INTEGER)
+  {
+    const poly::Integer& i = to_integer(val);
+    if (sgn(i) < 0)
+    {
+      os << "(- " << poly::abs(i) << ")";
     }
-  } else if (v->type == LP_VALUE_RATIONAL) {
-    Integer n, d;
-    lp_rational_get_num(&v->value.q, n.get());
-    lp_rational_get_den(&v->value.q, d.get());
-    lp_integer_abs(lp_Z, n.get(), n.get());
-    if (lp_rational_sgn(&v->value.q) < 0) {
-      os << "(- (/ " << lp_integer_to_string(n.get()) << " " << lp_integer_to_string(d.get()) << "))";
-    } else {
-      os << "(/ " << lp_integer_to_string(n.get()) << " " << lp_integer_to_string(d.get()) << ")";
+    else
+    {
+      os << i;
     }
-  } else if (v->type == LP_VALUE_DYADIC_RATIONAL) {
-    Integer n, d;
-    lp_dyadic_rational_get_num(&v->value.dy_q, n.get());
-    lp_dyadic_rational_get_den(&v->value.dy_q, d.get());
-    lp_integer_abs(lp_Z, n.get(), n.get());
-    if (lp_dyadic_rational_sgn(&v->value.dy_q) < 0) {
-      os << "(- (/ " << lp_integer_to_string(n.get()) << " " << lp_integer_to_string(d.get()) << "))";
-    } else {
-      os << "(/ " << lp_integer_to_string(n.get()) << " " << lp_integer_to_string(d.get()) << ")";
+  }
+  else if (v->type == LP_VALUE_RATIONAL)
+  {
+    const poly::Integer& n = numerator(to_rational(val));
+    const poly::Integer& d = denominator(to_rational(val));
+    if (sgn(to_rational(val)) < 0)
+    {
+      os << "(- (/ " << abs(n) << " " << d << "))";
     }
-  } else if (v->type == LP_VALUE_ALGEBRAIC) {
-    for (size_t i = 0; i < 10; ++i) {
-      lp_algebraic_number_refine_const(&v->value.a);
+    else
+    {
+      os << "(/ " << n << " " << d << ")";
     }
-    if (v->value.a.I.is_point) {
+  }
+  else if (v->type == LP_VALUE_DYADIC_RATIONAL)
+  {
+    poly::Integer n = numerator(to_dyadic_rational(val));
+    poly::Integer d = denominator(to_dyadic_rational(val));
+    if (sgn(to_dyadic_rational(val)) < 0)
+    {
+      os << "(- (/ " << n << " " << d << "))";
+    }
+    else
+    {
+      os << "(/ " << n << " " << d << ")";
+    }
+  }
+  else if (v->type == LP_VALUE_ALGEBRAIC)
+  {
+    const poly::AlgebraicNumber& an = to_algebraic_number(val);
+    for (size_t i = 0; i < 10; ++i)
+    {
+      refine_const(an);
+    }
+    if (v->value.a.I.is_point)
+    {
       Value value;
-      lp_value_construct(value.get(), LP_VALUE_DYADIC_RATIONAL, &v->value.a.I.a);
+      lp_value_construct(
+          value.get_internal(), LP_VALUE_DYADIC_RATIONAL, &v->value.a.I.a);
       render(os, value);
-    } else {
-      if (approx_from_below) {
+    }
+    else
+    {
+      if (approx_from_below)
+      {
         Value value;
-        lp_value_construct(value.get(), LP_VALUE_DYADIC_RATIONAL, &v->value.a.I.a);
+        lp_value_construct(
+            value.get_internal(), LP_VALUE_DYADIC_RATIONAL, &v->value.a.I.a);
         render(os, value);
-      } else {
+      }
+      else
+      {
         Value value;
-        lp_value_construct(value.get(), LP_VALUE_DYADIC_RATIONAL, &v->value.a.I.b);
+        lp_value_construct(
+            value.get_internal(), LP_VALUE_DYADIC_RATIONAL, &v->value.a.I.b);
         render(os, value);
       }
     }
-  } else {
+  }
+  else
+  {
     std::cout << "Skipping " << val << std::endl;
   }
 }
 
-void render(std::ostream& os, const Variable& v, const Interval& interval) {
-  const lp_interval_t* i = interval.get();
-  if (i->is_point) {
+void render(std::ostream& os, const Variable& v, const Interval& interval)
+{
+  const lp_interval_t* i = interval.get_internal();
+  if (i->is_point)
+  {
     os << "(assert (= " << v << " ";
-    render(os, Value(i->a));
+    render(os, Value(get_lower(interval)));
     os << "))" << std::endl;
-  } else {
-    if (i->a.type != LP_VALUE_MINUS_INFINITY) {
+  }
+  else
+  {
+    if (i->a.type != LP_VALUE_MINUS_INFINITY)
+    {
       os << "(assert (< ";
-      render(os, Value(i->a), false);
+      render(os, Value(get_lower(interval)), false);
       os << " " << v << "))" << std::endl;
     }
-    if (i->b.type != LP_VALUE_PLUS_INFINITY) {
+    if (i->b.type != LP_VALUE_PLUS_INFINITY)
+    {
       os << "(assert (< " << v << " ";
-      render(os, Value(i->b), true);
+      render(os, Value(get_upper(interval)), true);
       os << "))" << std::endl;
     }
   }
 }
 
-void CDCACDebugger::check_interval(const Assignment& a, const Variable& variable, const CACInterval& i) {
+void CDCACDebugger::check_interval(const Assignment& a,
+                                   const Variable& variable,
+                                   const CACInterval& i)
+{
   ++mCheckCounter;
 
-  std::cout << "Writing interval to cac-debug-" + std::to_string(mCheckCounter) + ".smt2" << std::endl;
+  std::cout << "Writing interval to cac-debug-" + std::to_string(mCheckCounter)
+                   + ".smt2"
+            << std::endl;
 
   std::ofstream out("cac-debug-" + std::to_string(mCheckCounter) + ".smt2");
   out << "(set-logic QF_NRA)" << std::endl;
-  for (const auto& v: mVariables) {
+  for (const auto& v : mVariables)
+  {
     out << "(declare-fun " << v << " () Real)" << std::endl;
   }
   out << "; Constraints used as origins" << std::endl;
-  for (const auto& o: i.mOrigins) {
+  for (const auto& o : i.mOrigins)
+  {
     out << "(assert " << o << ")" << std::endl;
   }
   out << "; Current assignment" << std::endl;
-  for (const auto& v: mVariables) {
-    if (a.has(v)) {
+  for (const auto& v : mVariables)
+  {
+    if (a.has(v))
+    {
       out << "(assert (= " << v << " ";
-      render(out, a.retrieve(v));
+      render(out, a.get(v));
       out << "))" << std::endl;
     }
   }

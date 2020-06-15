@@ -6,7 +6,7 @@
 #include <iostream>
 #include <vector>
 
-#include "../libpoly/polynomial.h"
+#include <poly/polyxx.h>
 
 namespace CVC4 {
 namespace theory {
@@ -15,23 +15,23 @@ namespace nl {
 namespace cad {
 
 /** Sort and remove duplicates from the list of polynomials. */
-void reduce_projection_polynomials(std::vector<libpoly::Polynomial>& polys);
+void reduce_projection_polynomials(std::vector<poly::Polynomial>& polys);
 
 /**
  * Adds a polynomial to the list of projection polynomials.
  * Before adding, it factorizes the polynomials and removed constant factors.
  */
-void add_polynomial(std::vector<libpoly::Polynomial>& polys, const libpoly::Polynomial& poly);
+void add_polynomial(std::vector<poly::Polynomial>& polys, const poly::Polynomial& poly);
 
-void add_polynomials(std::vector<libpoly::Polynomial>& polys, const std::vector<libpoly::Polynomial>& p);
+void add_polynomials(std::vector<poly::Polynomial>& polys, const std::vector<poly::Polynomial>& p);
 
-void make_finest_square_free_basis(std::vector<libpoly::Polynomial>& polys);
+void make_finest_square_free_basis(std::vector<poly::Polynomial>& polys);
 
 /**
  * Computes McCallum's projection operator.
  */
-std::vector<libpoly::Polynomial> projection_mccallum(
-    const std::vector<libpoly::Polynomial>& polys);
+std::vector<poly::Polynomial> projection_mccallum(
+    const std::vector<poly::Polynomial>& polys);
 
 }  // namespace cad
 }  // namespace nl

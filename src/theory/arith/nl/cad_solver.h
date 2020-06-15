@@ -38,8 +38,8 @@ class CadSolver
 
   cad::CDCAC mCAC;
 
-  bool assign_model_variable(const Node& variable, const libpoly::Value& value) const;
-  bool extract_bounds(const libpoly::Value& value, Node& lower, Node& upper) const;
+  bool assign_model_variable(const Node& variable, const poly::Value& value) const;
+  bool extract_bounds(const poly::Value& value, Node& lower, Node& upper) const;
   bool construct_model();
 
   bool found_satisfiability = false;

@@ -3,9 +3,8 @@
 
 #include "cdcac_utils.h"
 
-#include "../libpoly/assignment.h"
-#include "../libpoly/interval.h"
-#include "../libpoly/polynomial.h"
+#include <poly/polyxx.h>
+
 #include "constraints.h"
 
 #include <vector>
@@ -16,7 +15,7 @@ namespace arith {
 namespace nl {
 namespace cad {
 
-using namespace libpoly;
+using namespace poly;
 
 class CDCAC
 {

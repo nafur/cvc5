@@ -12,12 +12,15 @@
  ** \brief Implementation of new non-linear solver
  **/
 
-#include <poly/upolynomial.h>
+//#include <poly/upolynomial.h>
+
+#include <poly/polyxx.h>
 
 #include "theory/arith/nl/cad_solver.h"
 #include "theory/arith/nl/cad/cdcac.h"
-#include "theory/arith/nl/libpoly/conversion.h"
+#include "theory/arith/nl/poly_conversion.h"
 
+#include "util/poly_util.h"
 #include "options/arith_options.h"
 #include "options/smt_options.h"
 #include "preprocessing/passes/bv_to_int.h"
@@ -31,55 +34,56 @@ namespace theory {
 namespace arith {
 namespace nl {
 
-  bool CadSolver::assign_model_variable(const Node& variable, const libpoly::Value& value) const {
+  bool CadSolver::assign_model_variable(const Node& variable, const poly::Value& value) const {
     auto* nm = NodeManager::currentNM();
-    switch (value.get()->type) {
+    switch (value.get_internal()->type) {
       case LP_VALUE_INTEGER: {
         d_model.addCheckModelSubstitution(
           variable,
-          nm->mkConst(Rational(libpoly::as_cvc_integer(&value.get()->value.z)))
+          nm->mkConst(Rational(poly_utils::to_integer(poly::to_integer(value))))
         );
         return true;
       }
       case LP_VALUE_RATIONAL: {
         d_model.addCheckModelSubstitution(
           variable,
-          nm->mkConst(libpoly::as_cvc_rational(&value.get()->value.q))
+          nm->mkConst(poly_utils::to_rational(poly::to_rational(value)))
         );
         return true;
       }
       case LP_VALUE_DYADIC_RATIONAL: {
         d_model.addCheckModelSubstitution(
           variable,
-          nm->mkConst(libpoly::as_cvc_rational(&value.get()->value.dy_q))
+          nm->mkConst(poly_utils::to_rational(poly::to_dyadic_rational(value)))
         );
         return true;
       }
       case LP_VALUE_ALGEBRAIC: {
         //Trace("cad-check") << value << " is an algebraic" << std::endl;
         // For the sake of it...
-        const lp_algebraic_number_t& a = value.get()->value.a;
+        const poly::AlgebraicNumber& ran = poly::to_algebraic_number(value);
+        const lp_algebraic_number_t& a = value.get_internal()->value.a;
         //for (std::size_t i = 0; i < 10; ++i) {
         //  lp_algebraic_number_refine_const(&a);
         //}
         if (a.I.is_point) {
           d_model.addCheckModelSubstitution(
             variable,
-            nm->mkConst(libpoly::as_cvc_rational(&a.I.a))
+            nm->mkConst(poly_utils::to_rational(*poly::detail::cast_from(&a.I.a)))
           );
         } else {
-          Node poly = libpoly::as_cvc_polynomial(libpoly::UPolynomial(lp_upolynomial_construct_copy(a.f)), variable);
+          Node poly = as_cvc_polynomial(poly::UPolynomial(lp_upolynomial_construct_copy(a.f)), variable);
           // Construct witness:
           // a.f(x) == 0  &&  a.I.a < x  &&  x < a.I.b
           Node witness = nm->mkNode(Kind::AND,
             nm->mkNode(Kind::EQUAL, poly, nm->mkConst(Rational(0))),
             nm->mkNode(Kind::LT,
-              nm->mkConst(libpoly::as_cvc_rational(&a.I.a)),
+              nm->mkConst(poly_utils::to_rational(get_lower_bound(ran))),
               variable
             ),
             nm->mkNode(Kind::LT,
               variable,
-              nm->mkConst(libpoly::as_cvc_rational(&a.I.b))
+              nm->mkConst(poly_utils::to_rational(get_upper_bound(ran)))
             )
           );
           Trace("cad-check") << "Adding witness: " << witness << std::endl;
@@ -96,7 +100,7 @@ namespace nl {
 
   bool CadSolver::construct_model() {
     for (const auto& v: mCAC.get_variable_ordering()) {
-      libpoly::Value val = mCAC.get_model().retrieve(v);
+      poly::Value val = mCAC.get_model().get(v);
       Node variable = mCAC.get_constraints().var_mapper()(v);
       if (assign_model_variable(variable, val)) {
         Trace("cad-check") << "-> " << v << " = " << val << std::endl;

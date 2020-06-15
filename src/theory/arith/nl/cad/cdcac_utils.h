@@ -1,11 +1,10 @@
 #ifndef CVC4__THEORY__NLARITH__CAD__CDCAC_UTILS_H
 #define CVC4__THEORY__NLARITH__CAD__CDCAC_UTILS_H
 
+#include <poly/polyxx.h>
+
 #include <vector>
 
-#include "../libpoly/interval.h"
-#include "../libpoly/polynomial.h"
-#include "../libpoly/value.h"
 #include "expr/node.h"
 
 namespace CVC4 {
@@ -18,11 +17,11 @@ namespace cad {
  */
 struct CACInterval
 {
-  libpoly::Interval mInterval;
-  std::vector<libpoly::Polynomial> mLowerPolys;
-  std::vector<libpoly::Polynomial> mUpperPolys;
-  std::vector<libpoly::Polynomial> mMainPolys;
-  std::vector<libpoly::Polynomial> mDownPolys;
+  poly::Interval mInterval;
+  std::vector<poly::Polynomial> mLowerPolys;
+  std::vector<poly::Polynomial> mUpperPolys;
+  std::vector<poly::Polynomial> mMainPolys;
+  std::vector<poly::Polynomial> mDownPolys;
   std::vector<Node> mOrigins;
 };
 inline bool operator==(const CACInterval& lhs, const CACInterval& rhs)
@@ -33,6 +32,9 @@ inline bool operator<(const CACInterval& lhs, const CACInterval& rhs)
 {
   return lhs.mInterval < rhs.mInterval;
 }
+
+bool interval_covers(const poly::Interval& lhs, const poly::Interval& rhs);
+bool interval_connect(const poly::Interval& lhs, const poly::Interval& rhs);
 
 /** Sort intervals according to section 4.4.1.
  * Also removes fully redundant intervals as in 4.5. 1.
@@ -50,14 +52,18 @@ std::vector<Node> collect_constraints(
  * Implements sample_outside() from section 4.3
  */
 bool sample_outside(const std::vector<CACInterval>& infeasible,
-                    libpoly::Value& sample);
+                    poly::Value& sample);
 
-class CDCACDebugger {
+class CDCACDebugger
+{
   std::size_t mCheckCounter = 0;
-  const std::vector<libpoly::Variable>& mVariables;
-  public:
-  CDCACDebugger(const std::vector<libpoly::Variable>& vars): mVariables(vars) {}
-  void check_interval(const libpoly::Assignment& a, const libpoly::Variable& variable, const CACInterval& i);
+  const std::vector<poly::Variable>& mVariables;
+
+ public:
+  CDCACDebugger(const std::vector<poly::Variable>& vars) : mVariables(vars) {}
+  void check_interval(const poly::Assignment& a,
+                      const poly::Variable& variable,
+                      const CACInterval& i);
 };
 
 }  // namespace cad
