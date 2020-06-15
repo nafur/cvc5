@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 
+#include "integer.h"
 #include "utils.h"
 #include "variable.h"
 
@@ -34,6 +35,16 @@ class UPolynomial
   UPolynomial(std::size_t degree, const lp_integer_t* coeffs);
   /** Copy from the given UPolynomial. */
   UPolynomial(const UPolynomial& poly);
+
+  UPolynomial(const std::vector<Integer>& coeffs): UPolynomial(
+    coeffs.size(), reinterpret_cast<const lp_integer_t*>(coeffs.data())
+  )
+  {
+  }
+  UPolynomial(std::initializer_list<Integer> coeffs)
+      : UPolynomial(std::vector<Integer>(coeffs))
+  {
+  }
 
   /** Get a non-const pointer to the internal lp_upolynomial_t. Handle with
    * care! */

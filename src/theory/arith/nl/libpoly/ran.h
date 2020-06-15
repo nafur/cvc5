@@ -26,6 +26,9 @@ class RAN
   lp_algebraic_number_t mValue;
 
  public:
+  RAN() {
+    lp_algebraic_number_construct_zero(&mValue);
+  }
   /** Construct from a defining polynomial and an isolating interval. */
   RAN(UPolynomial&& poly, const DyadicInterval& i);
   /** Construct from a defining polynomial and an isolating interval. */
