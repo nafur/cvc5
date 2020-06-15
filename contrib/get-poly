@@ -7,7 +7,9 @@ version="v0.1.8"
 
 check_dep_dir "$POLY_DIR"
 setup_dep \
-  "https://github.com/SRI-CSL/libpoly/archive/$version.tar.gz" "$POLY_DIR"
+  "https://github.com/nafur/libpoly/archive/cxx.tar.gz" "$POLY_DIR"
+# TODO(Gereon): Change back to upstream once everything is merged
+#  "https://github.com/SRI-CSL/libpoly/archive/$version.tar.gz"
 
 pwd
 cd "$POLY_DIR/build/"
@@ -22,7 +24,7 @@ CMAKEFLAGS="\
 
 echo "Installing to $INSTALL_DIR"
 
-cmake $CMAKEFLAGS  ../ && make install
+cmake $CMAKEFLAGS  ../ && make -j${NPROC} install
 
 echo
 echo "Using poly version $version"

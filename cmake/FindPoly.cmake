@@ -8,7 +8,11 @@
 # However, includes in libpoly headers are not prefixed with "poly/" and therefore
 # we have to look for headers in include/poly instead of include/.
 find_path(POLY_INCLUDE_DIR NAMES poly/poly.h PATH_SUFFIXES poly)
-find_library(POLY_LIBRARIES NAMES poly)
+find_library(POLY_LIB NAMES poly)
+find_library(POLY_LIBXX NAMES polyxx)
+set(POLY_LIBRARIES "${POLY_LIBXX};${POLY_LIB}")
+unset(POLY_LIB)
+unset(POLY_LIBXX)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Poly
