@@ -8,7 +8,59 @@
 #include "util/rational.h"
 #include "util/real_algebraic_number.h"
 
+#include <map>
+
 namespace CVC4 {
+namespace poly_utils {
+
+Integer to_integer(const poly::Integer& i) {
+#ifdef CVC4_GMP_IMP
+  return Integer(*poly::detail::cast_to_gmp(&i));
+#endif
+#ifdef CVC4_CLN_IMP
+  Assert(false) << "This is not yet implemented";
+  return poly::Integer();
+#endif
+}
+Rational to_rational(const poly::Rational& r) {
+#ifdef CVC4_GMP_IMP
+  return Rational(*poly::detail::cast_to_gmp(&r));
+#endif
+#ifdef CVC4_CLN_IMP
+  Assert(false) << "This is not yet implemented";
+  return poly::Integer();
+#endif
+}
+Rational to_rational(const poly::DyadicRational& dr) {
+  return Rational(to_integer(numerator(dr)), to_integer(denominator(dr)));
+}
+
+poly::Integer to_integer(const Integer& i)
+{
+#ifdef CVC4_GMP_IMP
+  return poly::Integer(i.getValue());
+#endif
+#ifdef CVC4_CLN_IMP
+  Assert(false) << "This is not yet implemented";
+  return poly::Integer();
+#endif
+}
+std::vector<poly::Integer> to_integer(const std::vector<Integer>& vi)
+{
+  std::vector<poly::Integer> res;
+  for (const auto& i : vi) res.emplace_back(to_integer(i));
+  return res;
+}
+poly::Rational to_rational(const Rational& r)
+{
+#ifdef CVC4_GMP_IMP
+  return poly::Rational(r.getValue());
+#endif
+#ifdef CVC4_CLN_IMP
+  Assert(false) << "This is not yet implemented";
+  return poly::Rational();
+#endif
+}
 
 Maybe<poly::DyadicRational> to_dyadic_rational(const Rational& r)
 {
@@ -39,24 +91,6 @@ Maybe<poly::DyadicRational> to_dyadic_rational(const poly::Rational& r)
     return div_2exp(poly::DyadicRational(numerator(r)), size);
   }
   return Maybe<poly::DyadicRational>();
-}
-
-#ifdef CVC4_GMP_IMP
-poly::Integer to_integer(const Integer& i) {
-    return poly::Integer(i.getValue());
-}
-#endif
-#ifdef CVC4_CLN_IMP
-poly::Integer to_integer(const Integer& i) {
-    //return poly::Integer(i.get_value());
-    Assert(false) << "This is not yet implemented";
-    return poly::Integer();
-}
-#endif
-std::vector<poly::Integer> to_integer(const std::vector<Integer>& vi) {
-  std::vector<poly::Integer> res;
-  for (const auto& i: vi) res.emplace_back(to_integer(i));
-  return res;
 }
 
 /**
@@ -93,11 +127,12 @@ RealAlgebraicNumber from_rationals_with_refinement(poly::UPolynomial&& p,
     ri = poly::RationalInterval(l, u);
   }
   Assert(count_real_roots(p, poly::RationalInterval(l, u)) == 1);
-  auto ml = CVC4::to_dyadic_rational(l);
-  auto mu = CVC4::to_dyadic_rational(u);
+  auto ml = to_dyadic_rational(l);
+  auto mu = to_dyadic_rational(u);
   Assert(ml && mu) << "Both bounds should be dyadic by now.";
   return RealAlgebraicNumber(poly::AlgebraicNumber(
       std::move(p), poly::DyadicInterval(ml.value(), mu.value())));
 }
 
+}  // namespace poly_utils
 }  // namespace CVC4
