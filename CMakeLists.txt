@@ -513,6 +513,9 @@ if(USE_POLY)
     DESTINATION ${LIBRARY_INSTALL_DIR}/
     FILES_MATCHING PATTERN "libpoly.*"
   )
+  set(CVC4_USE_POLY_IMP 1)
+else()
+  set(CVC4_USE_POLY_IMP 0)
 endif()
 
 if(USE_READLINE)
