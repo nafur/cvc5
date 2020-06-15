@@ -24,7 +24,7 @@ RealAlgebraicNumber::RealAlgebraicNumber(const Integer& i)
 RealAlgebraicNumber::RealAlgebraicNumber(const Rational& r)
 {
   poly::Rational pr(r.getValue());
-  auto dr = to_dyadic_rational(r);
+  auto dr = poly_utils::to_dyadic_rational(r);
   if (dr) {
     d_value = poly::AlgebraicNumber(
         poly::UPolynomial({numerator(pr), -denominator(pr)}),
@@ -41,7 +41,7 @@ RealAlgebraicNumber::RealAlgebraicNumber(
     const Rational& lower,
     const Rational& upper)
 {
-    *this = from_rationals_with_refinement(poly::UPolynomial(to_integer(coefficients)), lower, upper);
+    *this = poly_utils::from_rationals_with_refinement(poly::UPolynomial(poly_utils::to_integer(coefficients)), lower, upper);
 }
 RealAlgebraicNumber::RealAlgebraicNumber(
     const std::vector<Rational>& coefficients,
@@ -57,7 +57,7 @@ RealAlgebraicNumber::RealAlgebraicNumber(
         Assert((c * factor).getDenominator() == Integer(1));
         coeffs.emplace_back((c * factor).getNumerator().getValue());
     }
-    *this = from_rationals_with_refinement(poly::UPolynomial(std::move(coeffs)), lower, upper);
+    *this = poly_utils::from_rationals_with_refinement(poly::UPolynomial(std::move(coeffs)), lower, upper);
 }
 
 RealAlgebraicNumber& RealAlgebraicNumber::operator=(const RealAlgebraicNumber& ran) {
