@@ -35,7 +35,7 @@ Integer to_integer(const poly::Integer& i)
   }
   else
   {
-    return cast_by_string<Integer,mpz_class>(gi);
+    return cast_by_string<Integer,poly::Integer>(i);
   }
 #endif
 }
