@@ -90,8 +90,8 @@ std::vector<CACInterval> CDCAC::get_unsat_intervals(
       Trace("cdcac") << "-> " << i << std::endl;
       std::vector<Polynomial> l, u, m, d;
       // TODO(Gereon): Factorize polynomials here.
-      if (!is_infinity(get_lower(i))) l.emplace_back(p);
-      if (!is_infinity(get_upper(i))) u.emplace_back(p);
+      if (!is_minus_infinity(get_lower(i))) l.emplace_back(p);
+      if (!is_plus_infinity(get_upper(i))) u.emplace_back(p);
       m.emplace_back(p);
       res.emplace_back(CACInterval{i, l, u, m, d, {n}});
     }

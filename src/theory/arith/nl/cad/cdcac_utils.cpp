@@ -177,7 +177,7 @@ bool sample_outside(const std::vector<CACInterval>& infeasible, Value& sample)
     sample = poly::Integer();
     return true;
   }
-  if (!is_infinity(get_lower(infeasible.front().mInterval)))
+  if (!is_minus_infinity(get_lower(infeasible.front().mInterval)))
   {
     Trace("cdcac") << "Sample before " << infeasible.front().mInterval
                    << std::endl;
@@ -212,7 +212,7 @@ bool sample_outside(const std::vector<CACInterval>& infeasible, Value& sample)
                      << infeasible[i + 1].mInterval << " connect" << std::endl;
     }
   }
-  if (!is_infinity(get_upper(infeasible.back().mInterval)))
+  if (!is_plus_infinity(get_upper(infeasible.back().mInterval)))
   {
     Trace("cdcac") << "Sample above " << infeasible.back().mInterval
                    << std::endl;
@@ -237,7 +237,7 @@ void render(std::ostream& os, const Value& val, bool approx_from_below = true)
   const lp_value_t* v = val.get_internal();
   if (v->type == LP_VALUE_INTEGER)
   {
-    const poly::Integer& i = to_integer(val);
+    const poly::Integer& i = as_integer(val);
     if (sgn(i) < 0)
     {
       os << "(- " << poly::abs(i) << ")";
@@ -249,9 +249,9 @@ void render(std::ostream& os, const Value& val, bool approx_from_below = true)
   }
   else if (v->type == LP_VALUE_RATIONAL)
   {
-    const poly::Integer& n = numerator(to_rational(val));
-    const poly::Integer& d = denominator(to_rational(val));
-    if (sgn(to_rational(val)) < 0)
+    const poly::Integer& n = numerator(as_rational(val));
+    const poly::Integer& d = denominator(as_rational(val));
+    if (sgn(as_rational(val)) < 0)
     {
       os << "(- (/ " << abs(n) << " " << d << "))";
     }
@@ -262,9 +262,9 @@ void render(std::ostream& os, const Value& val, bool approx_from_below = true)
   }
   else if (v->type == LP_VALUE_DYADIC_RATIONAL)
   {
-    poly::Integer n = numerator(to_dyadic_rational(val));
-    poly::Integer d = denominator(to_dyadic_rational(val));
-    if (sgn(to_dyadic_rational(val)) < 0)
+    poly::Integer n = numerator(as_dyadic_rational(val));
+    poly::Integer d = denominator(as_dyadic_rational(val));
+    if (sgn(as_dyadic_rational(val)) < 0)
     {
       os << "(- (/ " << n << " " << d << "))";
     }
@@ -275,7 +275,7 @@ void render(std::ostream& os, const Value& val, bool approx_from_below = true)
   }
   else if (v->type == LP_VALUE_ALGEBRAIC)
   {
-    const poly::AlgebraicNumber& an = to_algebraic_number(val);
+    const poly::AlgebraicNumber& an = as_algebraic_number(val);
     for (size_t i = 0; i < 10; ++i)
     {
       refine_const(an);

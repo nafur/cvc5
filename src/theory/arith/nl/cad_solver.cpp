@@ -40,28 +40,28 @@ namespace nl {
       case LP_VALUE_INTEGER: {
         d_model.addCheckModelSubstitution(
           variable,
-          nm->mkConst(Rational(poly_utils::to_integer(poly::to_integer(value))))
+          nm->mkConst(Rational(poly_utils::to_integer(as_integer(value))))
         );
         return true;
       }
       case LP_VALUE_RATIONAL: {
         d_model.addCheckModelSubstitution(
           variable,
-          nm->mkConst(poly_utils::to_rational(poly::to_rational(value)))
+          nm->mkConst(poly_utils::to_rational(as_rational(value)))
         );
         return true;
       }
       case LP_VALUE_DYADIC_RATIONAL: {
         d_model.addCheckModelSubstitution(
           variable,
-          nm->mkConst(poly_utils::to_rational(poly::to_dyadic_rational(value)))
+          nm->mkConst(poly_utils::to_rational(as_dyadic_rational(value)))
         );
         return true;
       }
       case LP_VALUE_ALGEBRAIC: {
         //Trace("cad-check") << value << " is an algebraic" << std::endl;
         // For the sake of it...
-        const poly::AlgebraicNumber& ran = poly::to_algebraic_number(value);
+        const poly::AlgebraicNumber& ran = as_algebraic_number(value);
         const lp_algebraic_number_t& a = value.get_internal()->value.a;
         //for (std::size_t i = 0; i < 10; ++i) {
         //  lp_algebraic_number_refine_const(&a);

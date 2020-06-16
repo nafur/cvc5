@@ -348,6 +348,8 @@ libcvc4_add_sources(
   theory/arith/nl/nl_solver.h
   theory/arith/nl/nonlinear_extension.cpp
   theory/arith/nl/nonlinear_extension.h
+  theory/arith/nl/poly_conversion.cpp
+  theory/arith/nl/poly_conversion.h
   theory/arith/nl/transcendental_solver.cpp
   theory/arith/nl/transcendental_solver.h
   theory/arith/normal_form.cpp

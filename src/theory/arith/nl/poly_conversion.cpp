@@ -3,6 +3,7 @@
 #include "expr/node.h"
 #include "expr/node_manager_attributes.h"
 #include "util/integer.h"
+#include "util/poly_util.h"
 #include "util/rational.h"
 
 namespace CVC4 {
@@ -10,7 +11,7 @@ namespace theory {
 namespace arith {
 namespace nl {
 
-libpoly::Variable VariableMapper::operator()(const CVC4::Node& n)
+poly::Variable VariableMapper::operator()(const CVC4::Node& n)
 {
   Assert(n.isVar()) << "Expect node to be a variable.";
   auto it = mVarCVCpoly.find(n);
@@ -19,101 +20,77 @@ libpoly::Variable VariableMapper::operator()(const CVC4::Node& n)
     std::string name;
     if (!n.getAttribute(expr::VarNameAttr(), name))
     {
-      Trace("libpoly::conversion")
+      Trace("poly::conversion")
           << "Variable " << n << " has no name, using ID instead." << std::endl;
       name = "v_" + std::to_string(n.getId());
     }
-    it = mVarCVCpoly.emplace(n, Variable(name.c_str())).first;
+    it = mVarCVCpoly.emplace(n, poly::Variable(name.c_str())).first;
     mVarpolyCVC.emplace(it->second, n);
   }
   return it->second;
 }
 
-CVC4::Node VariableMapper::operator()(const libpoly::Variable& n)
+CVC4::Node VariableMapper::operator()(const poly::Variable& n)
 {
   auto it = mVarpolyCVC.find(n);
   Assert(it != mVarpolyCVC.end()) << "Expect variable to be added already.";
   return it->second;
 }
 
-CVC4::Integer as_cvc_integer(const lp_integer_t* v)
+CVC4::Node as_cvc_polynomial(const poly::UPolynomial& p, const CVC4::Node& var)
 {
-  // TODO(Gereon): Make this conversion more efficient.
-  std::string tmp(lp_integer_to_string(v));
-  return CVC4::Integer(tmp);
-}
-CVC4::Rational as_cvc_rational(const lp_rational_t* v)
-{
-  // TODO(Gereon): Make this conversion more efficient.
-  std::string tmp(lp_rational_to_string(v));
-  return CVC4::Rational(tmp);
-}
-CVC4::Rational as_cvc_rational(const lp_dyadic_rational_t* v)
-{
-  // TODO(Gereon): Make this conversion more efficient.
-  std::string tmp(lp_dyadic_rational_to_string(v));
-  return CVC4::Rational(tmp);
-}
-
-CVC4::Node as_cvc_polynomial(const UPolynomial& p, const CVC4::Node& var)
-{
-  Trace("libpoly::conversion")
+  Trace("poly::conversion")
       << "Converting " << p << " over " << var << std::endl;
 
   std::size_t size = degree(p) + 1;
-  lp_integer_t coeffs[size];
-  for (std::size_t i = 0; i < size; ++i)
-  {
-    lp_integer_construct_from_int(lp_Z, &coeffs[i], 0);
-  }
+  poly::Integer coeffs[size];
 
-  lp_upolynomial_unpack(p.get(), coeffs);
+  lp_upolynomial_unpack(p.get_internal(), poly::detail::cast_to(coeffs));
   auto* nm = NodeManager::currentNM();
 
   Node res = nm->mkConst(Rational(0));
   Node monomial = nm->mkConst(Rational(1));
   for (std::size_t i = 0; i < size; ++i)
   {
-    if (!lp_integer_is_zero(lp_Z, &coeffs[i]))
+    if (is_zero(coeffs[i]))
     {
-      Node coeff = nm->mkConst(CVC4::Rational(as_cvc_integer(&coeffs[i])));
+      Node coeff = nm->mkConst(Rational(poly_utils::to_integer(coeffs[i])));
       Node term = nm->mkNode(Kind::MULT, coeff, monomial);
       res = nm->mkNode(Kind::PLUS, res, term);
     }
     monomial = nm->mkNode(Kind::NONLINEAR_MULT, monomial, var);
-    lp_integer_destruct(&coeffs[i]);
   }
-  Trace("libpoly::conversion") << "-> " << res << std::endl;
+  Trace("poly::conversion") << "-> " << res << std::endl;
   return res;
 }
 
 
-Polynomial as_poly_polynomial_impl(const CVC4::Node& n,
-                                   Integer& denominator,
+poly::Polynomial as_poly_polynomial_impl(const CVC4::Node& n,
+                                   poly::Integer& denominator,
                                    VariableMapper& vm)
 {
-  denominator = Integer(1);
+  denominator = poly::Integer(1);
   if (n.isVar()) {
-    return Polynomial(vm(n));
+    return poly::Polynomial(vm(n));
   }
   switch (n.getKind())
   {
     case Kind::CONST_RATIONAL:
     {
       Rational r = n.getConst<Rational>();
-      denominator = Integer(r.getDenominator().getValue());
-      return Polynomial(Integer(r.getNumerator().getValue()));
+      denominator = poly_utils::to_integer(r.getDenominator());
+      return poly::Polynomial(poly_utils::to_integer(r.getNumerator()));
     }
     case Kind::PLUS:
     {
-      Polynomial res;
-      Integer denom;
+      poly::Polynomial res;
+      poly::Integer denom;
       for (const auto& child : n)
       {
-        Polynomial tmp = as_poly_polynomial_impl(child, denom, vm);
+        poly::Polynomial tmp = as_poly_polynomial_impl(child, denom, vm);
         /** Normalize denominators
          */
-        Integer g = gcd(denom, denominator);
+        poly::Integer g = gcd(denom, denominator);
         res = res * (denom/g) + tmp * (denominator/g);
         denominator *= (denom/g);
       }
@@ -122,8 +99,8 @@ Polynomial as_poly_polynomial_impl(const CVC4::Node& n,
     case Kind::MULT:
     case Kind::NONLINEAR_MULT:
     {
-      Polynomial res = Polynomial(denominator);
-      Integer denom;
+      poly::Polynomial res(denominator);
+      poly::Integer denom;
       for (const auto& child : n)
       {
         res *= as_poly_polynomial_impl(child, denom, vm);
@@ -135,67 +112,67 @@ Polynomial as_poly_polynomial_impl(const CVC4::Node& n,
       Warning() << "Unhandled node " << n << " with kind " << n.getKind()
                 << std::endl;
   }
-  return Polynomial();
+  return poly::Polynomial();
 }
-Polynomial as_poly_polynomial(const CVC4::Node& n, VariableMapper& vm)
+poly::Polynomial as_poly_polynomial(const CVC4::Node& n, VariableMapper& vm)
 {
-  Integer denom;
+  poly::Integer denom;
   return as_poly_polynomial_impl(n, denom, vm);
 }
 
-libpoly::SignCondition normalize_kind(CVC4::Kind kind,
+poly::SignCondition normalize_kind(CVC4::Kind kind,
                                       bool negated,
-                                      Polynomial& lhs)
+                                      poly::Polynomial& lhs)
 {
   switch (kind)
   {
     case Kind::EQUAL:
     {
-      return negated ? SignCondition::NE : SignCondition::EQ;
+      return negated ? poly::SignCondition::NE : poly::SignCondition::EQ;
     }
     case Kind::LT:
     {
       if (negated)
       {
         lhs = -lhs;
-        return SignCondition::LE;
+        return poly::SignCondition::LE;
       }
-      return SignCondition::LT;
+      return poly::SignCondition::LT;
     }
     case Kind::LEQ:
     {
       if (negated)
       {
         lhs = -lhs;
-        return SignCondition::LT;
+        return poly::SignCondition::LT;
       }
-      return SignCondition::LE;
+      return poly::SignCondition::LE;
     }
     case Kind::GT:
     {
       if (negated)
       {
-        return SignCondition::LE;
+        return poly::SignCondition::LE;
       }
       lhs = -lhs;
-      return SignCondition::LT;
+      return poly::SignCondition::LT;
     }
     case Kind::GEQ:
     {
       if (negated)
       {
-        return SignCondition::LT;
+        return poly::SignCondition::LT;
       }
       lhs = -lhs;
-      return SignCondition::LE;
+      return poly::SignCondition::LE;
     }
     default:
       Assert(false) << "This function only deals with arithmetic relations.";
-      return SignCondition::EQ;
+      return poly::SignCondition::EQ;
   }
 }
 
-std::pair<libpoly::Polynomial, libpoly::SignCondition> as_poly_constraint(
+std::pair<poly::Polynomial, poly::SignCondition> as_poly_constraint(
     Node n, VariableMapper& vm)
 {
   bool negated = false;
@@ -215,17 +192,17 @@ std::pair<libpoly::Polynomial, libpoly::SignCondition> as_poly_constraint(
   Assert(n.getNumChildren() == 2)
       << "Supported relations only have two children.";
   auto childit = n.begin();
-  Integer ldenom;
-  Polynomial left = as_poly_polynomial_impl(*childit++, ldenom, vm);
-  Integer rdenom;
-  Polynomial right = as_poly_polynomial_impl(*childit++, rdenom, vm);
+  poly::Integer ldenom;
+  poly::Polynomial left = as_poly_polynomial_impl(*childit++, ldenom, vm);
+  poly::Integer rdenom;
+  poly::Polynomial right = as_poly_polynomial_impl(*childit++, rdenom, vm);
   Assert(childit == n.end()) << "Screwed up iterator handling.";
-  Assert(ldenom > Integer(0) && rdenom > Integer(0))
+  Assert(ldenom > poly::Integer(0) && rdenom > poly::Integer(0))
       << "Expected denominators to be always positive.";
 
-  Integer g = gcd(ldenom, rdenom);
-  Polynomial lhs = left * (rdenom/g) - right * (ldenom/g);
-  SignCondition sc = normalize_kind(n.getKind(), negated, lhs);
+  poly::Integer g = gcd(ldenom, rdenom);
+  poly::Polynomial lhs = left * (rdenom/g) - right * (ldenom/g);
+  poly::SignCondition sc = normalize_kind(n.getKind(), negated, lhs);
   return {lhs, sc};
 }
 
