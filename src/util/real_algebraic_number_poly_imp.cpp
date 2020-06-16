@@ -8,7 +8,7 @@
 #include "base/check.h"
 #include "poly_util.h"
 
-#include "poly/polyxx.h"
+#include <poly/polyxx.h>
 
 namespace CVC4 {
 
@@ -17,13 +17,13 @@ RealAlgebraicNumber::RealAlgebraicNumber() {}
 RealAlgebraicNumber::RealAlgebraicNumber(poly::AlgebraicNumber&& an): d_value(std::move(an)) {}
 
 RealAlgebraicNumber::RealAlgebraicNumber(const Integer& i)
-    : d_value(poly::DyadicRational(poly::Integer(i.getValue())))
+    : d_value(poly::DyadicRational(poly_utils::to_integer(i)))
 {
 }
 
 RealAlgebraicNumber::RealAlgebraicNumber(const Rational& r)
 {
-  poly::Rational pr(r.getValue());
+  poly::Rational pr = poly_utils::to_rational(r);
   auto dr = poly_utils::to_dyadic_rational(r);
   if (dr) {
     d_value = poly::AlgebraicNumber(
@@ -55,7 +55,7 @@ RealAlgebraicNumber::RealAlgebraicNumber(
     std::vector<poly::Integer> coeffs;
     for (const auto& c: coefficients) {
         Assert((c * factor).getDenominator() == Integer(1));
-        coeffs.emplace_back((c * factor).getNumerator().getValue());
+        coeffs.emplace_back(poly_utils::to_integer((c * factor).getNumerator()));
     }
     *this = poly_utils::from_rationals_with_refinement(poly::UPolynomial(std::move(coeffs)), lower, upper);
 }

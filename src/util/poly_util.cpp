@@ -1,5 +1,7 @@
 #include "poly_util.h"
 
+#include <map>
+
 #include "base/check.h"
 #include "maybe.h"
 #include "poly/polyxx.h"
@@ -8,30 +10,46 @@
 #include "util/rational.h"
 #include "util/real_algebraic_number.h"
 
-#include <map>
-
 namespace CVC4 {
 namespace poly_utils {
 
-Integer to_integer(const poly::Integer& i) {
+template<typename To, typename From>
+To cast_by_string(const From& f) {
+  std::stringstream s;
+  s << f;
+  return To(s.str());
+}
+
+Integer to_integer(const poly::Integer& i)
+{
+  const mpz_class& gi = *poly::detail::cast_to_gmp(&i);
 #ifdef CVC4_GMP_IMP
-  return Integer(*poly::detail::cast_to_gmp(&i));
+  return Integer(gi);
 #endif
 #ifdef CVC4_CLN_IMP
-  Assert(false) << "This is not yet implemented";
-  return poly::Integer();
+  
+  if (std::numeric_limits<long>::min() <= gi
+      && gi <= std::numeric_limits<long>::max())
+  {
+    return Integer(gi.get_si());
+  }
+  else
+  {
+    return cast_by_string<Integer,mpz_class>(gi);
+  }
 #endif
 }
-Rational to_rational(const poly::Rational& r) {
+Rational to_rational(const poly::Rational& r)
+{
 #ifdef CVC4_GMP_IMP
   return Rational(*poly::detail::cast_to_gmp(&r));
 #endif
 #ifdef CVC4_CLN_IMP
-  Assert(false) << "This is not yet implemented";
-  return poly::Integer();
+  return Rational(to_integer(numerator(r)), to_integer(denominator(r)));
 #endif
 }
-Rational to_rational(const poly::DyadicRational& dr) {
+Rational to_rational(const poly::DyadicRational& dr)
+{
   return Rational(to_integer(numerator(dr)), to_integer(denominator(dr)));
 }
 
@@ -41,8 +59,15 @@ poly::Integer to_integer(const Integer& i)
   return poly::Integer(i.getValue());
 #endif
 #ifdef CVC4_CLN_IMP
-  Assert(false) << "This is not yet implemented";
-  return poly::Integer();
+  if (std::numeric_limits<long>::min() <= i.getValue()
+      && i.getValue() <= std::numeric_limits<long>::max())
+  {
+    return poly::Integer(cln::cl_I_to_long(i.getValue()));
+  }
+  else
+  {
+    return poly::Integer(cast_by_string<mpz_class,Integer>(i));
+  }
 #endif
 }
 std::vector<poly::Integer> to_integer(const std::vector<Integer>& vi)
@@ -67,13 +92,13 @@ Maybe<poly::DyadicRational> to_dyadic_rational(const Rational& r)
   Integer den = r.getDenominator();
   if (den.isOne())
   {
-    return poly::DyadicRational(poly::Integer(r.getNumerator().getValue()));
+    return poly::DyadicRational(to_integer(r.getNumerator()));
   }
   unsigned long exp = den.isPow2();
   if (exp > 0)
   {
     return div_2exp(
-        poly::DyadicRational(poly::Integer(r.getNumerator().getValue())), exp);
+        poly::DyadicRational(to_integer(r.getNumerator())), exp);
   }
   return Maybe<poly::DyadicRational>();
 }
@@ -115,8 +140,8 @@ RealAlgebraicNumber from_rationals_with_refinement(poly::UPolynomial&& p,
                                                    const Rational& lower,
                                                    const Rational upper)
 {
-  poly::Rational origl(lower.getValue());
-  poly::Rational origu(upper.getValue());
+  poly::Rational origl = to_rational(lower);
+  poly::Rational origu = to_rational(upper);
   poly::Rational l(floor(origl));
   poly::Rational u(ceil(origu));
   poly::RationalInterval ri(l, u);
