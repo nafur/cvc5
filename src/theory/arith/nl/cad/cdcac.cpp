@@ -4,11 +4,21 @@
 
 namespace CVC4 {
 
-template<typename T>
-std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
-    container_to_stream(os, v);
-    return os;
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
+{
+  container_to_stream(os, v);
+  return os;
 }
+
+namespace poly {
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
+{
+  container_to_stream(os, v);
+  return os;
+}
+}  // namespace poly
 
 namespace theory {
 namespace arith {
@@ -48,7 +58,9 @@ void CDCAC::compute_variable_ordering()
             mVariableOrdering.end(),
             [](const Variable& a, const Variable& b) {
               return lp_variable_order_cmp(
-                         poly::Context::get_context().get_variable_order(), a.get_internal(), b.get_internal())
+                         poly::Context::get_context().get_variable_order(),
+                         a.get_internal(),
+                         b.get_internal())
                      < 0;
             });
   Trace("cdcac") << "Variable ordering is now " << mVariableOrdering
