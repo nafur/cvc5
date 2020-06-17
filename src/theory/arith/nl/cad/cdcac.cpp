@@ -279,7 +279,12 @@ CACInterval CDCAC::interval_from_characterization(
     mAssignment.unset(mVariableOrdering[cur_variable]);
   }
 
-  return CACInterval{Interval(lower, upper), l, u, m, d, {}};
+  if (lower == upper) {
+    return CACInterval{Interval(lower, false, upper, false), l, u, m, d, {}};
+  } else {
+    Assert(lower < upper);
+    return CACInterval{Interval(lower, true, upper, true), l, u, m, d, {}};
+  }
 }
 
 std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable)
