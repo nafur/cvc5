@@ -14,18 +14,18 @@
 
 //#include <poly/upolynomial.h>
 
+#include "theory/arith/nl/cad_solver.h"
+
 #include <poly/polyxx.h>
 
-#include "theory/arith/nl/cad_solver.h"
-#include "theory/arith/nl/cad/cdcac.h"
-#include "theory/arith/nl/poly_conversion.h"
-
-#include "util/poly_util.h"
 #include "options/arith_options.h"
 #include "options/smt_options.h"
 #include "preprocessing/passes/bv_to_int.h"
 #include "theory/arith/arith_msum.h"
 #include "theory/arith/arith_utilities.h"
+#include "theory/arith/nl/cad/cdcac.h"
+#include "theory/arith/nl/poly_conversion.h"
+#include "util/poly_util.h"
 
 using namespace CVC4::kind;
 
@@ -34,100 +34,35 @@ namespace theory {
 namespace arith {
 namespace nl {
 
-  bool CadSolver::assign_model_variable(const Node& variable, const poly::Value& value) const {
-    auto* nm = NodeManager::currentNM();
-    switch (value.get_internal()->type) {
-      case LP_VALUE_INTEGER: {
-        d_model.addCheckModelSubstitution(
-          variable,
-          nm->mkConst(Rational(poly_utils::to_integer(as_integer(value))))
-        );
-        return true;
-      }
-      case LP_VALUE_RATIONAL: {
-        d_model.addCheckModelSubstitution(
-          variable,
-          nm->mkConst(poly_utils::to_rational(as_rational(value)))
-        );
-        return true;
-      }
-      case LP_VALUE_DYADIC_RATIONAL: {
-        d_model.addCheckModelSubstitution(
-          variable,
-          nm->mkConst(poly_utils::to_rational(as_dyadic_rational(value)))
-        );
-        return true;
-      }
-      case LP_VALUE_ALGEBRAIC: {
-        //Trace("cad-check") << value << " is an algebraic" << std::endl;
-        // For the sake of it...
-        const poly::AlgebraicNumber& ran = as_algebraic_number(value);
-        const lp_algebraic_number_t& a = value.get_internal()->value.a;
-        //for (std::size_t i = 0; i < 10; ++i) {
-        //  lp_algebraic_number_refine_const(&a);
-        //}
-        if (a.I.is_point) {
-          d_model.addCheckModelSubstitution(
-            variable,
-            nm->mkConst(poly_utils::to_rational(*poly::detail::cast_from(&a.I.a)))
-          );
-        } else {
-          Node poly = as_cvc_upolynomial(poly::UPolynomial(lp_upolynomial_construct_copy(a.f)), variable);
-          // Construct witness:
-          // a.f(x) == 0  &&  a.I.a < x  &&  x < a.I.b
-          Node witness = nm->mkNode(Kind::AND,
-            nm->mkNode(Kind::EQUAL, poly, nm->mkConst(Rational(0))),
-            nm->mkNode(Kind::LT,
-              nm->mkConst(poly_utils::to_rational(get_lower_bound(ran))),
-              variable
-            ),
-            nm->mkNode(Kind::LT,
-              variable,
-              nm->mkConst(poly_utils::to_rational(get_upper_bound(ran)))
-            )
-          );
-          Trace("cad-check") << "Adding witness: " << witness << std::endl;
-          d_model.addCheckModelWitness(variable, witness);
-        }
-        return true;
-      }
-      default: {
-        Trace("cad-check") << value << " is weird" << std::endl;
-        return false;
-      }
+bool CadSolver::construct_model()
+{
+  for (const auto& v : mCAC.get_variable_ordering())
+  {
+    Node variable = mCAC.get_constraints().var_mapper()(v);
+    Node value = value_to_node(mCAC.get_model().get(v));
+    if (value.isConst())
+    {
+      d_model.addCheckModelSubstitution(variable, value);
     }
-  }
-
-  bool CadSolver::construct_model() {
-    for (const auto& v: mCAC.get_variable_ordering()) {
-      poly::Value val = mCAC.get_model().get(v);
-      Node variable = mCAC.get_constraints().var_mapper()(v);
-      if (assign_model_variable(variable, val)) {
-        Trace("cad-check") << "-> " << v << " = " << val << std::endl;
-      } else {
-        Trace("cad-check") << "Failed to set " << v << " = " << val << std::endl;
-      }
+    else
+    {
+      d_model.addCheckModelWitness(variable, value);
     }
-    return true;
+    Trace("cad-check") << "-> " << v << " = " << value << std::endl;
   }
+  return true;
+}
 
 CadSolver::CadSolver(TheoryArith& containing, NlModel& model)
-    : d_containing(containing),
-      d_model(model)
+    : d_containing(containing), d_model(model)
 {
-  NodeManager* nm = NodeManager::currentNM();
-  d_true = nm->mkConst(true);
-  d_false = nm->mkConst(false);
-  d_zero = nm->mkConst(Rational(0));
-  d_one = nm->mkConst(Rational(1));
-  d_neg_one = nm->mkConst(Rational(-1));
 }
 
 CadSolver::~CadSolver() {}
 
 void CadSolver::initLastCall(const std::vector<Node>& assertions,
-                              const std::vector<Node>& false_asserts,
-                              const std::vector<Node>& xts)
+                             const std::vector<Node>& false_asserts,
+                             const std::vector<Node>& xts)
 {
   if (Trace.isOn("cad-check"))
   {
@@ -136,7 +71,8 @@ void CadSolver::initLastCall(const std::vector<Node>& assertions,
     for (const Node& a : assertions)
     {
       Trace("cad-check") << "  " << a << std::endl;
-      if (std::find(false_asserts.begin(),false_asserts.end(),a)!=false_asserts.end())
+      if (std::find(false_asserts.begin(), false_asserts.end(), a)
+          != false_asserts.end())
       {
         Trace("cad-check") << " (false in candidate model)" << std::endl;
       }
@@ -160,7 +96,7 @@ std::vector<NlLemma> CadSolver::checkInitialRefine()
 {
   Chat() << "CadSolver::checkInitialRefine" << std::endl;
   std::vector<NlLemma> lems;
-  
+
   // add lemmas corresponding to easy conflicts or refinements based on
   // the assertions/terms given in initLastCall.
 
@@ -175,36 +111,44 @@ std::vector<NlLemma> CadSolver::checkFullRefine()
   // Do full theory check here
 
   auto covering = mCAC.get_unsat_cover();
-  if (covering.empty()) {
+  if (covering.empty())
+  {
     found_satisfiability = true;
     Notice() << "SAT: " << mCAC.get_model() << std::endl;
-  } else {
+  }
+  else
+  {
     found_satisfiability = false;
     auto mis = collect_constraints(covering);
     Notice() << "Collected MIS: " << mis << std::endl;
     auto* nm = NodeManager::currentNM();
-    for (auto& n: mis) {
+    for (auto& n : mis)
+    {
       n = n.negate();
     }
     Assert(!mis.empty()) << "Infeasible subset can not be empty";
-    if (mis.size() == 1) {
+    if (mis.size() == 1)
+    {
       lems.emplace_back(mis.front());
-    } else {
+    }
+    else
+    {
       lems.emplace_back(nm->mkNode(Kind::OR, mis));
     }
     Notice() << "UNSAT with MIS: " << lems.back().d_lemma << std::endl;
-  } 
-  
+  }
+
   return lems;
 }
 
 void CadSolver::preprocessAssertionsCheckModel(std::vector<Node>& assertions)
 {
-    if (found_satisfiability) {
-      Notice() << "Storing " << mCAC.get_model() << std::endl;
-      construct_model();
-      assertions.clear();
-    }
+  if (found_satisfiability)
+  {
+    Notice() << "Storing " << mCAC.get_model() << std::endl;
+    construct_model();
+    assertions.clear();
+  }
 }
 
 }  // namespace nl

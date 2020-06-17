@@ -38,10 +38,11 @@ class CadSolver
 
   cad::CDCAC mCAC;
 
-  bool assign_model_variable(const Node& variable, const poly::Value& value) const;
-  bool extract_bounds(const poly::Value& value, Node& lower, Node& upper) const;
+  /** Fill d_model with the model computed by mCAC. */
   bool construct_model();
 
+  /** Indicates whether we found satisfiability in the last call to
+   * checkFullRefine. */
   bool found_satisfiability = false;
 
  public:
@@ -60,7 +61,7 @@ class CadSolver
                     const std::vector<Node>& false_asserts,
                     const std::vector<Node>& xts);
   /** check initial refine
-   * 
+   *
    * This should be a heuristic incomplete check that only introduces a
    * small number of new terms in the lemmas it returns.
    */
@@ -79,18 +80,13 @@ class CadSolver
    * This method returns false if NlModel::checkModel should not be run.
    */
   void preprocessAssertionsCheckModel(std::vector<Node>& assertions);
+
  private:
   // The theory of arithmetic containing this extension.
   TheoryArith& d_containing;
   /** Reference to the non-linear model object */
   NlModel& d_model;
-  /** commonly used terms */
-  Node d_zero;
-  Node d_one;
-  Node d_neg_one;
-  Node d_true;
-  Node d_false;
-  
+
 }; /* class CadSolver */
 
 }  // namespace nl
