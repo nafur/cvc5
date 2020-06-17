@@ -23,6 +23,7 @@
 #include "theory/arith/nl/cad_solver.h"
 #include "theory/arith/nl/cad/cdcac.h"
 #include "theory/arith/nl/cad/projections.h"
+#include "theory/arith/nl/poly_conversion.h"
 
 #include <poly/polyxx.h>
 #include "util/poly_util.h"
@@ -317,8 +318,12 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
     test_delta(a);
   }
 
-  void test_ran_creation() {
+  void test_ran_conversion() {
     RealAlgebraicNumber ran(std::vector<Rational>({-2, 0, 1}), Rational(1, 3), Rational(7, 3));
-    std::cout << "-> " << ran.getValue() << std::endl;
+    {
+      Node n = nl::ran_to_node(ran);
+      RealAlgebraicNumber back = nl::node_to_ran(n);
+      TS_ASSERT(ran == back);
+    }
   }
 };

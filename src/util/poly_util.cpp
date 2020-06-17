@@ -13,8 +13,9 @@
 namespace CVC4 {
 namespace poly_utils {
 
-template<typename To, typename From>
-To cast_by_string(const From& f) {
+template <typename To, typename From>
+To cast_by_string(const From& f)
+{
   std::stringstream s;
   s << f;
   return To(s.str());
@@ -27,7 +28,7 @@ Integer to_integer(const poly::Integer& i)
   return Integer(gi);
 #endif
 #ifdef CVC4_CLN_IMP
-  
+
   if (std::numeric_limits<long>::min() <= gi
       && gi <= std::numeric_limits<long>::max())
   {
@@ -35,10 +36,11 @@ Integer to_integer(const poly::Integer& i)
   }
   else
   {
-    return cast_by_string<Integer,poly::Integer>(i);
+    return cast_by_string<Integer, poly::Integer>(i);
   }
 #endif
 }
+Rational to_rational(const poly::Integer& i) { return Rational(to_integer(i)); }
 Rational to_rational(const poly::Rational& r)
 {
 #ifdef CVC4_GMP_IMP
@@ -66,7 +68,7 @@ poly::Integer to_integer(const Integer& i)
   }
   else
   {
-    return poly::Integer(cast_by_string<mpz_class,Integer>(i));
+    return poly::Integer(cast_by_string<mpz_class, Integer>(i));
   }
 #endif
 }
@@ -82,7 +84,8 @@ poly::Rational to_rational(const Rational& r)
   return poly::Rational(r.getValue());
 #endif
 #ifdef CVC4_CLN_IMP
-  return poly::Rational(to_integer(r.getNumerator()), to_integer(r.getDenominator()));
+  return poly::Rational(to_integer(r.getNumerator()),
+                        to_integer(r.getDenominator()));
 #endif
 }
 
@@ -96,8 +99,8 @@ Maybe<poly::DyadicRational> to_dyadic_rational(const Rational& r)
   unsigned long exp = den.isPow2();
   if (exp > 0)
   {
-    return div_2exp(
-        poly::DyadicRational(to_integer(r.getNumerator())), exp);
+    return div_2exp(poly::DyadicRational(to_integer(r.getNumerator())),
+                    exp - 1);
   }
   return Maybe<poly::DyadicRational>();
 }
@@ -109,7 +112,6 @@ Maybe<poly::DyadicRational> to_dyadic_rational(const poly::Rational& r)
     return poly::DyadicRational(numerator(r));
   }
   unsigned long size = bit_size(den) - 1;
-  std::cout << "Testing whether " << den << " == 2^" << size << std::endl;
   if (mul_pow2(poly::Integer(1), size) == den)
   {
     return div_2exp(poly::DyadicRational(numerator(r)), size);
@@ -135,10 +137,18 @@ void approximate_to_dyadic(poly::Rational& r, const poly::Rational& original)
   r = poly::Rational(n, mul_pow2(denominator(r), 1));
 }
 
-RealAlgebraicNumber from_rationals_with_refinement(poly::UPolynomial&& p,
-                                                   const Rational& lower,
-                                                   const Rational upper)
+poly::AlgebraicNumber to_poly_ran_with_refinement(poly::UPolynomial&& p,
+                                                  const Rational& lower,
+                                                  const Rational upper)
 {
+  Maybe<poly::DyadicRational> ml = to_dyadic_rational(lower);
+  Maybe<poly::DyadicRational> mu = to_dyadic_rational(upper);
+  if (ml && mu)
+  {
+    return poly::AlgebraicNumber(std::move(p),
+                                 poly::DyadicInterval(ml.value(), mu.value()));
+  }
+  // The encoded real algebraic number did not have dyadic rational endpoints.
   poly::Rational origl = to_rational(lower);
   poly::Rational origu = to_rational(upper);
   poly::Rational l(floor(origl));
@@ -151,11 +161,19 @@ RealAlgebraicNumber from_rationals_with_refinement(poly::UPolynomial&& p,
     ri = poly::RationalInterval(l, u);
   }
   Assert(count_real_roots(p, poly::RationalInterval(l, u)) == 1);
-  auto ml = to_dyadic_rational(l);
-  auto mu = to_dyadic_rational(u);
+  ml = to_dyadic_rational(l);
+  mu = to_dyadic_rational(u);
   Assert(ml && mu) << "Both bounds should be dyadic by now.";
-  return RealAlgebraicNumber(poly::AlgebraicNumber(
-      std::move(p), poly::DyadicInterval(ml.value(), mu.value())));
+  return poly::AlgebraicNumber(std::move(p),
+                               poly::DyadicInterval(ml.value(), mu.value()));
+}
+
+RealAlgebraicNumber to_ran_with_refinement(poly::UPolynomial&& p,
+                                           const Rational& lower,
+                                           const Rational upper)
+{
+  return RealAlgebraicNumber(
+      to_poly_ran_with_refinement(std::move(p), lower, upper));
 }
 
 }  // namespace poly_utils

@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "expr/node.h"
+#include "util/real_algebraic_number.h"
 
 namespace CVC4 {
 namespace theory {
@@ -27,10 +28,15 @@ struct VariableMapper
   poly::Variable operator()(const CVC4::Node& n);
   /** Retrieves the according CVC4 variable. */
   CVC4::Node operator()(const poly::Variable& n);
+
+  static CVC4::Node ran_encoding_var();
 };
 
-/** Convert poly univariate polynomial to a CVC4::Node. */
-CVC4::Node as_cvc_polynomial(const poly::UPolynomial& p, const CVC4::Node& var);
+/** Convert a poly univariate polynomial to a CVC4::Node. */
+CVC4::Node as_cvc_upolynomial(const poly::UPolynomial& p, const CVC4::Node& var);
+
+/** Convert a CVC4::Node to a poly univariate polynomial. */
+poly::UPolynomial as_poly_upolynomial(const CVC4::Node& n, const CVC4::Node& var);
 
 /** Constructs a polynomial from the given node.
  *
@@ -47,6 +53,38 @@ poly::Polynomial as_poly_polynomial(const CVC4::Node& n, VariableMapper& vm);
  */
 std::pair<poly::Polynomial, poly::SignCondition> as_poly_constraint(
     Node n, VariableMapper& vm);
+
+
+/** Transforms a real algebraic number to a node suitable for putting it into a
+ * model. The resulting node can be either a constant (suitable for
+ * addCheckModelSubstitution) or a witness term (suitable for
+ * addCheckModelWitness).
+ */
+Node ran_to_node(const RealAlgebraicNumber& ran);
+
+Node ran_to_node(const poly::AlgebraicNumber& an);
+
+/** Transforms a poly::Value to a node.
+ * The resulting node can be either a constant or a witness term.
+ */
+Node value_to_node(const poly::Value& v);
+
+/** Transforms a node to a poly::AlgebraicNumber.
+ * Expects a node of the following form:
+ * (AND
+ *    (= (polynomial in __z) 0)
+ *    (< CONST __z)
+ *    (< __z CONST)
+ * )
+ */
+poly::AlgebraicNumber node_to_poly_ran(const Node& n);
+
+RealAlgebraicNumber node_to_ran(const Node& n);
+
+/** Transforms a node to a poly::Value.
+ */
+poly::Value node_to_value(const Node& n);
+
 
 }  // namespace nl
 }  // namespace arith

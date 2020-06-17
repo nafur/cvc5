@@ -72,7 +72,7 @@ namespace nl {
             nm->mkConst(poly_utils::to_rational(*poly::detail::cast_from(&a.I.a)))
           );
         } else {
-          Node poly = as_cvc_polynomial(poly::UPolynomial(lp_upolynomial_construct_copy(a.f)), variable);
+          Node poly = as_cvc_upolynomial(poly::UPolynomial(lp_upolynomial_construct_copy(a.f)), variable);
           // Construct witness:
           // a.f(x) == 0  &&  a.I.a < x  &&  x < a.I.b
           Node witness = nm->mkNode(Kind::AND,

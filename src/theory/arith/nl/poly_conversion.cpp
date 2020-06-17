@@ -37,24 +37,30 @@ CVC4::Node VariableMapper::operator()(const poly::Variable& n)
   return it->second;
 }
 
-CVC4::Node as_cvc_polynomial(const poly::UPolynomial& p, const CVC4::Node& var)
+CVC4::Node VariableMapper::ran_encoding_var()
+{
+  auto* nm = NodeManager::currentNM();
+  static CVC4::Node var =
+      nm->mkSkolem("__z", nm->realType(), "", NodeManager::SKOLEM_EXACT_NAME);
+  return var;
+}
+
+CVC4::Node as_cvc_upolynomial(const poly::UPolynomial& p, const CVC4::Node& var)
 {
   Trace("poly::conversion")
       << "Converting " << p << " over " << var << std::endl;
 
-  std::size_t size = degree(p) + 1;
-  poly::Integer coeffs[size];
+  std::vector<poly::Integer> coeffs = coefficients(p);
 
-  lp_upolynomial_unpack(p.get_internal(), poly::detail::cast_to(coeffs));
   auto* nm = NodeManager::currentNM();
 
   Node res = nm->mkConst(Rational(0));
   Node monomial = nm->mkConst(Rational(1));
-  for (std::size_t i = 0; i < size; ++i)
+  for (std::size_t i = 0; i < coeffs.size(); ++i)
   {
-    if (is_zero(coeffs[i]))
+    if (!is_zero(coeffs[i]))
     {
-      Node coeff = nm->mkConst(Rational(poly_utils::to_integer(coeffs[i])));
+      Node coeff = nm->mkConst(poly_utils::to_rational(coeffs[i]));
       Node term = nm->mkNode(Kind::MULT, coeff, monomial);
       res = nm->mkNode(Kind::PLUS, res, term);
     }
@@ -64,13 +70,73 @@ CVC4::Node as_cvc_polynomial(const poly::UPolynomial& p, const CVC4::Node& var)
   return res;
 }
 
-
-poly::Polynomial as_poly_polynomial_impl(const CVC4::Node& n,
-                                   poly::Integer& denominator,
-                                   VariableMapper& vm)
+poly::UPolynomial as_poly_upolynomial_impl(const CVC4::Node& n,
+                                           poly::Integer& denominator,
+                                           const CVC4::Node& var)
 {
   denominator = poly::Integer(1);
-  if (n.isVar()) {
+  if (n.isVar())
+  {
+    Assert(n == var) << "Unexpected variable: should be " << var << " but is "
+                     << n;
+    return poly::UPolynomial({0, 1});
+  }
+  switch (n.getKind())
+  {
+    case Kind::CONST_RATIONAL:
+    {
+      Rational r = n.getConst<Rational>();
+      denominator = poly_utils::to_integer(r.getDenominator());
+      return poly::UPolynomial(poly_utils::to_integer(r.getNumerator()));
+    }
+    case Kind::PLUS:
+    {
+      poly::UPolynomial res;
+      poly::Integer denom;
+      for (const auto& child : n)
+      {
+        poly::UPolynomial tmp = as_poly_upolynomial_impl(child, denom, var);
+        /** Normalize denominators
+         */
+        poly::Integer g = gcd(denom, denominator);
+        res = res * (denom / g) + tmp * (denominator / g);
+        denominator *= (denom / g);
+      }
+      return res;
+    }
+    case Kind::MULT:
+    case Kind::NONLINEAR_MULT:
+    {
+      poly::UPolynomial res(denominator);
+      poly::Integer denom;
+      for (const auto& child : n)
+      {
+        res = res * as_poly_upolynomial_impl(child, denom, var);
+        denominator *= denom;
+      }
+      return res;
+    }
+    default:
+      Warning() << "Unhandled node " << n << " with kind " << n.getKind()
+                << std::endl;
+  }
+  return poly::UPolynomial();
+}
+
+poly::UPolynomial as_poly_upolynomial(const CVC4::Node& n,
+                                      const CVC4::Node& var)
+{
+  poly::Integer denom;
+  return as_poly_upolynomial_impl(n, denom, var);
+}
+
+poly::Polynomial as_poly_polynomial_impl(const CVC4::Node& n,
+                                         poly::Integer& denominator,
+                                         VariableMapper& vm)
+{
+  denominator = poly::Integer(1);
+  if (n.isVar())
+  {
     return poly::Polynomial(vm(n));
   }
   switch (n.getKind())
@@ -91,8 +157,8 @@ poly::Polynomial as_poly_polynomial_impl(const CVC4::Node& n,
         /** Normalize denominators
          */
         poly::Integer g = gcd(denom, denominator);
-        res = res * (denom/g) + tmp * (denominator/g);
-        denominator *= (denom/g);
+        res = res * (denom / g) + tmp * (denominator / g);
+        denominator *= (denom / g);
       }
       return res;
     }
@@ -121,8 +187,8 @@ poly::Polynomial as_poly_polynomial(const CVC4::Node& n, VariableMapper& vm)
 }
 
 poly::SignCondition normalize_kind(CVC4::Kind kind,
-                                      bool negated,
-                                      poly::Polynomial& lhs)
+                                   bool negated,
+                                   poly::Polynomial& lhs)
 {
   switch (kind)
   {
@@ -201,9 +267,178 @@ std::pair<poly::Polynomial, poly::SignCondition> as_poly_constraint(
       << "Expected denominators to be always positive.";
 
   poly::Integer g = gcd(ldenom, rdenom);
-  poly::Polynomial lhs = left * (rdenom/g) - right * (ldenom/g);
+  poly::Polynomial lhs = left * (rdenom / g) - right * (ldenom / g);
   poly::SignCondition sc = normalize_kind(n.getKind(), negated, lhs);
   return {lhs, sc};
+}
+
+Node ran_to_node(const RealAlgebraicNumber& ran)
+{
+  return ran_to_node(ran.getValue());
+}
+
+Node ran_to_node(const poly::AlgebraicNumber& an)
+{
+  auto* nm = NodeManager::currentNM();
+
+  const poly::DyadicInterval& di = get_isolating_interval(an);
+  if (is_point(di))
+  {
+    return nm->mkConst(poly_utils::to_rational(get_point(di)));
+  }
+  Assert(di.get_internal()->a_open && di.get_internal()->b_open)
+      << "We assume an open interval here.";
+
+  Node var = VariableMapper::ran_encoding_var();
+  Node poly = as_cvc_upolynomial(get_defining_polynomial(an), var);
+  Node lower = nm->mkConst(poly_utils::to_rational(get_lower(di)));
+  Node upper = nm->mkConst(poly_utils::to_rational(get_upper(di)));
+
+  // Construct witness:
+  return nm->mkNode(Kind::AND,
+                    // poly(var) == 0
+                    nm->mkNode(Kind::EQUAL, poly, nm->mkConst(Rational(0))),
+                    // lower_bound < var
+                    nm->mkNode(Kind::LT, lower, var),
+                    // var < upper_bound
+                    nm->mkNode(Kind::LT, var, upper));
+}
+
+Node value_to_node(const poly::Value& v)
+{
+  Assert(!is_minus_infinity(v)) << "Can not convert minus infinity.";
+  Assert(!is_none(v)) << "Can not convert none.";
+  Assert(!is_plus_infinity(v)) << "Can not convert plus infinity.";
+
+  if (is_algebraic_number(v))
+  {
+    return ran_to_node(as_algebraic_number(v));
+  }
+  auto* nm = NodeManager::currentNM();
+  if (is_dyadic_rational(v))
+  {
+    return nm->mkConst(poly_utils::to_rational(as_dyadic_rational(v)));
+  }
+  if (is_integer(v))
+  {
+    return nm->mkConst(poly_utils::to_rational(as_integer(v)));
+  }
+  if (is_rational(v))
+  {
+    return nm->mkConst(poly_utils::to_rational(as_rational(v)));
+  }
+  Assert(false) << "All cases should be covered.";
+  return nm->mkConst(Rational(0));
+}
+
+Maybe<Rational> get_lower_bound(const Node& n)
+{
+  if (n.getNumChildren() != 2) return Maybe<Rational>();
+  if (n.getKind() == Kind::LT)
+  {
+    if (!n[0].isConst()) return Maybe<Rational>();
+    if (!n[1].isVar()) return Maybe<Rational>();
+    return n[0].getConst<Rational>();
+  }
+  else if (n.getKind() == Kind::GT)
+  {
+    if (!n[0].isVar()) return Maybe<Rational>();
+    if (!n[1].isConst()) return Maybe<Rational>();
+    return n[1].getConst<Rational>();
+  }
+  return Maybe<Rational>();
+}
+Maybe<Rational> get_upper_bound(const Node& n)
+{
+  if (n.getNumChildren() != 2) return Maybe<Rational>();
+  if (n.getKind() == Kind::LT)
+  {
+    if (!n[0].isVar()) return Maybe<Rational>();
+    if (!n[1].isConst()) return Maybe<Rational>();
+    return n[1].getConst<Rational>();
+  }
+  else if (n.getKind() == Kind::GT)
+  {
+    if (!n[0].isConst()) return Maybe<Rational>();
+    if (!n[1].isVar()) return Maybe<Rational>();
+    return n[0].getConst<Rational>();
+  }
+  return Maybe<Rational>();
+}
+
+/** Returns indices of appropriate parts of ran encoding.
+ * Returns (poly equation ; lower bound ; upper bound)
+ */
+std::tuple<Node, Rational, Rational> detect_ran_encoding(const Node& n)
+{
+  Assert(n.getKind() == Kind::AND) << "Invalid node structure.";
+  Assert(n.getNumChildren() == 3) << "Invalid node structure.";
+
+  Node poly_eq;
+  if (n[0].getKind() == Kind::EQUAL)
+    poly_eq = n[0];
+  else if (n[1].getKind() == Kind::EQUAL)
+    poly_eq = n[1];
+  else if (n[2].getKind() == Kind::EQUAL)
+    poly_eq = n[2];
+  else
+    Assert(false) << "Could not identify polynomial equation.";
+
+  Node poly;
+  Assert(poly_eq.getNumChildren() == 2) << "Invalid polynomial equation.";
+  if (poly_eq[0].isConst())
+  {
+    Assert(poly_eq[0].getConst<Rational>() == Rational(0))
+        << "Invalid polynomial equation.";
+    poly = poly_eq[1];
+  }
+  else if (poly_eq[1].isConst())
+  {
+    Assert(poly_eq[1].getConst<Rational>() == Rational(0))
+        << "Invalid polynomial equation.";
+    poly = poly_eq[0];
+  }
+  else
+  {
+    Assert(false) << "Invalid polynomial equation.";
+  }
+
+  Maybe<Rational> lower = get_lower_bound(n[0]);
+  if (!lower) lower = get_lower_bound(n[1]);
+  if (!lower) lower = get_lower_bound(n[2]);
+  Assert(lower) << "Could not identify lower bound.";
+
+  Maybe<Rational> upper = get_upper_bound(n[0]);
+  if (!upper) upper = get_upper_bound(n[1]);
+  if (!upper) upper = get_upper_bound(n[2]);
+  Assert(upper) << "Could not identify upper bound.";
+
+  return {poly, lower.value(), upper.value()};
+}
+
+poly::AlgebraicNumber node_to_poly_ran(const Node& n)
+{
+  // Identify poly, lower and upper
+  auto encoding = detect_ran_encoding(n);
+  // Construct polynomial
+  poly::UPolynomial pol = as_poly_upolynomial(
+      std::get<0>(encoding), VariableMapper::ran_encoding_var());
+  // Construct algebraic number
+  return poly_utils::to_poly_ran_with_refinement(
+      std::move(pol), std::get<1>(encoding), std::get<2>(encoding));
+}
+RealAlgebraicNumber node_to_ran(const Node& n)
+{
+  return RealAlgebraicNumber(node_to_poly_ran(n));
+}
+
+poly::Value node_to_value(const Node& n)
+{
+  if (n.isConst())
+  {
+    return poly_utils::to_rational(n.getConst<Rational>());
+  }
+  return node_to_poly_ran(n);
 }
 
 }  // namespace nl
