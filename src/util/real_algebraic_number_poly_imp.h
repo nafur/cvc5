@@ -19,69 +19,133 @@
 #ifndef CVC4__REAL_ALGEBRAIC_NUMBER_H
 #define CVC4__REAL_ALGEBRAIC_NUMBER_H
 
-#include "poly/polyxx.h"
+#include <poly/polyxx.h>
+
+#include <vector>
 
 #include "util/integer.h"
 #include "util/rational.h"
 
-#include <vector>
-
 namespace CVC4 {
 
-class CVC4_PUBLIC RealAlgebraicNumber {
-private:
+/** Represents a real algebraic number based on poly::AlgebraicNumber.
+ * This real algebraic number is represented by a (univariate) polynomial and in
+ * isolating interval. The interval contains exactly one real root of the
+ * polynomial, which is the number the real algebraic number as a whole
+ * represents.
+ * This representation can hold rationals (where the interval can be a point
+ * interval and the polynomial is omitted), an irrational algebraic number (like
+ * square roots), but no trancendentals (like pi).
+ * Note that the interval representation used dyadic rationals (denominators are
+ * only powers of two).
+ */
+class CVC4_PUBLIC RealAlgebraicNumber
+{
+ private:
+  /**
+   * Stores the actual real algebraic number.
+   */
   poly::AlgebraicNumber d_value;
 
-public:
-
-  RealAlgebraicNumber();
+ public:
+  /** Construct as zero. */
+  RealAlgebraicNumber() = default;
+  /** Move from a poly::AlgebraicNumber type. */
   RealAlgebraicNumber(poly::AlgebraicNumber&& an);
+  /** Copy from an Integer. */
   RealAlgebraicNumber(const Integer& i);
+  /** Copy from an Integer. */
   RealAlgebraicNumber(const Rational& r);
-  RealAlgebraicNumber(const std::vector<Integer>& coefficients, const Rational& lower, const Rational& upper);
-  RealAlgebraicNumber(const std::vector<Rational>& coefficients, const Rational& lower, const Rational& upper);
+  /** Construct from a polynomial with the given coefficients and an open
+   * interval with the given bounds. If the bounds are not dyadic, we need to
+   * perform refinement to find a suitable dyadic interval.
+   * See poly_utils::to_ran_with_refinement for more details.
+   */
+  RealAlgebraicNumber(const std::vector<Integer>& coefficients,
+                      const Rational& lower,
+                      const Rational& upper);
+  /** Construct from a polynomial with the given coefficients and an open
+   * interval with the given bounds. If the bounds are not dyadic, we need to
+   * perform refinement to find a suitable dyadic interval.
+   * See poly_utils::to_ran_with_refinement for more details.
+   */
+  RealAlgebraicNumber(const std::vector<Rational>& coefficients,
+                      const Rational& lower,
+                      const Rational& upper);
 
-  RealAlgebraicNumber(const RealAlgebraicNumber& ran);
-  RealAlgebraicNumber(RealAlgebraicNumber&& ran);
+  /** Copy constructor. */
+  RealAlgebraicNumber(const RealAlgebraicNumber& ran) = default;
+  /** Move constructor. */
+  RealAlgebraicNumber(RealAlgebraicNumber&& ran) = default;
 
-  ~RealAlgebraicNumber() {}
+  /** Default destructor. */
+  ~RealAlgebraicNumber() = default;
 
-  RealAlgebraicNumber& operator=(const RealAlgebraicNumber& ran);
-  RealAlgebraicNumber& operator=(RealAlgebraicNumber&& ran);
+  /** Copy assignment. */
+  RealAlgebraicNumber& operator=(const RealAlgebraicNumber& ran) = default;
+  /** Move assignment. */
+  RealAlgebraicNumber& operator=(RealAlgebraicNumber&& ran) = default;
 
-  const poly::AlgebraicNumber& getValue() const
-  {
-    return d_value;
-  }
-  poly::AlgebraicNumber& getValue()
-  {
-    return d_value;
-  }
+  /** Get the internal value as a const reference. */
+  const poly::AlgebraicNumber& getValue() const { return d_value; }
+  /** Get the internal value as a non-const reference. */
+  poly::AlgebraicNumber& getValue() { return d_value; }
 
-};/* class RealAlgebraicNumber */
+}; /* class RealAlgebraicNumber */
 
-CVC4_PUBLIC std::ostream& operator<<(std::ostream& os, const RealAlgebraicNumber& ran);
+/** Stream a real algebraic number to an output stream. */
+CVC4_PUBLIC std::ostream& operator<<(std::ostream& os,
+                                     const RealAlgebraicNumber& ran);
 
-CVC4_PUBLIC bool operator==(const RealAlgebraicNumber& lhs, const RealAlgebraicNumber& rhs);
-CVC4_PUBLIC bool operator!=(const RealAlgebraicNumber& lhs, const RealAlgebraicNumber& rhs);
-CVC4_PUBLIC bool operator<(const RealAlgebraicNumber& lhs, const RealAlgebraicNumber& rhs);
-CVC4_PUBLIC bool operator<=(const RealAlgebraicNumber& lhs, const RealAlgebraicNumber& rhs);
-CVC4_PUBLIC bool operator>(const RealAlgebraicNumber& lhs, const RealAlgebraicNumber& rhs);
-CVC4_PUBLIC bool operator>=(const RealAlgebraicNumber& lhs, const RealAlgebraicNumber& rhs);
+/** Compare two real algebraic numbers. */
+CVC4_PUBLIC bool operator==(const RealAlgebraicNumber& lhs,
+                            const RealAlgebraicNumber& rhs);
+/** Compare two real algebraic numbers. */
+CVC4_PUBLIC bool operator!=(const RealAlgebraicNumber& lhs,
+                            const RealAlgebraicNumber& rhs);
+/** Compare two real algebraic numbers. */
+CVC4_PUBLIC bool operator<(const RealAlgebraicNumber& lhs,
+                           const RealAlgebraicNumber& rhs);
+/** Compare two real algebraic numbers. */
+CVC4_PUBLIC bool operator<=(const RealAlgebraicNumber& lhs,
+                            const RealAlgebraicNumber& rhs);
+/** Compare two real algebraic numbers. */
+CVC4_PUBLIC bool operator>(const RealAlgebraicNumber& lhs,
+                           const RealAlgebraicNumber& rhs);
+/** Compare two real algebraic numbers. */
+CVC4_PUBLIC bool operator>=(const RealAlgebraicNumber& lhs,
+                            const RealAlgebraicNumber& rhs);
 
-CVC4_PUBLIC RealAlgebraicNumber operator+(const RealAlgebraicNumber& lhs, const RealAlgebraicNumber& rhs);
-CVC4_PUBLIC RealAlgebraicNumber operator-(const RealAlgebraicNumber& lhs, const RealAlgebraicNumber& rhs);
+/** Add two real algebraic numbers. */
+CVC4_PUBLIC RealAlgebraicNumber operator+(const RealAlgebraicNumber& lhs,
+                                          const RealAlgebraicNumber& rhs);
+/** Subtract two real algebraic numbers. */
+CVC4_PUBLIC RealAlgebraicNumber operator-(const RealAlgebraicNumber& lhs,
+                                          const RealAlgebraicNumber& rhs);
+/** Negate a real algebraic number. */
 CVC4_PUBLIC RealAlgebraicNumber operator-(const RealAlgebraicNumber& ran);
-CVC4_PUBLIC RealAlgebraicNumber operator*(const RealAlgebraicNumber& lhs, const RealAlgebraicNumber& rhs);
+/** Multiply two real algebraic numbers. */
+CVC4_PUBLIC RealAlgebraicNumber operator*(const RealAlgebraicNumber& lhs,
+                                          const RealAlgebraicNumber& rhs);
 
-CVC4_PUBLIC RealAlgebraicNumber& operator+=(RealAlgebraicNumber& lhs, const RealAlgebraicNumber& rhs);
-CVC4_PUBLIC RealAlgebraicNumber& operator-=(RealAlgebraicNumber& lhs, const RealAlgebraicNumber& rhs);
-CVC4_PUBLIC RealAlgebraicNumber& operator*=(RealAlgebraicNumber& lhs, const RealAlgebraicNumber& rhs);
+/** Add and assign two real algebraic numbers. */
+CVC4_PUBLIC RealAlgebraicNumber& operator+=(RealAlgebraicNumber& lhs,
+                                            const RealAlgebraicNumber& rhs);
+/** Subtract and assign two real algebraic numbers. */
+CVC4_PUBLIC RealAlgebraicNumber& operator-=(RealAlgebraicNumber& lhs,
+                                            const RealAlgebraicNumber& rhs);
+/** Multiply and assign two real algebraic numbers. */
+CVC4_PUBLIC RealAlgebraicNumber& operator*=(RealAlgebraicNumber& lhs,
+                                            const RealAlgebraicNumber& rhs);
 
+/** Compute the sign of a real algebraic number. */
 CVC4_PUBLIC int sgn(const RealAlgebraicNumber& ran);
+
+/** Check whether a real algebraic number is zero. */
 CVC4_PUBLIC bool is_zero(const RealAlgebraicNumber& ran);
+/** Check whether a real algebraic number is one. */
 CVC4_PUBLIC bool is_one(const RealAlgebraicNumber& ran);
 
-}/* CVC4 namespace */
+}  // namespace CVC4
 
 #endif /* CVC4__REAL_ALGEBRAIC_NUMBER_H */
