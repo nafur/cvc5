@@ -2,9 +2,9 @@
 /*! \file cvc4cpp.cpp
  ** \verbatim
  ** Top contributors (to current version):
- **   Aina Niemetz, Andres Noetzli
+ **   Aina Niemetz, Makai Mann, Andrew Reynolds
  ** This file is part of the CVC4 project.
- ** Copyright (c) 2009-2019 by the authors listed in the file AUTHORS
+ ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
  ** in the top-level source directory) and their institutional affiliations.
  ** All rights reserved.  See the file COPYING in the top-level source
  ** directory for licensing information.\endverbatim
@@ -257,6 +257,8 @@ const static std::unordered_map<Kind, CVC4::Kind, KindHashFunction> s_kinds{
     {STRING_INDEXOF, CVC4::Kind::STRING_STRIDOF},
     {STRING_REPLACE, CVC4::Kind::STRING_STRREPL},
     {STRING_REPLACE_ALL, CVC4::Kind::STRING_STRREPLALL},
+    {STRING_REPLACE_RE, CVC4::Kind::STRING_REPLACE_RE},
+    {STRING_REPLACE_RE_ALL, CVC4::Kind::STRING_REPLACE_RE_ALL},
     {STRING_TOLOWER, CVC4::Kind::STRING_TOLOWER},
     {STRING_TOUPPER, CVC4::Kind::STRING_TOUPPER},
     {STRING_REV, CVC4::Kind::STRING_REV},
@@ -526,6 +528,8 @@ const static std::unordered_map<CVC4::Kind, Kind, CVC4::kind::KindHashFunction>
         {CVC4::Kind::STRING_STRIDOF, STRING_INDEXOF},
         {CVC4::Kind::STRING_STRREPL, STRING_REPLACE},
         {CVC4::Kind::STRING_STRREPLALL, STRING_REPLACE_ALL},
+        {CVC4::Kind::STRING_REPLACE_RE, STRING_REPLACE_RE},
+        {CVC4::Kind::STRING_REPLACE_RE_ALL, STRING_REPLACE_RE_ALL},
         {CVC4::Kind::STRING_TOLOWER, STRING_TOLOWER},
         {CVC4::Kind::STRING_TOUPPER, STRING_TOUPPER},
         {CVC4::Kind::STRING_REV, STRING_REV},
@@ -1119,7 +1123,7 @@ size_t SortHashFunction::operator()(const Sort& s) const
 /* Op                                                                     */
 /* -------------------------------------------------------------------------- */
 
-Op::Op() : d_kind(NULL_EXPR), d_expr(new CVC4::Expr()) {}
+Op::Op() : d_solver(nullptr), d_kind(NULL_EXPR), d_expr(new CVC4::Expr()) {}
 
 Op::Op(const Solver* slv, const Kind k)
     : d_solver(slv), d_kind(k), d_expr(new CVC4::Expr())
@@ -1628,7 +1632,7 @@ Term::const_iterator::const_iterator(const Solver* slv,
 }
 
 Term::const_iterator::const_iterator(const const_iterator& it)
-    : d_orig_expr(nullptr)
+    : d_solver(nullptr), d_orig_expr(nullptr)
 {
   if (it.d_orig_expr != nullptr)
   {
@@ -1920,7 +1924,7 @@ std::ostream& operator<<(std::ostream& out, const DatatypeDecl& dtdecl)
 
 /* DatatypeSelector --------------------------------------------------------- */
 
-DatatypeSelector::DatatypeSelector() { d_stor = nullptr; }
+DatatypeSelector::DatatypeSelector() : d_solver(nullptr), d_stor(nullptr) {}
 
 DatatypeSelector::DatatypeSelector(const Solver* slv,
                                    const CVC4::DatatypeConstructorArg& stor)
