@@ -82,8 +82,7 @@ poly::Rational to_rational(const Rational& r)
   return poly::Rational(r.getValue());
 #endif
 #ifdef CVC4_CLN_IMP
-  Assert(false) << "This is not yet implemented";
-  return poly::Rational();
+  return poly::Rational(to_integer(r.getNumerator()), to_integer(r.getDenominator()));
 #endif
 }
 
