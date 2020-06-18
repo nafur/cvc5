@@ -1,8 +1,8 @@
 #include "poly_util.h"
 
-#include <map>
-
 #include <poly/polyxx.h>
+
+#include <map>
 
 #include "base/check.h"
 #include "maybe.h"
@@ -13,6 +13,12 @@
 namespace CVC4 {
 namespace poly_utils {
 
+/** Convert arbitrary data using a string as intermediary.
+ * Assumes the existance of operator<<(std::ostream&, const From&) and To(const
+ * std::string&); Should be the last resort for type conversions: it may not
+ * only yield bad performance, but is also dependent on compatible string
+ * representations. Use with care!
+ */
 template <typename To, typename From>
 To cast_by_string(const From& f)
 {
@@ -28,7 +34,6 @@ Integer to_integer(const poly::Integer& i)
   return Integer(gi);
 #endif
 #ifdef CVC4_CLN_IMP
-
   if (std::numeric_limits<long>::min() <= gi
       && gi <= std::numeric_limits<long>::max())
   {
@@ -93,12 +98,13 @@ Maybe<poly::DyadicRational> to_dyadic_rational(const Rational& r)
 {
   Integer den = r.getDenominator();
   if (den.isOne())
-  {
+  {  // It's an integer anyway.
     return poly::DyadicRational(to_integer(r.getNumerator()));
   }
   unsigned long exp = den.isPow2();
   if (exp > 0)
   {
+    // It's a dyadic rational.
     return div_2exp(poly::DyadicRational(to_integer(r.getNumerator())),
                     exp - 1);
   }
@@ -108,23 +114,24 @@ Maybe<poly::DyadicRational> to_dyadic_rational(const poly::Rational& r)
 {
   poly::Integer den = denominator(r);
   if (den == poly::Integer(1))
-  {
+  {  // It's an integer anyway.
     return poly::DyadicRational(numerator(r));
   }
+  // Use bit_size as an estimate for the dyadic exponent.
   unsigned long size = bit_size(den) - 1;
   if (mul_pow2(poly::Integer(1), size) == den)
   {
+    // It's a dyadic rational.
     return div_2exp(poly::DyadicRational(numerator(r)), size);
   }
   return Maybe<poly::DyadicRational>();
 }
 
-/**
- * Assuming that r is dyadic, makes one refinement step to move r closer to
- * original.
- */
 void approximate_to_dyadic(poly::Rational& r, const poly::Rational& original)
 {
+  // Multiply both numerator and denominator by two.
+  // Increase or decrease the numerator, depending on whether r is too small or
+  // too large.
   poly::Integer n = mul_pow2(numerator(r), 1);
   if (r < original)
   {
