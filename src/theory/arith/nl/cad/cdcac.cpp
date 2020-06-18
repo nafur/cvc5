@@ -112,7 +112,7 @@ std::vector<Polynomial> CDCAC::required_coefficients(const Polynomial& p) const
     auto coeff = coefficient(p, deg);
     if (lp_polynomial_is_constant(coeff.get_internal())) break;
     res.emplace_back(coeff);
-    if (evaluate_polynomial_constraint(coeff, mAssignment, SignCondition::NE))
+    if (evaluate_constraint(coeff, mAssignment, SignCondition::NE))
     {
       break;
     }
@@ -259,7 +259,7 @@ CACInterval CDCAC::interval_from_characterization(
     mAssignment.set(mVariableOrdering[cur_variable], lower);
     for (const auto& p : m)
     {
-      if (evaluate_polynomial_constraint(p, mAssignment, SignCondition::EQ))
+      if (evaluate_constraint(p, mAssignment, SignCondition::EQ))
       {
         l.emplace_back(p);
       }
@@ -271,7 +271,7 @@ CACInterval CDCAC::interval_from_characterization(
     mAssignment.set(mVariableOrdering[cur_variable], upper);
     for (const auto& p : m)
     {
-      if (evaluate_polynomial_constraint(p, mAssignment, SignCondition::EQ))
+      if (evaluate_constraint(p, mAssignment, SignCondition::EQ))
       {
         u.emplace_back(p);
       }
