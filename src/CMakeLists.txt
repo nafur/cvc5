@@ -310,32 +310,6 @@ libcvc4_add_sources(
   theory/arith/nl/cad/constraints.h
   theory/arith/nl/cad/projections.cpp
   theory/arith/nl/cad/projections.h
-  theory/arith/nl/libpoly/assignment.cpp
-  theory/arith/nl/libpoly/assignment.h
-  theory/arith/nl/libpoly/conversion.cpp
-  theory/arith/nl/libpoly/conversion.h
-  theory/arith/nl/libpoly/dyadic_interval.cpp
-  theory/arith/nl/libpoly/dyadic_interval.h
-  theory/arith/nl/libpoly/integer.cpp
-  theory/arith/nl/libpoly/integer.h
-  theory/arith/nl/libpoly/interval.cpp
-  theory/arith/nl/libpoly/interval.h
-  theory/arith/nl/libpoly/polynomial.cpp
-  theory/arith/nl/libpoly/polynomial.h
-  theory/arith/nl/libpoly/ran.cpp
-  theory/arith/nl/libpoly/ran.h
-  theory/arith/nl/libpoly/root_isolation.cpp
-  theory/arith/nl/libpoly/root_isolation.h
-  theory/arith/nl/libpoly/sign_condition.cpp
-  theory/arith/nl/libpoly/sign_condition.h
-  theory/arith/nl/libpoly/upolynomial.cpp
-  theory/arith/nl/libpoly/upolynomial.h
-  theory/arith/nl/libpoly/utils.cpp
-  theory/arith/nl/libpoly/utils.h
-  theory/arith/nl/libpoly/value.cpp
-  theory/arith/nl/libpoly/value.h
-  theory/arith/nl/libpoly/variable.cpp
-  theory/arith/nl/libpoly/variable.h
   theory/arith/nl/nl_constraint.cpp
   theory/arith/nl/nl_constraint.h
   theory/arith/nl/nl_lemma_utils.cpp
