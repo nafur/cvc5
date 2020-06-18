@@ -28,9 +28,7 @@ RealAlgebraicNumber::RealAlgebraicNumber(const Rational& r)
   auto dr = poly_utils::to_dyadic_rational(r);
   if (dr)
   {
-    d_value = poly::AlgebraicNumber(
-        poly::UPolynomial({numerator(pr), -denominator(pr)}),
-        poly::DyadicInterval(dr.value()));
+    d_value = poly::AlgebraicNumber(dr.value());
   }
   else
   {
