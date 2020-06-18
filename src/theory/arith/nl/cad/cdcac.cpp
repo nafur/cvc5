@@ -279,9 +279,12 @@ CACInterval CDCAC::interval_from_characterization(
     mAssignment.unset(mVariableOrdering[cur_variable]);
   }
 
-  if (lower == upper) {
+  if (lower == upper)
+  {
     return CACInterval{Interval(lower, false, upper, false), l, u, m, d, {}};
-  } else {
+  }
+  else
+  {
     Assert(lower < upper);
     return CACInterval{Interval(lower, true, upper, true), l, u, m, d, {}};
   }

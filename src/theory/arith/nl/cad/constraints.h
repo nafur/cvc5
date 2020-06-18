@@ -1,13 +1,13 @@
 #ifndef CVC4__THEORY__NLARITH__CAD__CONSTRAINTS_H
 #define CVC4__THEORY__NLARITH__CAD__CONSTRAINTS_H
 
+#include <poly/polyxx.h>
+
 #include <map>
 #include <tuple>
 #include <vector>
 
-#include <poly/polyxx.h>
 #include "../poly_conversion.h"
-
 #include "expr/kind.h"
 #include "expr/node_manager_attributes.h"
 
@@ -20,8 +20,8 @@ namespace cad {
 class Constraints
 {
   /** Type alias for a list of constraints. */
-  using ConstraintVector = std::vector<
-      std::tuple<poly::Polynomial, poly::SignCondition, Node>>;
+  using ConstraintVector =
+      std::vector<std::tuple<poly::Polynomial, poly::SignCondition, Node>>;
   /** A list of constraints, each comprised of a polynomial and a sign
    * condition.
    */
@@ -32,11 +32,8 @@ class Constraints
   VariableMapper mVarMapper;
 
  public:
+  VariableMapper& var_mapper() { return mVarMapper; }
 
-  VariableMapper& var_mapper() {
-    return mVarMapper;
-  }
-  
   /** Add a constraing (represented by a polynomial and a sign condition) to the
    * list of constraints.
    */

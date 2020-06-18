@@ -2,11 +2,11 @@
 #ifndef CVC4__THEORY__NLARITH__CAD_PROJECTIONS_H
 #define CVC4__THEORY__NLARITH__CAD_PROJECTIONS_H
 
+#include <poly/polyxx.h>
+
 #include <algorithm>
 #include <iostream>
 #include <vector>
-
-#include <poly/polyxx.h>
 
 namespace CVC4 {
 namespace theory {
@@ -21,10 +21,14 @@ void reduce_projection_polynomials(std::vector<poly::Polynomial>& polys);
  * Adds a polynomial to the list of projection polynomials.
  * Before adding, it factorizes the polynomials and removed constant factors.
  */
-void add_polynomial(std::vector<poly::Polynomial>& polys, const poly::Polynomial& poly);
+void add_polynomial(std::vector<poly::Polynomial>& polys,
+                    const poly::Polynomial& poly);
 
-void add_polynomials(std::vector<poly::Polynomial>& polys, const std::vector<poly::Polynomial>& p);
+/** Adds a list of polynomials using add_polynomial(). */
+void add_polynomials(std::vector<poly::Polynomial>& polys,
+                     const std::vector<poly::Polynomial>& p);
 
+/** Make a set of polynomials a finest square-free basis. */
 void make_finest_square_free_basis(std::vector<poly::Polynomial>& polys);
 
 /**

@@ -1,13 +1,12 @@
 #ifndef CVC4__THEORY__NLARITH__CAD__CDCAC_H
 #define CVC4__THEORY__NLARITH__CAD__CDCAC_H
 
-#include "cdcac_utils.h"
-
 #include <poly/polyxx.h>
 
-#include "constraints.h"
-
 #include <vector>
+
+#include "cdcac_utils.h"
+#include "constraints.h"
 
 namespace CVC4 {
 namespace theory {
@@ -29,6 +28,7 @@ class CDCAC
   std::vector<Variable> mVariableOrdering;
 
   CDCACDebugger debugger;
+
  public:
   /** Initialize without a variable ordering. */
   CDCAC();
@@ -70,15 +70,14 @@ class CDCAC
    * A characterization contains polynomials whose roots bound the region around
    * the current assignment. Implements Algorithm 4.
    */
-  std::vector<Polynomial>
-  construct_characterization(const std::vector<CACInterval>& intervals);
+  std::vector<Polynomial> construct_characterization(
+      const std::vector<CACInterval>& intervals);
 
   /** Constructs an infeasible interval from a characterization.
    * Implements Algorithm 5.
    */
   CACInterval interval_from_characterization(
-      const std::vector<Polynomial>&
-          characterization,
+      const std::vector<Polynomial>& characterization,
       std::size_t cur_variable,
       const Value& sample);
 
