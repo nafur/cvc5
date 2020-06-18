@@ -5,8 +5,9 @@
 
 #include <map>
 
+#include <poly/polyxx.h>
+
 #include "maybe.h"
-#include "poly/polyxx.h"
 #include "util/integer.h"
 #include "util/rational.h"
 #include "util/real_algebraic_number.h"

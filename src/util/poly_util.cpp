@@ -2,10 +2,10 @@
 
 #include <map>
 
+#include <poly/polyxx.h>
+
 #include "base/check.h"
 #include "maybe.h"
-#include "poly/polyxx.h"
-#include "poly/polyxx/upolynomial_roots.h"
 #include "util/integer.h"
 #include "util/rational.h"
 #include "util/real_algebraic_number.h"
