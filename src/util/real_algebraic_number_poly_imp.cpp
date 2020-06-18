@@ -38,6 +38,11 @@ RealAlgebraicNumber::RealAlgebraicNumber(const Rational& r)
   }
 }
 
+RealAlgebraicNumber::RealAlgebraicNumber(const std::vector<long>& coefficients, long lower, long upper)
+    : d_value(poly::UPolynomial(coefficients), poly::DyadicInterval(lower, upper))
+{
+}
+
 RealAlgebraicNumber::RealAlgebraicNumber(
     const std::vector<Integer>& coefficients,
     const Rational& lower,
