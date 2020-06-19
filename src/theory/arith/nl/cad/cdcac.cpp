@@ -57,6 +57,19 @@ void CDCAC::compute_variable_ordering()
             });
   Trace("cdcac") << "Variable ordering is now " << mVariableOrdering
                  << std::endl;
+
+  // Write variable ordering back to libpoly.
+  lp_variable_order_t* vo = poly::Context::get_context().get_variable_order();
+  lp_variable_order_clear(vo);
+  for (const auto& v : mVariableOrdering)
+  {
+    lp_variable_order_push(vo, v.get_internal());
+  }
+  //std::cout << "libpoly: " << lp_variable_order_to_string(vo, poly::Context::get_context().get_variable_db()) << std::endl;
+  //for (const auto& c : mConstraints.get_constraints())
+  //{
+  //  std::cout << " -> " << std::get<0>(c) << std::endl;
+  //}
 }
 
 Constraints& CDCAC::get_constraints() { return mConstraints; }
@@ -252,7 +265,7 @@ CACInterval CDCAC::interval_from_characterization(
       break;
     }
   }
-  Assert(lower != Value() && upper != Value());
+  Assert(!is_none(lower) && !is_none(upper));
 
   if (lower != Value::minus_infty())
   {

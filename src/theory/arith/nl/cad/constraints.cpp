@@ -30,6 +30,11 @@ void Constraints::sort_constraints()
               if (tda != tdb) return tda < tdb;
               return degree(a) < degree(b);
             });
+  for (auto& c : mConstraints)
+  {
+    auto* p = std::get<0>(c).get_internal();
+    lp_polynomial_set_external(p);
+  }
 }
 
 void Constraints::add_constraint(const Polynomial& lhs,
