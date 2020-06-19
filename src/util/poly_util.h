@@ -69,6 +69,8 @@ RealAlgebraicNumber to_ran_with_refinement(poly::UPolynomial&& p,
                                            const Rational& lower,
                                            const Rational upper);
 
+std::size_t total_degree(const poly::Polynomial& p);
+
 }  // namespace poly_utils
 }  // namespace CVC4
 

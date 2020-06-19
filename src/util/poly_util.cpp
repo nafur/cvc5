@@ -183,5 +183,26 @@ RealAlgebraicNumber to_ran_with_refinement(poly::UPolynomial&& p,
       to_poly_ran_with_refinement(std::move(p), lower, upper));
 }
 
+std::size_t total_degree(const poly::Polynomial& p)
+{
+  std::size_t tdeg = 0;
+
+  lp_polynomial_traverse_f f =
+      [](const lp_polynomial_context_t* ctx, lp_monomial_t* m, void* data) {
+        std::size_t sum = 0;
+        for (std::size_t i = 0; i < m->n; ++i)
+        {
+          sum += m->p[i].d;
+        }
+
+        std::size_t* td = static_cast<std::size_t*>(data);
+        *td = std::max(*td, sum);
+      };
+
+  lp_polynomial_traverse(p.get_internal(), f, &tdeg);
+
+  return tdeg;
+}
+
 }  // namespace poly_utils
 }  // namespace CVC4
