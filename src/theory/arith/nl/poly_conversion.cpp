@@ -413,7 +413,7 @@ std::tuple<Node, Rational, Rational> detect_ran_encoding(const Node& n)
   if (!upper) upper = get_upper_bound(n[2]);
   Assert(upper) << "Could not identify upper bound.";
 
-  return {poly, lower.value(), upper.value()};
+  return std::tuple<Node, Rational, Rational>(poly, lower.value(), upper.value());
 }
 
 poly::AlgebraicNumber node_to_poly_ran(const Node& n)
