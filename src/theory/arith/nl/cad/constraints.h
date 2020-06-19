@@ -31,6 +31,8 @@ class Constraints
    */
   VariableMapper mVarMapper;
 
+  void sort_constraints();
+
  public:
   VariableMapper& var_mapper() { return mVarMapper; }
 
