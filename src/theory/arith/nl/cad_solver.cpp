@@ -39,7 +39,7 @@ bool CadSolver::construct_model()
   for (const auto& v : mCAC.get_variable_ordering())
   {
     Node variable = mCAC.get_constraints().var_mapper()(v);
-    Node value = value_to_node(mCAC.get_model().get(v));
+    Node value = value_to_node(mCAC.get_model().get(v), ran_variable);
     if (value.isConst())
     {
       d_model.addCheckModelSubstitution(variable, value);
@@ -54,7 +54,7 @@ bool CadSolver::construct_model()
 }
 
 CadSolver::CadSolver(TheoryArith& containing, NlModel& model)
-    : d_containing(containing), d_model(model)
+    : ran_variable(NodeManager::currentNM()->mkSkolem("__z", NodeManager::currentNM()->realType(), "", NodeManager::SKOLEM_EXACT_NAME)), d_containing(containing), d_model(model)
 {
 }
 

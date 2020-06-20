@@ -45,6 +45,8 @@ class CadSolver
    * checkFullRefine. */
   bool found_satisfiability = false;
 
+  Node ran_variable;
+
  public:
   CadSolver(TheoryArith& containing, NlModel& model);
   ~CadSolver();

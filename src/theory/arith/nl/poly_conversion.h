@@ -28,8 +28,6 @@ struct VariableMapper
   poly::Variable operator()(const CVC4::Node& n);
   /** Retrieves the according CVC4 variable. */
   CVC4::Node operator()(const poly::Variable& n);
-
-  static CVC4::Node ran_encoding_var();
 };
 
 /** Convert a poly univariate polynomial to a CVC4::Node. */
@@ -60,14 +58,14 @@ std::pair<poly::Polynomial, poly::SignCondition> as_poly_constraint(
  * addCheckModelSubstitution) or a witness term (suitable for
  * addCheckModelWitness).
  */
-Node ran_to_node(const RealAlgebraicNumber& ran);
+Node ran_to_node(const RealAlgebraicNumber& ran, const Node& ran_variable);
 
-Node ran_to_node(const poly::AlgebraicNumber& an);
+Node ran_to_node(const poly::AlgebraicNumber& an, const Node& ran_variable);
 
 /** Transforms a poly::Value to a node.
  * The resulting node can be either a constant or a witness term.
  */
-Node value_to_node(const poly::Value& v);
+Node value_to_node(const poly::Value& v, const Node& ran_variable);
 
 /** Transforms a node to a poly::AlgebraicNumber.
  * Expects a node of the following form:
@@ -77,13 +75,13 @@ Node value_to_node(const poly::Value& v);
  *    (< __z CONST)
  * )
  */
-poly::AlgebraicNumber node_to_poly_ran(const Node& n);
+poly::AlgebraicNumber node_to_poly_ran(const Node& n, const Node& ran_variable);
 
-RealAlgebraicNumber node_to_ran(const Node& n);
+RealAlgebraicNumber node_to_ran(const Node& n, const Node& ran_variable);
 
 /** Transforms a node to a poly::Value.
  */
-poly::Value node_to_value(const Node& n);
+poly::Value node_to_value(const Node& n, const Node& ran_variable);
 
 
 }  // namespace nl

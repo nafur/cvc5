@@ -37,14 +37,6 @@ CVC4::Node VariableMapper::operator()(const poly::Variable& n)
   return it->second;
 }
 
-CVC4::Node VariableMapper::ran_encoding_var()
-{
-  auto* nm = NodeManager::currentNM();
-  static CVC4::Node var =
-      nm->mkSkolem("__z", nm->realType(), "", NodeManager::SKOLEM_EXACT_NAME);
-  return var;
-}
-
 CVC4::Node as_cvc_upolynomial(const poly::UPolynomial& p, const CVC4::Node& var)
 {
   Trace("poly::conversion")
@@ -272,12 +264,12 @@ std::pair<poly::Polynomial, poly::SignCondition> as_poly_constraint(
   return {lhs, sc};
 }
 
-Node ran_to_node(const RealAlgebraicNumber& ran)
+Node ran_to_node(const RealAlgebraicNumber& ran, const Node& ran_variable)
 {
-  return ran_to_node(ran.getValue());
+  return ran_to_node(ran.getValue(), ran_variable);
 }
 
-Node ran_to_node(const poly::AlgebraicNumber& an)
+Node ran_to_node(const poly::AlgebraicNumber& an, const Node& ran_variable)
 {
   auto* nm = NodeManager::currentNM();
 
@@ -289,8 +281,7 @@ Node ran_to_node(const poly::AlgebraicNumber& an)
   Assert(di.get_internal()->a_open && di.get_internal()->b_open)
       << "We assume an open interval here.";
 
-  Node var = VariableMapper::ran_encoding_var();
-  Node poly = as_cvc_upolynomial(get_defining_polynomial(an), var);
+  Node poly = as_cvc_upolynomial(get_defining_polynomial(an), ran_variable);
   Node lower = nm->mkConst(poly_utils::to_rational(get_lower(di)));
   Node upper = nm->mkConst(poly_utils::to_rational(get_upper(di)));
 
@@ -299,12 +290,12 @@ Node ran_to_node(const poly::AlgebraicNumber& an)
                     // poly(var) == 0
                     nm->mkNode(Kind::EQUAL, poly, nm->mkConst(Rational(0))),
                     // lower_bound < var
-                    nm->mkNode(Kind::LT, lower, var),
+                    nm->mkNode(Kind::LT, lower, ran_variable),
                     // var < upper_bound
-                    nm->mkNode(Kind::LT, var, upper));
+                    nm->mkNode(Kind::LT, ran_variable, upper));
 }
 
-Node value_to_node(const poly::Value& v)
+Node value_to_node(const poly::Value& v, const Node& ran_variable)
 {
   Assert(!is_minus_infinity(v)) << "Can not convert minus infinity.";
   Assert(!is_none(v)) << "Can not convert none.";
@@ -312,7 +303,7 @@ Node value_to_node(const poly::Value& v)
 
   if (is_algebraic_number(v))
   {
-    return ran_to_node(as_algebraic_number(v));
+    return ran_to_node(as_algebraic_number(v), ran_variable);
   }
   auto* nm = NodeManager::currentNM();
   if (is_dyadic_rational(v))
@@ -416,29 +407,29 @@ std::tuple<Node, Rational, Rational> detect_ran_encoding(const Node& n)
   return std::tuple<Node, Rational, Rational>(poly, lower.value(), upper.value());
 }
 
-poly::AlgebraicNumber node_to_poly_ran(const Node& n)
+poly::AlgebraicNumber node_to_poly_ran(const Node& n, const Node& ran_variable)
 {
   // Identify poly, lower and upper
   auto encoding = detect_ran_encoding(n);
   // Construct polynomial
   poly::UPolynomial pol = as_poly_upolynomial(
-      std::get<0>(encoding), VariableMapper::ran_encoding_var());
+      std::get<0>(encoding), ran_variable);
   // Construct algebraic number
   return poly_utils::to_poly_ran_with_refinement(
       std::move(pol), std::get<1>(encoding), std::get<2>(encoding));
 }
-RealAlgebraicNumber node_to_ran(const Node& n)
+RealAlgebraicNumber node_to_ran(const Node& n, const Node& ran_variable)
 {
-  return RealAlgebraicNumber(node_to_poly_ran(n));
+  return RealAlgebraicNumber(node_to_poly_ran(n, ran_variable));
 }
 
-poly::Value node_to_value(const Node& n)
+poly::Value node_to_value(const Node& n, const Node& ran_variable)
 {
   if (n.isConst())
   {
     return poly_utils::to_rational(n.getConst<Rational>());
   }
-  return node_to_poly_ran(n);
+  return node_to_poly_ran(n, ran_variable);
 }
 
 }  // namespace nl
