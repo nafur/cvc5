@@ -19,9 +19,11 @@ namespace cad {
 
 class Constraints
 {
+  public:
   /** Type alias for a list of constraints. */
   using ConstraintVector =
       std::vector<std::tuple<poly::Polynomial, poly::SignCondition, Node>>;
+  private:
   /** A list of constraints, each comprised of a polynomial and a sign
    * condition.
    */
