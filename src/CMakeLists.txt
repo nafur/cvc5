@@ -310,6 +310,8 @@ libcvc4_add_sources(
   theory/arith/nl/cad/constraints.h
   theory/arith/nl/cad/projections.cpp
   theory/arith/nl/cad/projections.h
+  theory/arith/nl/cad/variable_ordering.cpp
+  theory/arith/nl/cad/variable_ordering.h
   theory/arith/nl/nl_constraint.cpp
   theory/arith/nl/nl_constraint.h
   theory/arith/nl/nl_lemma_utils.cpp
