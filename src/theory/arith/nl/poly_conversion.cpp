@@ -33,7 +33,7 @@ poly::Variable VariableMapper::operator()(const CVC4::Node& n)
 CVC4::Node VariableMapper::operator()(const poly::Variable& n)
 {
   auto it = mVarpolyCVC.find(n);
-  Assert(it != mVarpolyCVC.end()) << "Expect variable to be added already.";
+  Assert(it != mVarpolyCVC.end()) << "Expect variable " << n << " to be added already.";
   return it->second;
 }
 
