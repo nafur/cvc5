@@ -31,6 +31,9 @@ void add_polynomials(std::vector<poly::Polynomial>& polys,
 /** Make a set of polynomials a finest square-free basis. */
 void make_finest_square_free_basis(std::vector<poly::Polynomial>& polys);
 
+/** Ensure that two sets of polynomials are finest square-free basis relative to each other. */
+void make_finest_square_free_basis(std::vector<poly::Polynomial>& lhs, std::vector<poly::Polynomial>& rhs);
+
 /**
  * Computes McCallum's projection operator.
  */

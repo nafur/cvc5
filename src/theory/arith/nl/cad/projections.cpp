@@ -49,6 +49,28 @@ void make_finest_square_free_basis(std::vector<Polynomial>& polys)
     return is_constant(p);
   });
   polys.erase(it, polys.end());
+  reduce_projection_polynomials(polys);
+}
+
+void make_finest_square_free_basis(std::vector<poly::Polynomial>& lhs, std::vector<poly::Polynomial>& rhs) {
+
+  for (std::size_t i = 0; i < lhs.size(); ++i)
+  {
+    for (std::size_t j = 0; j < rhs.size(); ++j)
+    {
+      if (lhs[i] == rhs[j]) continue;
+      Polynomial g = gcd(lhs[i], rhs[j]);
+      if (!is_constant(g))
+      {
+        lhs[i] = div(lhs[i], g);
+        rhs[j] = div(rhs[j], g);
+        lhs.emplace_back(g);
+        rhs.emplace_back(g);
+      }
+    }
+  }
+  reduce_projection_polynomials(lhs);
+  reduce_projection_polynomials(rhs);
 }
 
 std::vector<Polynomial> projection_mccallum(
