@@ -132,7 +132,7 @@ void add_polynomial(
 }
 
 std::vector<Polynomial> CDCAC::construct_characterization(
-    const std::vector<CACInterval>& intervals)
+    std::vector<CACInterval>& intervals)
 {
   // TODO(Gereon): origins from a single interval are a squarefree basis. What
   // about resultants of polys from different intervals?
@@ -185,6 +185,7 @@ std::vector<Polynomial> CDCAC::construct_characterization(
 
   for (std::size_t i = 0; i < intervals.size() - 1; ++i)
   {
+    cad::make_finest_square_free_basis(intervals[i].mUpperPolys, intervals[i + 1].mLowerPolys);
     for (const auto& p : intervals[i].mUpperPolys)
     {
       for (const auto& q : intervals[i + 1].mLowerPolys)
@@ -342,13 +343,17 @@ std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable)
 
     intervals.emplace_back(new_interval);
     Trace("cdcac") << "Added " << intervals.back().mInterval << std::endl;
+    Trace("cdcac") << "\tlower: " << intervals.back().mLowerPolys << std::endl;
+    Trace("cdcac") << "\tupper: " << intervals.back().mUpperPolys << std::endl;
+    Trace("cdcac") << "\tmain:  " << intervals.back().mMainPolys << std::endl;
+    Trace("cdcac") << "\tdown:  " << intervals.back().mDownPolys << std::endl;
     // debugger.check_interval(mAssignment, mVariableOrdering[cur_variable],
     // intervals.back());
     clean_intervals(intervals);
     Trace("cdcac") << "Now we have for " << mVariableOrdering[cur_variable]
                    << ":" << std::endl;
     for (const auto& i : intervals)
-      Trace("cdcac") << "-> " << i.mInterval << " (from " << i.mOrigins << ")"
+      Trace("cdcac") << "-> " << mVariableOrdering[cur_variable] << " not in " << i.mInterval << " (from " << i.mOrigins << ")"
                      << std::endl;
   }
 

@@ -71,7 +71,7 @@ class CDCAC
    * the current assignment. Implements Algorithm 4.
    */
   std::vector<Polynomial> construct_characterization(
-      const std::vector<CACInterval>& intervals);
+      std::vector<CACInterval>& intervals);
 
   /** Constructs an infeasible interval from a characterization.
    * Implements Algorithm 5.
