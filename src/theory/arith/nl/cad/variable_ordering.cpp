@@ -42,6 +42,15 @@ std::vector<poly::Variable> get_variables(
   return res;
 }
 
+void sort_byid(std::vector<poly_utils::VariableInformation>& vi)
+{
+  std::sort(
+      vi.begin(),
+      vi.end(),
+      [](const poly_utils::VariableInformation& a,
+         const poly_utils::VariableInformation& b) { return a.var < b.var; });
+};
+
 void sort_brown(std::vector<poly_utils::VariableInformation>& vi)
 {
   std::sort(vi.begin(),
@@ -76,13 +85,17 @@ std::vector<poly::Variable> variable_ordering(
   std::vector<poly_utils::VariableInformation> vi = collect(polys);
   switch (vo)
   {
-    case VariableOrdering::Brown:
+    case VariableOrdering::ByID: sort_byid(vi); break;
+    case VariableOrdering::Brown: sort_brown(vi); break;
     case VariableOrdering::Triangular: sort_triangular(vi); break;
     default: Assert(false) << "Unsupported variable ordering.";
   }
   Trace("cdcac") << "Computed variable ordering:" << std::endl;
-  for (const auto& v: vi) {
-    Trace("cdcac") << "\t" << v.var << ":\t" << v.max_degree << "\t/ " << v.max_lc_degree << "\t/ " << v.sum_degree << "\t/ " << v.max_terms_tdegree << "\t/ " << v.num_terms << std::endl;
+  for (const auto& v : vi)
+  {
+    Trace("cdcac") << "\t" << v.var << ":\t" << v.max_degree << "\t/ "
+                   << v.max_lc_degree << "\t/ " << v.sum_degree << "\t/ "
+                   << v.max_terms_tdegree << "\t/ " << v.num_terms << std::endl;
   }
   return get_variables(vi);
 }

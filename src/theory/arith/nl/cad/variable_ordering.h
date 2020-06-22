@@ -13,6 +13,8 @@ namespace cad {
 
 /** Variable orderings for real variables in the context of CAD. */
 enum class VariableOrdering {
+    /** Dummy ordering by variable ID. */
+    ByID,
     /** Triangular as of DOI:10.1145/2755996.2756678 */
     Triangular,
     /** Brown as of DOI:10.1145/2755996.2756678 */
