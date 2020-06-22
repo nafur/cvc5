@@ -38,11 +38,6 @@ class Rational;
 class CVC4_PUBLIC Integer {
 private:
   /**
-   * Stores the value of the rational is stored in a C++ CLN integer class.
-   */
-  cln::cl_I d_value;
-
-  /**
    * Gets a reference to the cln data that backs up the integer.
    * Only accessible to friend classes.
    */
@@ -67,6 +62,11 @@ private:
   static unsigned long s_signedLongMin;
   static unsigned long s_signedLongMax;
   static unsigned long s_unsignedLongMax;
+
+  /**
+   * Stores the value of the rational is stored in a C++ CLN integer class.
+   */
+  cln::cl_I d_value;
 public:
 
   /**
