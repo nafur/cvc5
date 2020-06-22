@@ -1,5 +1,7 @@
 #include "poly_util.h"
 
+#ifdef CVC4_POLY_IMP
+
 #include <poly/polyxx.h>
 
 #include <map>
@@ -244,3 +246,5 @@ void get_variable_information(VariableInformation& vi, const poly::Polynomial& p
 
 }  // namespace poly_utils
 }  // namespace CVC4
+
+#endif
