@@ -31,27 +31,9 @@ namespace CVC4 {
 
 class Rational;
 
-<<<<<<< HEAD
-class CVC4_PUBLIC Integer {
-private:
-  /**
-   * Gets a reference to the gmp data that backs up the integer.
-   * Only accessible to friend classes.
-   */
-  const mpz_class& get_mpz() const { return d_value; }
-
-  /**
-   * Stores the value of the rational is stored in a C++ GMP integer class.
-   * Using this instead of mpz_t allows for easier destruction.
-   */
-  mpz_class d_value;
-
-public:
-=======
 class CVC4_PUBLIC Integer
 {
   friend class CVC4::Rational;
->>>>>>> 1a08524c269a583b5d12f0d4c6f88045b44bdbf7
 
  public:
   /**
@@ -88,14 +70,7 @@ class CVC4_PUBLIC Integer
   /**
    * Returns a copy of d_value to enable public access of GMP data.
    */
-<<<<<<< HEAD
-  const mpz_class& getValue() const
-  {
-    return d_value;
-  }
-=======
   const mpz_class& getValue() const { return d_value; }
->>>>>>> 1a08524c269a583b5d12f0d4c6f88045b44bdbf7
 
   Integer& operator=(const Integer& x)
   {

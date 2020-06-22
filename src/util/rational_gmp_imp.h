@@ -51,33 +51,16 @@ namespace CVC4 {
  ** in danger of invoking the char* constructor, from whence you will segfault.
  **/
 
-<<<<<<< HEAD
-class CVC4_PUBLIC Rational {
-private:
-  /**
-   * Stores the value of the rational is stored in a C++ GMP rational class.
-   * Using this instead of mpq_t allows for easier destruction.
-   */
-  mpq_class d_value;
-
-public:
-
-=======
 class CVC4_PUBLIC Rational
 {
  public:
->>>>>>> 1a08524c269a583b5d12f0d4c6f88045b44bdbf7
   /**
    * Constructs a Rational from a mpq_class object.
    * Does a deep copy.
    * Assumes that the value is in canonical form, and thus does not
    * have to call canonicalize() on the value.
    */
-<<<<<<< HEAD
-  Rational(const mpq_class& val) : d_value(val) {  }
-=======
   Rational(const mpq_class& val) : d_value(val) {}
->>>>>>> 1a08524c269a583b5d12f0d4c6f88045b44bdbf7
 
   /**
    * Creates a rational from a decimal string (e.g., <code>"1.5"</code>).
@@ -174,14 +157,7 @@ class CVC4_PUBLIC Rational
   /**
    * Returns a copy of d_value to enable public access of GMP data.
    */
-<<<<<<< HEAD
-  const mpq_class& getValue() const
-  {
-    return d_value;
-  }
-=======
   const mpq_class& getValue() const { return d_value; }
->>>>>>> 1a08524c269a583b5d12f0d4c6f88045b44bdbf7
 
   /**
    * Returns the value of numerator of the Rational.

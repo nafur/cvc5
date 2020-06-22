@@ -58,27 +58,10 @@ class CVC4_PUBLIC Rational
 {
  public:
   /**
-<<<<<<< HEAD
-   * Stores the value of the rational is stored in a C++ GMP rational class.
-   * Using this instead of mpq_t allows for easier destruction.
-   */
-  cln::cl_RA d_value;
-
-public:
-
-  /**
-   * Constructs a Rational from a mpq_class object.
-=======
    * Constructs a Rational from a cln::cl_RA object.
->>>>>>> 1a08524c269a583b5d12f0d4c6f88045b44bdbf7
    * Does a deep copy.
    */
-<<<<<<< HEAD
-  //Rational(const mpq_class& val) : d_value(val) {  }
-  Rational(const cln::cl_RA& val) : d_value(val) {  }
-=======
   Rational(const cln::cl_RA& val) : d_value(val) {}
->>>>>>> 1a08524c269a583b5d12f0d4c6f88045b44bdbf7
 
   /**
    * Creates a rational from a decimal string (e.g., <code>"1.5"</code>).
@@ -194,14 +177,7 @@ public:
   /**
    * Returns a copy of d_value to enable public access of CLN data.
    */
-<<<<<<< HEAD
-  const cln::cl_RA& getValue() const
-  {
-    return d_value;
-  }
-=======
   const cln::cl_RA& getValue() const { return d_value; }
->>>>>>> 1a08524c269a583b5d12f0d4c6f88045b44bdbf7
 
   /**
    * Returns the value of numerator of the Rational.

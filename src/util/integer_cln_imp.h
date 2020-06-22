@@ -36,52 +36,11 @@ namespace CVC4 {
 
 class Rational;
 
-<<<<<<< HEAD
-class CVC4_PUBLIC Integer {
-private:
-  /**
-   * Gets a reference to the cln data that backs up the integer.
-   * Only accessible to friend classes.
-   */
-  const cln::cl_I& get_cl_I() const { return d_value; }
-  // Throws a std::invalid_argument on invalid input `s` for the given base.
-  void readInt(const cln::cl_read_flags& flags,
-               const std::string& s,
-               unsigned base);
-
-  // Throws a std::invalid_argument on invalid inputs.
-  void parseInt(const std::string& s, unsigned base);
-
-  // These constants are to help with CLN conversion in 32 bit.
-  // See http://www.ginac.de/CLN/cln.html#Conversions
-  static signed int s_fastSignedIntMax; /*  2^29 - 1 */
-  static signed int s_fastSignedIntMin; /* -2^29 */
-  static unsigned int s_fastUnsignedIntMax; /* 2^29 - 1 */
-
-  static signed long s_slowSignedIntMax; /*  std::numeric_limits<signed int>::max() */
-  static signed long s_slowSignedIntMin; /*  std::numeric_limits<signed int>::min() */
-  static unsigned long s_slowUnsignedIntMax; /*  std::numeric_limits<unsigned int>::max() */
-  static unsigned long s_signedLongMin;
-  static unsigned long s_signedLongMax;
-  static unsigned long s_unsignedLongMax;
-
-  /**
-   * Stores the value of the rational is stored in a C++ CLN integer class.
-   */
-  cln::cl_I d_value;
-public:
-=======
 class CVC4_PUBLIC Integer
 {
   friend class CVC4::Rational;
 
  public:
-  /**
-   * Constructs an Integer by copying a CLN C++ primitive.
-   */
-  Integer(const cln::cl_I& val) : d_value(val) {}
->>>>>>> 1a08524c269a583b5d12f0d4c6f88045b44bdbf7
-
   /**
    * Constructs an Integer by copying a CLN C++ primitive.
    */
@@ -121,14 +80,7 @@ class CVC4_PUBLIC Integer
   /**
    * Returns a copy of d_value to enable public access of CLN data.
    */
-<<<<<<< HEAD
-  const cln::cl_I& getValue() const
-  {
-    return d_value;
-  }
-=======
   const cln::cl_I& getValue() const { return d_value; }
->>>>>>> 1a08524c269a583b5d12f0d4c6f88045b44bdbf7
 
   Integer& operator=(const Integer& x)
   {
