@@ -1,6 +1,7 @@
 #include "cdcac.h"
 
 #include "projections.h"
+#include "variable_ordering.h"
 
 namespace std {
 template <typename T>
@@ -39,22 +40,7 @@ void CDCAC::reset()
 
 void CDCAC::compute_variable_ordering()
 {
-  VariableCollector vc;
-  for (const auto& c : mConstraints.get_constraints())
-  {
-    vc(std::get<0>(c));
-  }
-  mVariableOrdering = vc.get_variables();
-  // TODO(Gereon): Figure out how to set custom variable ordering in poly
-  std::sort(mVariableOrdering.begin(),
-            mVariableOrdering.end(),
-            [](const Variable& a, const Variable& b) {
-              return lp_variable_order_cmp(
-                         poly::Context::get_context().get_variable_order(),
-                         a.get_internal(),
-                         b.get_internal())
-                     < 0;
-            });
+  mVariableOrdering = variable_ordering(mConstraints.get_constraints(), VariableOrdering::Triangular);
   Trace("cdcac") << "Variable ordering is now " << mVariableOrdering
                  << std::endl;
 
