@@ -58,10 +58,10 @@ void sort_brown(std::vector<poly_utils::VariableInformation>& vi)
             [](const poly_utils::VariableInformation& a,
                const poly_utils::VariableInformation& b) {
               if (a.max_degree != b.max_degree)
-                return a.max_degree < b.max_degree;
+                return a.max_degree > b.max_degree;
               if (a.max_terms_tdegree != b.max_terms_tdegree)
-                return a.max_terms_tdegree < b.max_terms_tdegree;
-              return a.num_terms < b.num_terms;
+                return a.max_terms_tdegree > b.max_terms_tdegree;
+              return a.num_terms > b.num_terms;
             });
 };
 
@@ -72,10 +72,10 @@ void sort_triangular(std::vector<poly_utils::VariableInformation>& vi)
             [](const poly_utils::VariableInformation& a,
                const poly_utils::VariableInformation& b) {
               if (a.max_degree != b.max_degree)
-                return a.max_degree < b.max_degree;
+                return a.max_degree > b.max_degree;
               if (a.max_lc_degree != b.max_lc_degree)
-                return a.max_lc_degree < b.max_lc_degree;
-              return a.sum_degree < b.sum_degree;
+                return a.max_lc_degree > b.max_lc_degree;
+              return a.sum_degree > b.sum_degree;
             });
 };
 
