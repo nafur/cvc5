@@ -11,8 +11,8 @@ find_path(POLY_INCLUDE_DIR NAMES poly/poly.h PATH_SUFFIXES poly)
 find_library(POLY_LIB NAMES poly)
 find_library(POLY_LIBXX NAMES polyxx)
 set(POLY_LIBRARIES "${POLY_LIBXX};${POLY_LIB}")
-unset(POLY_LIB)
-unset(POLY_LIBXX)
+unset(POLY_LIB CACHE)
+unset(POLY_LIBXX CACHE)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Poly
