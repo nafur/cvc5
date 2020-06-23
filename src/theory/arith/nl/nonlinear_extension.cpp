@@ -382,12 +382,6 @@ bool NonlinearExtension::checkModel(const std::vector<Node>& assertions,
   Trace("nl-ext-cm-debug") << "  apply pre-substitution..." << std::endl;
   std::vector<Node> passertions = assertions;
 
-  // preprocess the assertions with the trancendental solver
-  if (!d_trSlv.preprocessAssertionsCheckModel(passertions))
-  {
-    return false;
-  }
-
   if (options::nlCad())
   {
     d_cadSlv.preprocessAssertionsCheckModel(passertions);

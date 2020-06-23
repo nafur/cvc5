@@ -35,7 +35,7 @@ namespace theory {
 namespace arith {
 namespace nl {
 
-// #define EXPORT_THEORY_CALL_STATISTICS
+#define EXPORT_THEORY_CALLS
 
 bool CadSolver::construct_model()
 {
@@ -93,7 +93,7 @@ void CadSolver::initLastCall(const std::vector<Node>& assertions,
     mCAC.get_constraints().add_constraint(a);
   }
 #ifdef CVC4_STATISTICS_ON
-#ifdef EXPORT_THEORY_CALL_STATISTICS
+#ifdef EXPORT_THEORY_CALLS
   static std::size_t theory_calls = 0;
   ++theory_calls;
   cad::NRAStatistics stats("dummy");
@@ -119,7 +119,8 @@ std::vector<NlLemma> CadSolver::checkFullRefine()
 {
   Notice() << "CadSolver::checkFullRefine" << std::endl;
   std::vector<NlLemma> lems;
-#ifdef EXPORT_THEORY_CALL_STATISTICS
+#ifdef EXPORT_THEORY_CALLS
+  std::cout << "Abort solving as we only export theory calls." << std::endl;
   return lems;
 #endif
 
