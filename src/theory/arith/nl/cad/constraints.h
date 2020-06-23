@@ -21,8 +21,9 @@ class Constraints
 {
   public:
   /** Type alias for a list of constraints. */
+  using Constraint = std::tuple<poly::Polynomial, poly::SignCondition, Node>;
   using ConstraintVector =
-      std::vector<std::tuple<poly::Polynomial, poly::SignCondition, Node>>;
+      std::vector<Constraint>;
   private:
   /** A list of constraints, each comprised of a polynomial and a sign
    * condition.

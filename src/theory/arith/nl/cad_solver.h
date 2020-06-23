@@ -23,6 +23,8 @@
 #include "theory/arith/nl/cad/cdcac.h"
 #include "theory/arith/nl/nl_model.h"
 #include "theory/arith/theory_arith.h"
+#include "cad/cdcac_stats.h"
+#include "util/statistics_registry.h"
 
 namespace CVC4 {
 namespace theory {

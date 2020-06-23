@@ -26,6 +26,7 @@
 #include "theory/arith/nl/cad/cdcac.h"
 #include "theory/arith/nl/poly_conversion.h"
 #include "util/poly_util.h"
+#include "cad/theory_call_exporter.h"
 
 using namespace CVC4::kind;
 
@@ -33,6 +34,8 @@ namespace CVC4 {
 namespace theory {
 namespace arith {
 namespace nl {
+
+#define EXPORT_THEORY_CALL_STATISTICS
 
 bool CadSolver::construct_model()
 {
@@ -89,6 +92,15 @@ void CadSolver::initLastCall(const std::vector<Node>& assertions,
   {
     mCAC.get_constraints().add_constraint(a);
   }
+#ifdef CVC4_STATISTICS_ON
+#ifdef EXPORT_THEORY_CALL_STATISTICS
+  static std::size_t theory_calls = 0;
+  ++theory_calls;
+  cad::NRAStatistics stats("dummy");
+  stats.make_stats(mCAC.get_constraints().get_constraints());
+  cad::export_theory_call(theory_calls, assertions, stats);
+#endif
+#endif
   mCAC.compute_variable_ordering();
 }
 
@@ -107,6 +119,9 @@ std::vector<NlLemma> CadSolver::checkFullRefine()
 {
   Notice() << "CadSolver::checkFullRefine" << std::endl;
   std::vector<NlLemma> lems;
+#ifdef EXPORT_THEORY_CALL_STATISTICS
+  return lems;
+#endif
 
   // Do full theory check here
 

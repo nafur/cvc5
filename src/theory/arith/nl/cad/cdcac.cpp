@@ -40,7 +40,7 @@ void CDCAC::reset()
 
 void CDCAC::compute_variable_ordering()
 {
-  mVariableOrdering = variable_ordering(mConstraints.get_constraints(), VariableOrdering::Triangular);
+  mVariableOrdering = variable_ordering(mConstraints.get_constraints(), VariableOrdering::Brown);
   Trace("cdcac") << "Variable ordering is now " << mVariableOrdering
                  << std::endl;
 
