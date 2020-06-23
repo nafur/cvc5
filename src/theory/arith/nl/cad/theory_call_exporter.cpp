@@ -17,6 +17,10 @@ void export_theory_call(std::size_t n,
 {
   std::string filename = CVC4::smt::currentSmtEngine()->getFilename() + "-tc-"
                          + std::to_string(n) + ".smt2";
+  auto last_slash = filename.find_last_of("/");
+  if (last_slash != std::string::npos) {
+      filename.erase(0, last_slash + 1);
+  }
   std::ofstream out(filename);
   out << language::SetLanguage(CVC4::OutputLanguage::LANG_SMTLIB_V2_6);
 
