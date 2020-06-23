@@ -304,12 +304,16 @@ libcvc4_add_sources(
   theory/arith/nl/cad_solver.h
   theory/arith/nl/cad/cdcac.cpp
   theory/arith/nl/cad/cdcac.h
+  theory/arith/nl/cad/cdcac_stats.cpp
+  theory/arith/nl/cad/cdcac_stats.h
   theory/arith/nl/cad/cdcac_utils.cpp
   theory/arith/nl/cad/cdcac_utils.h
   theory/arith/nl/cad/constraints.cpp
   theory/arith/nl/cad/constraints.h
   theory/arith/nl/cad/projections.cpp
   theory/arith/nl/cad/projections.h
+  theory/arith/nl/cad/theory_call_exporter.cpp
+  theory/arith/nl/cad/theory_call_exporter.h
   theory/arith/nl/cad/variable_ordering.cpp
   theory/arith/nl/cad/variable_ordering.h
   theory/arith/nl/nl_constraint.cpp
