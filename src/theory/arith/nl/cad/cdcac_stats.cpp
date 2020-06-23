@@ -85,11 +85,6 @@ void NRAStatistics::make_stats(const Constraints::ConstraintVector& constraints)
 {
   auto data = cad::collect_information(constraints, true);
 
-  for (const auto& d : data)
-  {
-    std::cout << d << std::endl;
-  }
-
   poly_utils::VariableInformation totals = data.back();
   data.pop_back();
 
