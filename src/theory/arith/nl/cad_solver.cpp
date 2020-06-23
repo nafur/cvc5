@@ -35,7 +35,7 @@ namespace theory {
 namespace arith {
 namespace nl {
 
-#define EXPORT_THEORY_CALL_STATISTICS
+// #define EXPORT_THEORY_CALL_STATISTICS
 
 bool CadSolver::construct_model()
 {
