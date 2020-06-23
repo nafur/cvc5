@@ -14,6 +14,7 @@
 #ifdef CVC4_POLY_IMP
 
 #include <poly/polyxx.h>
+#include <iosfwd>
 
 namespace CVC4 {
 /** Utilities for working with libpoly.
@@ -76,6 +77,7 @@ std::size_t total_degree(const poly::Polynomial& p);
 
 /** Collects information about a single variable in a set of polynomials.
  * Used for determining a variable ordering.
+ * If var == poly::Variable(), only max_degree, sum_degree and num_terms are computed.
  */
 struct VariableInformation {
     poly::Variable var;
@@ -85,11 +87,16 @@ struct VariableInformation {
     std::size_t max_lc_degree = 0;
     /** Maximum of total degrees of terms that contain this variable. */
     std::size_t max_terms_tdegree = 0;
-    /** Sum of degrees of this variable. */
-    std::size_t sum_degree = 0;
+    /** Sum of degrees of this variable within all terms. */
+    std::size_t sum_term_degree = 0;
+    /** Sum of degrees of this variable within all polynomials. */
+    std::size_t sum_poly_degree = 0;
+    /** Number of polynomials that contain this variable. */
+    std::size_t num_polynomials = 0;
     /** Number of terms that contain this variable. */
     std::size_t num_terms = 0;
 };
+std::ostream& operator<<(std::ostream& os, const VariableInformation& vi);
 
 void get_variable_information(VariableInformation& vi, const poly::Polynomial& poly);
 
