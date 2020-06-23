@@ -2,8 +2,6 @@
 
 #include "expr/node_algorithm.h"
 #include "smt/command.h"
-#include "smt/smt_engine.h"
-#include "smt/smt_engine_scope.h"
 
 namespace CVC4 {
 namespace theory {
@@ -15,13 +13,7 @@ void export_theory_call(std::size_t n,
                         const std::vector<Node>& assertions,
                         const NRAStatistics& stats)
 {
-  std::string filename = CVC4::smt::currentSmtEngine()->getFilename() + "-tc-"
-                         + std::to_string(n) + ".smt2";
-  auto last_slash = filename.find_last_of("/");
-  if (last_slash != std::string::npos) {
-      filename.erase(0, last_slash + 1);
-  }
-  std::ofstream out(filename);
+  std::ofstream out("theory-call-" + std::to_string(n) + ".smt2");
   out << language::SetLanguage(CVC4::OutputLanguage::LANG_SMTLIB_V2_6);
 
   // Add statistics (in json)
