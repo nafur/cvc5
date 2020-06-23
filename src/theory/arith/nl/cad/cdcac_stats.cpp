@@ -95,7 +95,7 @@ void NRAStatistics::make_stats(const Constraints::ConstraintVector& constraints)
             data.end(),
             [](const poly_utils::VariableInformation& a,
                const poly_utils::VariableInformation& b) {
-              return a.max_degree < b.max_degree;
+              return a.max_degree > b.max_degree;
             });
   if (data.size() > 0) max_degree_a.maxAssign(data[0].max_degree);
   if (data.size() > 1) max_degree_b.maxAssign(data[1].max_degree);
