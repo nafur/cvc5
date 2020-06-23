@@ -35,7 +35,7 @@ namespace theory {
 namespace arith {
 namespace nl {
 
-#define EXPORT_THEORY_CALLS
+// #define EXPORT_THEORY_CALLS
 
 bool CadSolver::construct_model()
 {
