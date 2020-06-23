@@ -10,8 +10,8 @@ namespace cad {
 
 using namespace poly;
 
-std::vector<poly_utils::VariableInformation> collect(
-    const Constraints::ConstraintVector& polys)
+std::vector<poly_utils::VariableInformation> collect_information(
+    const Constraints::ConstraintVector& polys, bool with_totals)
 {
   VariableCollector vc;
   for (const auto& c : polys)
@@ -23,6 +23,14 @@ std::vector<poly_utils::VariableInformation> collect(
   {
     res.emplace_back();
     res.back().var = v;
+    for (const auto& c : polys)
+    {
+      poly_utils::get_variable_information(res.back(), std::get<0>(c));
+    }
+  }
+  if (with_totals)
+  {
+    res.emplace_back();
     for (const auto& c : polys)
     {
       poly_utils::get_variable_information(res.back(), std::get<0>(c));
@@ -75,14 +83,14 @@ void sort_triangular(std::vector<poly_utils::VariableInformation>& vi)
                 return a.max_degree > b.max_degree;
               if (a.max_lc_degree != b.max_lc_degree)
                 return a.max_lc_degree > b.max_lc_degree;
-              return a.sum_degree > b.sum_degree;
+              return a.sum_poly_degree > b.sum_poly_degree;
             });
 };
 
 std::vector<poly::Variable> variable_ordering(
     const Constraints::ConstraintVector& polys, VariableOrdering vo)
 {
-  std::vector<poly_utils::VariableInformation> vi = collect(polys);
+  std::vector<poly_utils::VariableInformation> vi = collect_information(polys);
   switch (vo)
   {
     case VariableOrdering::ByID: sort_byid(vi); break;
@@ -94,7 +102,7 @@ std::vector<poly::Variable> variable_ordering(
   for (const auto& v : vi)
   {
     Trace("cdcac") << "\t" << v.var << ":\t" << v.max_degree << "\t/ "
-                   << v.max_lc_degree << "\t/ " << v.sum_degree << "\t/ "
+                   << v.max_lc_degree << "\t/ " << v.sum_poly_degree << "\t/ "
                    << v.max_terms_tdegree << "\t/ " << v.num_terms << std::endl;
   }
   return get_variables(vi);
