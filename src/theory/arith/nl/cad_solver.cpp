@@ -90,13 +90,11 @@ void CadSolver::initLastCall(const std::vector<Node>& assertions,
   {
     mCAC.get_constraints().add_constraint(a);
   }
-#ifdef CVC4_STATISTICS_ON
 #ifdef EXPORT_THEORY_CALLS
   static std::size_t theory_calls = 0;
   ++theory_calls;
   cad::NRAFeatures stats(mCAC.get_constraints().get_constraints());
   cad::export_theory_call(theory_calls, assertions, stats);
-#endif
 #endif
   mCAC.compute_variable_ordering();
 }
