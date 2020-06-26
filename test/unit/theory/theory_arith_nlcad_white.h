@@ -321,8 +321,9 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
   void test_ran_conversion() {
     RealAlgebraicNumber ran(std::vector<Rational>({-2, 0, 1}), Rational(1, 3), Rational(7, 3));
     {
-      Node n = nl::ran_to_node(ran);
-      RealAlgebraicNumber back = nl::node_to_ran(n);
+      Node x = make_real_variable("x");
+      Node n = nl::ran_to_node(ran, x);
+      RealAlgebraicNumber back = nl::node_to_ran(n, x);
       TS_ASSERT(ran == back);
     }
   }
