@@ -13,14 +13,31 @@ namespace nl {
 namespace cad {
 
 /** Variable orderings for real variables in the context of CAD. */
-enum class VariableOrdering
+enum class VariableOrderingStrategy
 {
   /** Dummy ordering by variable ID. */
   ByID,
   /** Triangular as of DOI:10.1145/2755996.2756678 */
   Triangular,
   /** Brown as of DOI:10.1145/2755996.2756678 */
-  Brown
+  Brown,
+#ifdef CVC4_USE_DLIB
+  ML
+#endif
+};
+
+class VOMLState;
+
+class VariableOrdering
+{
+ private:
+  mutable std::unique_ptr<VOMLState> state_ml;
+
+ public:
+ VariableOrdering();
+ ~VariableOrdering();
+  std::vector<poly::Variable> operator()(
+      const Constraints::ConstraintVector& polys, VariableOrderingStrategy vos) const;
 };
 
 /** Retrieves variable information for all variables with the given polynomials.
@@ -29,9 +46,6 @@ enum class VariableOrdering
  */
 std::vector<poly_utils::VariableInformation> collect_information(
     const Constraints::ConstraintVector& polys, bool with_totals = false);
-
-std::vector<poly::Variable> variable_ordering(
-    const Constraints::ConstraintVector& polys, VariableOrdering vo);
 
 }  // namespace cad
 }  // namespace nl

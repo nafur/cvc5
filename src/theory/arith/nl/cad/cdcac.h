@@ -7,6 +7,7 @@
 
 #include "cdcac_utils.h"
 #include "constraints.h"
+#include "variable_ordering.h"
 
 namespace CVC4 {
 namespace theory {
@@ -26,6 +27,8 @@ class CDCAC
 
   /** The variable ordering used for this method. */
   std::vector<Variable> mVariableOrdering;
+
+  VariableOrdering mVarOrder;
 
   CDCACDebugger debugger;
 

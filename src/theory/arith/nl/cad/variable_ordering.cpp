@@ -1,6 +1,12 @@
 #include "variable_ordering.h"
 
+#include "cdcac_stats.h"
+
 #include "util/poly_util.h"
+
+#ifdef CVC4_USE_DLIB
+#include <dlib/svm.h>
+#endif
 
 namespace CVC4 {
 namespace theory {
@@ -50,17 +56,20 @@ std::vector<poly::Variable> get_variables(
   return res;
 }
 
-void sort_byid(std::vector<poly_utils::VariableInformation>& vi)
+std::vector<poly::Variable> sort_byid(const Constraints::ConstraintVector& polys)
 {
+  auto vi = collect_information(polys);
   std::sort(
       vi.begin(),
       vi.end(),
       [](const poly_utils::VariableInformation& a,
          const poly_utils::VariableInformation& b) { return a.var < b.var; });
+  return get_variables(vi);
 };
 
-void sort_brown(std::vector<poly_utils::VariableInformation>& vi)
+std::vector<poly::Variable> sort_brown(const Constraints::ConstraintVector& polys)
 {
+  auto vi = collect_information(polys);
   std::sort(vi.begin(),
             vi.end(),
             [](const poly_utils::VariableInformation& a,
@@ -71,10 +80,12 @@ void sort_brown(std::vector<poly_utils::VariableInformation>& vi)
                 return a.max_terms_tdegree > b.max_terms_tdegree;
               return a.num_terms > b.num_terms;
             });
+  return get_variables(vi);
 };
 
-void sort_triangular(std::vector<poly_utils::VariableInformation>& vi)
+std::vector<poly::Variable> sort_triangular(const Constraints::ConstraintVector& polys)
 {
+  auto vi = collect_information(polys);
   std::sort(vi.begin(),
             vi.end(),
             [](const poly_utils::VariableInformation& a,
@@ -85,27 +96,71 @@ void sort_triangular(std::vector<poly_utils::VariableInformation>& vi)
                 return a.max_lc_degree > b.max_lc_degree;
               return a.sum_poly_degree > b.sum_poly_degree;
             });
+  return get_variables(vi);
 };
 
-std::vector<poly::Variable> variable_ordering(
-    const Constraints::ConstraintVector& polys, VariableOrdering vo)
+#ifdef CVC4_USE_DLIB
+class VOMLState
 {
-  std::vector<poly_utils::VariableInformation> vi = collect_information(polys);
-  switch (vo)
+    using sample_type = dlib::matrix<double, NRAFeatures::feature_count, 1>;
+    using kernel_type = dlib::radial_basis_kernel<sample_type>;
+    using tester_type = dlib::decision_function<kernel_type>;
+    std::vector<tester_type> regressions;
+public:
+  VOMLState(const std::string& filename) {
+    dlib::deserialize(filename) >> regressions;
+  }
+  std::size_t operator()(const NRAFeatures& features) const {
+      double min = std::numeric_limits<double>::max();
+      std::size_t res = 0;
+      auto f = dlib::mat(features.to_feature_vector());
+      for (std::size_t i = 0; i < regressions.size(); ++i) {
+          double cur = regressions[i](f);
+          if (cur < min) {
+              min = cur;
+              res = i;
+          }
+      }
+      return res;
+  }
+};
+
+std::vector<poly::Variable> sort_ml(const Constraints::ConstraintVector& polys, std::unique_ptr<VOMLState>& state) {
+  if (!state) {
+    state.reset(new VOMLState("vo-ml.model"));
+  }
+  std::size_t selection = (*state)(cad::NRAFeatures(polys));
+  switch (selection) {
+    case 0: return sort_brown(polys);
+    case 1: return sort_byid(polys);
+    case 2: return sort_triangular(polys);
+    default:
+      Notice() << "Learned heuristic selected unsupported variable ordering: " << selection;
+      return sort_brown(polys);
+  }
+}
+#else
+class VOMLState {};
+#endif
+
+VariableOrdering::VariableOrdering() : state_ml(nullptr) {}
+VariableOrdering::~VariableOrdering() {}
+
+std::vector<poly::Variable> VariableOrdering::operator()(
+    const Constraints::ConstraintVector& polys,
+    VariableOrderingStrategy vos) const
+{
+  switch (vos)
   {
-    case VariableOrdering::ByID: sort_byid(vi); break;
-    case VariableOrdering::Brown: sort_brown(vi); break;
-    case VariableOrdering::Triangular: sort_triangular(vi); break;
+    case VariableOrderingStrategy::ByID: return sort_byid(polys);
+    case VariableOrderingStrategy::Brown: return sort_brown(polys);
+    case VariableOrderingStrategy::Triangular: return sort_triangular(polys);
+#ifdef CVC4_USE_DLIB
+    case VariableOrderingStrategy::ML: return sort_ml(polys, state_ml);
+#endif
     default: Assert(false) << "Unsupported variable ordering.";
   }
-  Trace("cdcac") << "Computed variable ordering:" << std::endl;
-  for (const auto& v : vi)
-  {
-    Trace("cdcac") << "\t" << v.var << ":\t" << v.max_degree << "\t/ "
-                   << v.max_lc_degree << "\t/ " << v.sum_poly_degree << "\t/ "
-                   << v.max_terms_tdegree << "\t/ " << v.num_terms << std::endl;
-  }
-  return get_variables(vi);
+  return {};
 }
 
 }  // namespace cad
