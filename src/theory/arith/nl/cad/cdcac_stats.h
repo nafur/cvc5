@@ -12,6 +12,8 @@ namespace nl {
 namespace cad {
 
 struct NRAFeatures {
+    static constexpr std::size_t feature_count = 21;
+
     std::size_t num_variables = 0;
     std::size_t num_polynomials = 0;
     std::size_t max_tdegree = 0;
