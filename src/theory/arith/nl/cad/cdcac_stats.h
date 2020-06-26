@@ -11,6 +11,38 @@ namespace arith {
 namespace nl {
 namespace cad {
 
+struct NRAFeatures {
+    std::size_t num_variables = 0;
+    std::size_t num_polynomials = 0;
+    std::size_t max_tdegree = 0;
+    // Maximum degree of variable ...
+    std::size_t max_degree_a = 0;
+    std::size_t max_degree_b = 0;
+    std::size_t max_degree_c = 0;
+    std::size_t max_degree_x = 0;
+    std::size_t max_degree_y = 0;
+    std::size_t max_degree_z = 0;
+    // Percentage of polynomials that contain variable ...
+    double perc_poly_contain_a = 0;
+    double perc_poly_contain_b = 0;
+    double perc_poly_contain_c = 0;
+    double perc_poly_contain_x = 0;
+    double perc_poly_contain_y = 0;
+    double perc_poly_contain_z = 0;
+    // Percentage of polynomials that contain variable ...
+    double perc_monomial_contain_a = 0;
+    double perc_monomial_contain_b = 0;
+    double perc_monomial_contain_c = 0;
+    double perc_monomial_contain_x = 0;
+    double perc_monomial_contain_y = 0;
+    double perc_monomial_contain_z = 0;
+
+    NRAFeatures(const Constraints::ConstraintVector& constraints);
+    std::vector<double> to_feature_vector() const;
+    void to_json_vector(std::ostream& os, const std::string& prefix) const;
+    void to_json_dict(std::ostream& os, const std::string& prefix) const;
+};
+
 /** An interval as specified in section 4.1
  */
 struct NRAStatistics
