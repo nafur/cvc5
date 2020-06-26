@@ -2,7 +2,6 @@
 # POLY_FOUND - system has libpoly
 # POLY_INCLUDE_DIR - the libpoly include directory
 # POLY_LIBRARIES - Libraries needed to use libpoly
-# POLY_ARCH_FLAGS - Platform specific compile flags
 
 # Note: contrib/get-poly copies header files to deps/install/include/poly.
 # However, includes in libpoly headers are not prefixed with "poly/" and therefore
