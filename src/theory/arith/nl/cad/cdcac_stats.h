@@ -74,9 +74,7 @@ struct NRAStatistics
 
     NRAStatistics(std::string name);
     ~NRAStatistics();
-
-    void make_stats(const Constraints::ConstraintVector& constraints);
-    void as_json(std::ostream& os, const std::string& prefix) const;
+    void set(const NRAFeatures& features);
 };
 
 }  // namespace cad
