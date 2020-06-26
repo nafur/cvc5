@@ -144,6 +144,12 @@ namespace CVC4 {
 #define IS_POLY_BUILD false
 #endif /* CVC4_USE_POLY */
 
+#if CVC4_USE_DLIB
+#define IS_DLIB_BUILD true
+#else /* CVC4_USE_DLIB */
+#define IS_DLIB_BUILD false
+#endif /* CVC4_USE_DLIB */
+
 #if HAVE_LIBREADLINE
 #  define IS_READLINE_BUILD true
 #else /* HAVE_LIBREADLINE */

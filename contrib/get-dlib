@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#
+source "$(dirname "$0")/get-script-header.sh"
+
+DLIB_DIR="$DEPS_DIR/dlib"
+version="v19.20"
+
+check_dep_dir "$DLIB_DIR"
+setup_dep \
+  "https://github.com/davisking/dlib/archive/$version.tar.gz" "$DLIB_DIR"
+
+pwd
+mkdir -p "$DLIB_DIR/build/"
+cd "$DLIB_DIR/build/"
+
+CMAKEFLAGS="\
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR \
+  -DDLIB_JPEG_SUPPORT=OFF \
+  -DDLIB_PNG_SUPPORT=OFF \
+"
+if grep -q avx /proc/cpuinfo; then
+  CMAKEFLAGS="$CMAKEFLAGS \
+    -DUSE_AVX_INSTRUCTIONS=ON"
+fi
+if grep -q sse2 /proc/cpuinfo; then
+  CMAKEFLAGS="$CMAKEFLAGS \
+    -DUSE_SSE2_INSTRUCTIONS=ON"
+fi
+if grep -q sse4 /proc/cpuinfo; then
+  CMAKEFLAGS="$CMAKEFLAGS \
+    -DUSE_SSE4_INSTRUCTIONS=ON"
+fi
+
+echo "CMake: $CMAKEFLAGS"
+
+echo "Installing to $INSTALL_DIR"
+
+cmake $CMAKEFLAGS  ../ && make -j${NPROC} install
+
+echo
+echo "Using dlib version $version"
+echo
+echo ===================== Now configure CVC4 with =====================
+echo ./configure.sh --dlib
