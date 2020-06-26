@@ -11,13 +11,13 @@ namespace cad {
 
 void export_theory_call(std::size_t n,
                         const std::vector<Node>& assertions,
-                        const NRAStatistics& stats)
+                        const NRAFeatures& stats)
 {
   std::ofstream out("theory-call-" + std::to_string(n) + ".smt2");
   out << language::SetLanguage(CVC4::OutputLanguage::LANG_SMTLIB_V2_6);
 
   // Add statistics (in json)
-  stats.as_json(out, "; ");
+  stats.to_json_vector(out, "; ");
 
   // Set logic
   out << CVC4::SetBenchmarkLogicCommand("QF_NRA") << std::endl;

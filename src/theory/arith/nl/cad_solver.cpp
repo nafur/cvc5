@@ -12,8 +12,6 @@
  ** \brief Implementation of new non-linear solver
  **/
 
-//#include <poly/upolynomial.h>
-
 #include "theory/arith/nl/cad_solver.h"
 
 #include <poly/polyxx.h>
@@ -96,8 +94,7 @@ void CadSolver::initLastCall(const std::vector<Node>& assertions,
 #ifdef EXPORT_THEORY_CALLS
   static std::size_t theory_calls = 0;
   ++theory_calls;
-  cad::NRAStatistics stats("dummy");
-  stats.make_stats(mCAC.get_constraints().get_constraints());
+  cad::NRAFeatures stats(mCAC.get_constraints().get_constraints());
   cad::export_theory_call(theory_calls, assertions, stats);
 #endif
 #endif

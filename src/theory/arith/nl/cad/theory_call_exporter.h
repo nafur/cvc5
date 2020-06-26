@@ -14,7 +14,7 @@ namespace cad {
 
 void export_theory_call(std::size_t n,
                         const std::vector<Node>& assertions,
-                        const NRAStatistics& stats);
+                        const NRAFeatures& stats);
 
 }  // namespace cad
 }  // namespace nl
