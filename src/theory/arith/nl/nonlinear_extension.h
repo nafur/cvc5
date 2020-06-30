@@ -301,7 +301,7 @@ class NonlinearExtension
   /** The nonlinear extension object
    *
    * This is the subsolver responsible for running the procedure for
-   * constraints involving nonlinear mulitplication.
+   * constraints involving nonlinear mulitplication, Cimatti et al., TACAS 2017.
    */
   NlSolver d_nlSlv;
   /** The CAD-based solver

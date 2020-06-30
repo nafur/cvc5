@@ -381,7 +381,14 @@ bool NonlinearExtension::checkModel(const std::vector<Node>& assertions,
   // get the presubstitution
   Trace("nl-ext-cm-debug") << "  apply pre-substitution..." << std::endl;
   std::vector<Node> passertions = assertions;
-
+  if (options::nlExt())
+  {
+    // preprocess the assertions with the trancendental solver
+    if (!d_trSlv.preprocessAssertionsCheckModel(passertions))
+    {
+      return false;
+    }
+  }
   if (options::nlCad())
   {
     d_cadSlv.preprocessAssertionsCheckModel(passertions);
@@ -428,6 +435,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
     lemmas = d_cadSlv.checkFullRefine();
     filterLemmas(lemmas, wlems);
   }
+
   Trace("nl-ext") << "  ...finished with " << wlems.size() << " waiting lemmas."
                   << std::endl;
 
@@ -657,7 +665,8 @@ bool NonlinearExtension::modelBasedRefinement(std::vector<NlLemma>& mlems)
       }
 
       // we are incomplete
-      if (options::nlExtIncPrecision() && d_model.usedApproximate())
+      if (options::nlExt() && options::nlExtIncPrecision()
+          && d_model.usedApproximate())
       {
         d_trSlv.incrementTaylorDegree();
         needsRecheck = true;
