@@ -557,6 +557,33 @@ public:
       return getNode().getNumChildren();
   }
 
+  bool contains(const Variable& v) const {
+    auto it = std::lower_bound(begin(), end(), v);
+    return (it != end()) && (*it == v);
+  }
+  VarList remove_once(const Variable& v) const {
+    std::vector<Variable> vars;
+    bool was_removed = false;
+    for (const auto& var: *this) {
+      if (was_removed) {
+        vars.emplace_back(var);
+      }
+      else if (v == var) {
+        was_removed = true;
+      } else {
+        vars.emplace_back(var);
+      }
+    }
+    Assert(was_removed) << "Did not find Variable that should be removed";
+    if (vars.empty()) {
+      return mkEmptyVarList();
+    } else if (vars.size() == 1) {
+      return VarList(vars[0]);
+    } else {
+      return multList(vars);
+    }
+  }
+
   static VarList parseVarList(Node n);
 
   VarList operator*(const VarList& vl) const;
@@ -686,6 +713,8 @@ public:
     return (*this) * Rational(-1);
   }
 
+  bool divisible_by(const Variable& v) const;
+  Monomial divide_by(const Variable& v) const;
 
   int cmp(const Monomial& mono) const {
     return getVarList().cmp(mono.getVarList());
@@ -983,6 +1012,9 @@ public:
 
   /** z must divide all of the coefficients of the polynomial. */
   Polynomial exactDivide(const Integer& z) const;
+
+  bool divisible_by(const Variable& v) const;
+  Polynomial divide_by(const Variable& v) const;
 
   Polynomial operator+(const Polynomial& vl) const;
   Polynomial operator-(const Polynomial& vl) const;

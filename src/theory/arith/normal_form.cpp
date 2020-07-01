@@ -302,6 +302,13 @@ Monomial Monomial::operator*(const Monomial& mono) const {
 //   return outMonomials;
 // }
 
+bool Monomial::divisible_by(const Variable& v) const {
+  return this->getVarList().contains(v);
+}
+Monomial Monomial::divide_by(const Variable& v) const {
+  return mkMonomial(getConstant(), getVarList().remove_once(v));
+}
+
 void Monomial::sort(std::vector<Monomial>& m){
   if(!isSorted(m)){
     std::sort(m.begin(), m.end());
@@ -383,6 +390,20 @@ Polynomial Polynomial::exactDivide(const Integer& z) const {
     Assert(prod.isIntegral());
     return prod;
   }
+}
+
+bool Polynomial::divisible_by(const Variable& v) const {
+  for (const auto& mon: *this) {
+    if (!mon.divisible_by(v)) return false;
+  }
+  return true;
+}
+Polynomial Polynomial::divide_by(const Variable& v) const {
+  std::vector<Monomial> mons;
+  for (const auto& mon: *this) {
+    mons.emplace_back(mon.divide_by(v));
+  }
+  return mkPolynomial(mons);
 }
 
 Polynomial Polynomial::sumPolynomials(const std::vector<Polynomial>& ps){
