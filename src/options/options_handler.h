@@ -93,8 +93,6 @@ public:
   void notifySetRegularOutputChannel(std::string option);
   void notifySetDiagnosticOutputChannel(std::string option);
 
-  // TODO(Gereon): Add PolyEnabledBuild()?
-
   void statsEnabledBuild(std::string option, bool value);
 
   unsigned long limitHandler(std::string option, std::string optarg);

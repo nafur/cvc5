@@ -327,8 +327,6 @@ void OptionsHandler::LFSCEnabledBuild(std::string option, bool value) {
 #endif /* CVC4_USE_LFSC */
 }
 
-// TODO(Gereon): Add PolyEnabledBuild()?
-
 void OptionsHandler::notifyDumpToFile(std::string option) {
   d_options->d_dumpToFileListeners.notify();
 }
