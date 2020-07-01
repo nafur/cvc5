@@ -435,6 +435,8 @@ bool ProcessAssertions::apply(AssertionPipeline& assertions)
     d_passes["ho-elim"]->apply(&assertions);
   }
 
+  d_passes["arith-elim-factors"]->apply(&assertions);
+
   // begin: INVARIANT to maintain: no reordering of assertions or
   // introducing new ones
 
