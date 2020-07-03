@@ -318,6 +318,8 @@ libcvc4_add_sources(
   theory/arith/nl/cad/theory_call_exporter.h
   theory/arith/nl/cad/variable_ordering.cpp
   theory/arith/nl/cad/variable_ordering.h
+  theory/arith/nl/iand_solver.cpp
+  theory/arith/nl/iand_solver.h
   theory/arith/nl/nl_constraint.cpp
   theory/arith/nl/nl_constraint.h
   theory/arith/nl/nl_lemma_utils.cpp
@@ -385,13 +387,13 @@ libcvc4_add_sources(
   theory/booleans/theory_bool_rewriter.h
   theory/booleans/theory_bool_type_rules.h
   theory/booleans/type_enumerator.h
+  theory/builtin/proof_checker.cpp
+  theory/builtin/proof_checker.h
   theory/builtin/theory_builtin.cpp
   theory/builtin/theory_builtin.h
   theory/builtin/theory_builtin_rewriter.cpp
   theory/builtin/theory_builtin_rewriter.h
   theory/builtin/theory_builtin_type_rules.h
-  theory/builtin/proof_checker.cpp
-  theory/builtin/proof_checker.h
   theory/builtin/type_enumerator.cpp
   theory/builtin/type_enumerator.h
   theory/bv/abstraction.cpp
