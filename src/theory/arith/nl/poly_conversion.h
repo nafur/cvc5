@@ -67,6 +67,8 @@ Node ran_to_node(const poly::AlgebraicNumber& an, const Node& ran_variable);
  */
 Node value_to_node(const poly::Value& v, const Node& ran_variable);
 
+Node excluding_interval_to_lemma(const Node& variable, const poly::Interval& interval);
+
 /** Transforms a node to a poly::AlgebraicNumber.
  * Expects a node of the following form:
  * (AND
@@ -82,7 +84,6 @@ RealAlgebraicNumber node_to_ran(const Node& n, const Node& ran_variable);
 /** Transforms a node to a poly::Value.
  */
 poly::Value node_to_value(const Node& n, const Node& ran_variable);
-
 
 }  // namespace nl
 }  // namespace arith

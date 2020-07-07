@@ -322,6 +322,35 @@ Node value_to_node(const poly::Value& v, const Node& ran_variable)
   return nm->mkConst(Rational(0));
 }
 
+Node excluding_interval_to_lemma(const Node& variable, const poly::Interval& interval) {
+  auto* nm = NodeManager::currentNM();
+  const auto& lv = poly::get_lower(interval);
+  const auto& uv = poly::get_upper(interval);
+  bool li = poly::is_minus_infinity(lv);
+  bool ui = poly::is_plus_infinity(uv);
+  if (li && ui) return nm->mkConst(true);
+  if (poly::is_point(interval)) {
+    if (is_algebraic_number(lv)) {
+      return nm->mkNode(Kind::AND,
+        nm->mkNode(Kind::GT, variable, nm->mkConst(poly_utils::to_rational_below(lv))),
+        nm->mkNode(Kind::LT, variable, nm->mkConst(poly_utils::to_rational_above(lv)))
+      );
+    } else {
+      return nm->mkNode(Kind::EQUAL, variable, nm->mkConst(poly_utils::to_rational_below(lv)));
+    }
+  }
+  if (li) {
+    return nm->mkNode(Kind::GT, variable, nm->mkConst(poly_utils::to_rational_above(uv)));
+  }
+  if (ui) {
+    return nm->mkNode(Kind::LT, variable, nm->mkConst(poly_utils::to_rational_below(lv)));
+  }
+  return nm->mkNode(Kind::AND,
+    nm->mkNode(Kind::GT, variable, nm->mkConst(poly_utils::to_rational_above(uv))),
+    nm->mkNode(Kind::LT, variable, nm->mkConst(poly_utils::to_rational_below(lv)))
+  );
+}
+
 Maybe<Rational> get_lower_bound(const Node& n)
 {
   if (n.getNumChildren() != 2) return Maybe<Rational>();
