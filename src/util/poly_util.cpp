@@ -61,6 +61,32 @@ Rational to_rational(const poly::DyadicRational& dr)
 {
   return Rational(to_integer(numerator(dr)), to_integer(denominator(dr)));
 }
+Rational to_rational_above(const poly::Value& v) {
+  if (is_algebraic_number(v)) {
+    return to_rational(get_upper_bound(as_algebraic_number(v)));
+  } else if (is_dyadic_rational(v)) {
+    return to_rational(as_dyadic_rational(v));
+  } else if (is_integer(v)) {
+    return to_rational(as_integer(v));
+  } else if (is_rational(v)) {
+    return to_rational(as_rational(v));
+  }
+  Assert(false) << "Can not convert " << v << " to rational.";
+  return Rational();
+}
+Rational to_rational_below(const poly::Value& v) {
+  if (is_algebraic_number(v)) {
+    return to_rational(get_lower_bound(as_algebraic_number(v)));
+  } else if (is_dyadic_rational(v)) {
+    return to_rational(as_dyadic_rational(v));
+  } else if (is_integer(v)) {
+    return to_rational(as_integer(v));
+  } else if (is_rational(v)) {
+    return to_rational(as_rational(v));
+  }
+  Assert(false) << "Can not convert " << v << " to rational.";
+  return Rational();
+}
 
 poly::Integer to_integer(const Integer& i)
 {

@@ -37,6 +37,11 @@ Rational to_rational(const poly::Rational& r);
 /** Converts a poly::DyadicRational to a CVC4::Rational. */
 Rational to_rational(const poly::DyadicRational& dr);
 
+/** Converts a poly::Value to a CVC4::Rational (that may be a bit above). */
+Rational to_rational_above(const poly::Value& v);
+/** Converts a poly::Value to a CVC4::Rational (that may be a bit below). */
+Rational to_rational_below(const poly::Value& v);
+
 /** Converts a CVC4::Integer to a poly::Integer. */
 poly::Integer to_integer(const Integer& i);
 /** Converts a vector of CVC4::Integers to a vector of poly::Integers. */
