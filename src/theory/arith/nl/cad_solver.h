@@ -86,6 +86,10 @@ class CadSolver
   void preprocessAssertionsCheckModel(std::vector<Node>& assertions);
 
  private:
+
+  std::vector<NlLemma> check_full();
+  std::vector<NlLemma> check_partial();
+
   // The theory of arithmetic containing this extension.
   TheoryArith& d_containing;
   /** Reference to the non-linear model object */

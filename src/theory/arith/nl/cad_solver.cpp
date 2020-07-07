@@ -102,25 +102,33 @@ void CadSolver::initLastCall(const std::vector<Node>& assertions,
 std::vector<NlLemma> CadSolver::checkInitialRefine()
 {
   Chat() << "CadSolver::checkInitialRefine" << std::endl;
-  std::vector<NlLemma> lems;
-
-  // add lemmas corresponding to easy conflicts or refinements based on
-  // the assertions/terms given in initLastCall.
-
-  return lems;
+  return {};
 }
 
 std::vector<NlLemma> CadSolver::checkFullRefine()
 {
   Notice() << "CadSolver::checkFullRefine" << std::endl;
-  std::vector<NlLemma> lems;
 #ifdef EXPORT_THEORY_CALLS
   std::cout << "Abort solving as we only export theory calls." << std::endl;
-  return lems;
+  return {};
 #endif
 
-  // Do full theory check here
+  return check_full();
+}
 
+void CadSolver::preprocessAssertionsCheckModel(std::vector<Node>& assertions)
+{
+  if (found_satisfiability)
+  {
+    Notice() << "Storing " << mCAC.get_model() << std::endl;
+    construct_model();
+    assertions.clear();
+  }
+}
+
+std::vector<NlLemma> CadSolver::check_full()
+{
+  std::vector<NlLemma> lems;
   auto covering = mCAC.get_unsat_cover();
   if (covering.empty())
   {
@@ -148,18 +156,27 @@ std::vector<NlLemma> CadSolver::checkFullRefine()
     }
     Notice() << "UNSAT with MIS: " << lems.back().d_lemma << std::endl;
   }
-
   return lems;
 }
 
-void CadSolver::preprocessAssertionsCheckModel(std::vector<Node>& assertions)
+std::vector<NlLemma> CadSolver::check_partial()
 {
-  if (found_satisfiability)
+  std::vector<NlLemma> lems;
+  auto covering = mCAC.get_unsat_cover(0, true);
+  if (covering.empty())
   {
-    Notice() << "Storing " << mCAC.get_model() << std::endl;
-    construct_model();
-    assertions.clear();
+    found_satisfiability = true;
+    Notice() << "SAT: " << mCAC.get_model() << std::endl;
   }
+  else
+  {
+    for (const auto& interval: covering) {
+      Node first_var = mCAC.get_constraints().var_mapper()(mCAC.get_variable_ordering()[0]);
+      Node lemma = excluding_interval_to_lemma(first_var, interval.mInterval);
+      lems.emplace_back(lemma);
+    }
+  }
+  return lems;
 }
 
 }  // namespace nl
