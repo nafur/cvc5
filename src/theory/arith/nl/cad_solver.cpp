@@ -97,6 +97,7 @@ void CadSolver::initLastCall(const std::vector<Node>& assertions,
   cad::export_theory_call(theory_calls, assertions, stats);
 #endif
   mCAC.compute_variable_ordering();
+  mCAC.retrieve_initial_assignment(d_model, ran_variable);
 }
 
 std::vector<NlLemma> CadSolver::checkInitialRefine()
