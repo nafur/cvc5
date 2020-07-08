@@ -5,6 +5,7 @@
 
 #include <vector>
 
+#include "../nl_model.h"
 #include "cdcac_utils.h"
 #include "constraints.h"
 #include "variable_ordering.h"
@@ -28,6 +29,9 @@ class CDCAC
   /** The variable ordering used for this method. */
   std::vector<Variable> mVariableOrdering;
 
+  /** The linear assignment used as an initial guess. */
+  std::vector<poly::Value> mInitialAssignment;
+
   VariableOrdering mVarOrder;
 
   CDCACDebugger debugger;
@@ -44,6 +48,8 @@ class CDCAC
 
   /** Collect variables from the constraints and compute a variable ordering. */
   void compute_variable_ordering();
+
+  void retrieve_initial_assignment(NlModel& model, const Node& ran_variable);
 
   /** Returns the constraints as a non-const reference. Can be used to add new
    * constraints. */
@@ -63,6 +69,10 @@ class CDCAC
    * mAssignment. Implements Algorithm 2.
    */
   std::vector<CACInterval> get_unsat_intervals(std::size_t cur_variable) const;
+
+  bool sample_outside_with_initial(const std::vector<CACInterval>& infeasible,
+                                   poly::Value& sample,
+                                   std::size_t cur_variable);
 
   /** Collects the coefficients required for projection from the given
    * polynomial. Implements Algorithm 6.
