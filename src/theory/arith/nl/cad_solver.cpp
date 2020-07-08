@@ -122,6 +122,7 @@ void CadSolver::preprocessAssertionsCheckModel(std::vector<Node>& assertions)
   if (found_satisfiability)
   {
     Notice() << "Storing " << mCAC.get_model() << std::endl;
+    Trace("cdcac") << "Storing " << mCAC.get_model() << std::endl;
     construct_model();
     assertions.clear();
   }

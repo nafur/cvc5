@@ -70,6 +70,9 @@ class CDCAC
    */
   std::vector<CACInterval> get_unsat_intervals(std::size_t cur_variable) const;
 
+  /** Sample outside of the set of intervals.
+   * Uses a given initial value from mInitialAssignment if possible.
+   */
   bool sample_outside_with_initial(const std::vector<CACInterval>& infeasible,
                                    poly::Value& sample,
                                    std::size_t cur_variable);
@@ -102,7 +105,8 @@ class CDCAC
    * UNSAT and an infeasible subset can be extracted from the returned covering.
    * Implements Algorithm 2.
    */
-  std::vector<CACInterval> get_unsat_cover(std::size_t cur_variable = 0, bool return_first_interval = false);
+  std::vector<CACInterval> get_unsat_cover(std::size_t cur_variable = 0,
+                                           bool return_first_interval = false);
 };
 
 }  // namespace cad

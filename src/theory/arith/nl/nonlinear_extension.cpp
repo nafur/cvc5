@@ -601,6 +601,9 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
   if (options::nlCad())
   {
     lemmas = d_cadSlv.checkFullRefine();
+    if (lemmas.empty()) {
+      Trace("cdcac") << "CDCAC found SAT!" << std::endl;
+    }
     filterLemmas(lemmas, wlems);
   }
   // run the full refinement in the IAND solver
@@ -609,7 +612,8 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
 
   Trace("nl-ext") << "  ...finished with " << wlems.size() << " waiting lemmas."
                   << std::endl;
-
+  Trace("nl-ext") << "  ...finished with " << lems.size() << " lemmas."
+                  << std::endl;
   return 0;
 }
 

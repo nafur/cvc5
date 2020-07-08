@@ -40,7 +40,8 @@ void CDCAC::reset()
 
 void CDCAC::compute_variable_ordering()
 {
-  mVariableOrdering = mVarOrder(mConstraints.get_constraints(), VariableOrderingStrategy::Brown);
+  mVariableOrdering = mVarOrder(mConstraints.get_constraints(),
+                                VariableOrderingStrategy::Brown);
   Trace("cdcac") << "Variable ordering is now " << mVariableOrdering
                  << std::endl;
 
@@ -51,11 +52,6 @@ void CDCAC::compute_variable_ordering()
   {
     lp_variable_order_push(vo, v.get_internal());
   }
-  //std::cout << "libpoly: " << lp_variable_order_to_string(vo, poly::Context::get_context().get_variable_db()) << std::endl;
-  //for (const auto& c : mConstraints.get_constraints())
-  //{
-  //  std::cout << " -> " << std::get<0>(c) << std::endl;
-  //}
 }
 
 void CDCAC::retrieve_initial_assignment(NlModel& model,
@@ -95,8 +91,6 @@ std::vector<CACInterval> CDCAC::get_unsat_intervals(
 
     if (main_variable(p) != mVariableOrdering[cur_variable])
     {
-      Trace("cdcac") << "Skipping " << p << " as it is not univariate."
-                     << std::endl;
       continue;
     }
 
@@ -223,7 +217,8 @@ std::vector<Polynomial> CDCAC::construct_characterization(
 
   for (std::size_t i = 0; i < intervals.size() - 1; ++i)
   {
-    cad::make_finest_square_free_basis(intervals[i].mUpperPolys, intervals[i + 1].mLowerPolys);
+    cad::make_finest_square_free_basis(intervals[i].mUpperPolys,
+                                       intervals[i + 1].mLowerPolys);
     for (const auto& p : intervals[i].mUpperPolys)
     {
       for (const auto& q : intervals[i + 1].mLowerPolys)
@@ -328,7 +323,8 @@ CACInterval CDCAC::interval_from_characterization(
   }
 }
 
-std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable, bool return_first_interval)
+std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable,
+                                                bool return_first_interval)
 {
   if (cur_variable == 0)
   {
@@ -379,8 +375,9 @@ std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable, bool r
     Trace("cdcac") << "Collected origins: " << new_interval.mOrigins
                    << std::endl;
 
-    if (return_first_interval) {
-      return { new_interval };
+    if (return_first_interval)
+    {
+      return {new_interval};
     }
 
     intervals.emplace_back(new_interval);
@@ -395,7 +392,8 @@ std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable, bool r
     Trace("cdcac") << "Now we have for " << mVariableOrdering[cur_variable]
                    << ":" << std::endl;
     for (const auto& i : intervals)
-      Trace("cdcac") << "-> " << mVariableOrdering[cur_variable] << " not in " << i.mInterval << " (from " << i.mOrigins << ")"
+      Trace("cdcac") << "-> " << mVariableOrdering[cur_variable] << " not in "
+                     << i.mInterval << " (from " << i.mOrigins << ")"
                      << std::endl;
   }
 
