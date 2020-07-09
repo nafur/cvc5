@@ -13,15 +13,18 @@ namespace nl {
 
 poly::Variable VariableMapper::operator()(const CVC4::Node& n)
 {
-  Assert(n.isVar()) << "Expect node to be a variable.";
   auto it = mVarCVCpoly.find(n);
   if (it == mVarCVCpoly.end())
   {
     std::string name;
-    if (!n.getAttribute(expr::VarNameAttr(), name))
-    {
-      Trace("poly::conversion")
-          << "Variable " << n << " has no name, using ID instead." << std::endl;
+    if (n.isVar()) {
+      if (!n.getAttribute(expr::VarNameAttr(), name))
+      {
+        Trace("poly::conversion")
+            << "Variable " << n << " has no name, using ID instead." << std::endl;
+        name = "v_" + std::to_string(n.getId());
+      }
+    } else {
       name = "v_" + std::to_string(n.getId());
     }
     it = mVarCVCpoly.emplace(n, poly::Variable(name.c_str())).first;
@@ -167,8 +170,7 @@ poly::Polynomial as_poly_polynomial_impl(const CVC4::Node& n,
       return res;
     }
     default:
-      Warning() << "Unhandled node " << n << " with kind " << n.getKind()
-                << std::endl;
+      return poly::Polynomial(vm(n));
   }
   return poly::Polynomial();
 }
