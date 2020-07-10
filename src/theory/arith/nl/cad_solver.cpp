@@ -16,6 +16,7 @@
 
 #include <poly/polyxx.h>
 
+#include "inference.h"
 #include "options/arith_options.h"
 #include "options/smt_options.h"
 #include "preprocessing/passes/bv_to_int.h"
@@ -150,11 +151,11 @@ std::vector<NlLemma> CadSolver::check_full()
     Assert(!mis.empty()) << "Infeasible subset can not be empty";
     if (mis.size() == 1)
     {
-      lems.emplace_back(mis.front());
+      lems.emplace_back(mis.front(), Inference::CAD_CONFLICT);
     }
     else
     {
-      lems.emplace_back(nm->mkNode(Kind::OR, mis));
+      lems.emplace_back(nm->mkNode(Kind::OR, mis), Inference::CAD_CONFLICT);
     }
     Notice() << "UNSAT with MIS: " << lems.back().d_lemma << std::endl;
   }
@@ -175,7 +176,7 @@ std::vector<NlLemma> CadSolver::check_partial()
     for (const auto& interval: covering) {
       Node first_var = mCAC.get_constraints().var_mapper()(mCAC.get_variable_ordering()[0]);
       Node lemma = excluding_interval_to_lemma(first_var, interval.mInterval);
-      lems.emplace_back(lemma);
+      lems.emplace_back(lemma, Inference::CAD_EXCLUDED_INTERVAL);
     }
   }
   return lems;
