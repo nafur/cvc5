@@ -8,14 +8,13 @@ version="v0.1.8"
 check_dep_dir "$POLY_DIR"
 setup_dep \
   "https://github.com/SRI-CSL/libpoly/archive/master.tar.gz" "$POLY_DIR"
-# TODO(Gereon): Go back to fixed version with the next release
+# TODO(Gereon, #4706): Go back to fixed version with the next release
 
 pwd
 cd "$POLY_DIR/build/"
 
 CMAKEFLAGS="\
   -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR \
   -DLIBPOLY_BUILD_PYTHON_API=OFF \
   -DLIBPOLY_BUILD_STATIC=ON \
   -DLIBPOLY_BUILD_STATIC_PIC=ON \
@@ -23,7 +22,7 @@ CMAKEFLAGS="\
 
 echo "Installing to $INSTALL_DIR"
 
-cmake $CMAKEFLAGS  ../ && make -j${NPROC} install
+cmake -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" $CMAKEFLAGS  ../ && make -j${NPROC} install
 
 echo
 echo "Using poly version $version"
