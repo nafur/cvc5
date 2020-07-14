@@ -59,6 +59,9 @@ poly::AlgebraicNumber get_ran(std::initializer_list<long> init, int lower, int u
   Node make_real_variable(const std::string& s) {
     return d_nodeManager->mkSkolem(s, d_nodeManager->realType(), "", NodeManager::SKOLEM_EXACT_NAME);
   }
+  Node make_int_variable(const std::string& s) {
+    return d_nodeManager->mkSkolem(s, d_nodeManager->integerType(), "", NodeManager::SKOLEM_EXACT_NAME);
+  }
 
 class TheoryArithNLCADWhite : public CxxTest::TestSuite
 {
@@ -143,10 +146,9 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
 
   void test_cdcac_1()
   {
-    poly::Variable x("x");
-    poly::Variable y("y");
-
-    cad::CDCAC cac({x, y});
+    cad::CDCAC cac;
+    poly::Variable x = cac.get_constraints().var_mapper()(make_real_variable("x"));
+    poly::Variable y = cac.get_constraints().var_mapper()(make_real_variable("y"));
 
     cac.get_constraints().add_constraint(
         4 * y - x * x + 4, poly::SignCondition::LT, dummy(1));
@@ -154,6 +156,8 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
         4 * y - 4 + (x - 1) * (x - 1), poly::SignCondition::GT, dummy(2));
     cac.get_constraints().add_constraint(
         4 * y - x - 2, poly::SignCondition::GT, dummy(3));
+    
+    cac.compute_variable_ordering();
 
     auto cover = cac.get_unsat_cover();
     TS_ASSERT(cover.empty());
@@ -162,11 +166,10 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
 
   void test_cdcac_2()
   {
-    poly::Variable x("x");
-    poly::Variable y("y");
-
-    cad::CDCAC cac({x, y});
-
+    cad::CDCAC cac;
+    poly::Variable x = cac.get_constraints().var_mapper()(make_real_variable("x"));
+    poly::Variable y = cac.get_constraints().var_mapper()(make_real_variable("y"));
+    
     cac.get_constraints().add_constraint(
         y - pow(-x - 3, 11) + pow(-x - 3, 10) + 1,
         poly::SignCondition::GT,
@@ -181,6 +184,8 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
         y * y * y - pow(x - 2, 11) + pow(x - 2, 10) + 1,
         poly::SignCondition::GT,
         dummy(5));
+    
+    cac.compute_variable_ordering();
 
     auto cover = cac.get_unsat_cover();
     TS_ASSERT(!cover.empty());
@@ -199,11 +204,10 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
 
   void test_cdcac_3()
   {
-    poly::Variable x("x");
-    poly::Variable y("y");
-    poly::Variable z("z");
-
-    cad::CDCAC cac({x, y, z});
+    cad::CDCAC cac;
+    poly::Variable x = cac.get_constraints().var_mapper()(make_real_variable("x"));
+    poly::Variable y = cac.get_constraints().var_mapper()(make_real_variable("y"));
+    poly::Variable z = cac.get_constraints().var_mapper()(make_real_variable("z"));
 
     cac.get_constraints().add_constraint(
         x * x + y * y + z * z - 1, poly::SignCondition::LT, dummy(1));
@@ -212,6 +216,8 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
         poly::SignCondition::LT,
         dummy(2));
 
+    cac.compute_variable_ordering();
+
     auto cover = cac.get_unsat_cover();
     TS_ASSERT(cover.empty());
     std::cout << "SAT: " << cac.get_model() << std::endl;
@@ -219,11 +225,10 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
 
   void test_cdcac_4()
   {
-    poly::Variable x("x");
-    poly::Variable y("y");
-    poly::Variable z("z");
-
-    cad::CDCAC cac({x, y, z});
+    cad::CDCAC cac;
+    poly::Variable x = cac.get_constraints().var_mapper()(make_real_variable("x"));
+    poly::Variable y = cac.get_constraints().var_mapper()(make_real_variable("y"));
+    poly::Variable z = cac.get_constraints().var_mapper()(make_real_variable("z"));
 
     cac.get_constraints().add_constraint(
         -z * z + y * y + x * x - 25, poly::SignCondition::GT, dummy(1));
@@ -233,6 +238,8 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
         dummy(2));
     cac.get_constraints().add_constraint(
         y * y - 100, poly::SignCondition::LT, dummy(3));
+    
+    cac.compute_variable_ordering();
 
     auto cover = cac.get_unsat_cover();
     TS_ASSERT(cover.empty());
