@@ -55,7 +55,7 @@ CVC4::Node as_cvc_upolynomial(const poly::UPolynomial& p, const CVC4::Node& var)
   {
     if (!is_zero(coeffs[i]))
     {
-      Node coeff = nm->mkConst(poly_utils::to_rational(coeffs[i]));
+      Node coeff = nm->mkConst(poly_utils::toRational(coeffs[i]));
       Node term = nm->mkNode(Kind::MULT, coeff, monomial);
       res = nm->mkNode(Kind::PLUS, res, term);
     }
@@ -81,8 +81,8 @@ poly::UPolynomial as_poly_upolynomial_impl(const CVC4::Node& n,
     case Kind::CONST_RATIONAL:
     {
       Rational r = n.getConst<Rational>();
-      denominator = poly_utils::to_integer(r.getDenominator());
-      return poly::UPolynomial(poly_utils::to_integer(r.getNumerator()));
+      denominator = poly_utils::toInteger(r.getDenominator());
+      return poly::UPolynomial(poly_utils::toInteger(r.getNumerator()));
     }
     case Kind::PLUS:
     {
@@ -139,8 +139,8 @@ poly::Polynomial as_poly_polynomial_impl(const CVC4::Node& n,
     case Kind::CONST_RATIONAL:
     {
       Rational r = n.getConst<Rational>();
-      denominator = poly_utils::to_integer(r.getDenominator());
-      return poly::Polynomial(poly_utils::to_integer(r.getNumerator()));
+      denominator = poly_utils::toInteger(r.getDenominator());
+      return poly::Polynomial(poly_utils::toInteger(r.getNumerator()));
     }
     case Kind::PLUS:
     {
@@ -278,14 +278,14 @@ Node ran_to_node(const poly::AlgebraicNumber& an, const Node& ran_variable)
   const poly::DyadicInterval& di = get_isolating_interval(an);
   if (is_point(di))
   {
-    return nm->mkConst(poly_utils::to_rational(get_point(di)));
+    return nm->mkConst(poly_utils::toRational(get_point(di)));
   }
   Assert(di.get_internal()->a_open && di.get_internal()->b_open)
       << "We assume an open interval here.";
 
   Node poly = as_cvc_upolynomial(get_defining_polynomial(an), ran_variable);
-  Node lower = nm->mkConst(poly_utils::to_rational(get_lower(di)));
-  Node upper = nm->mkConst(poly_utils::to_rational(get_upper(di)));
+  Node lower = nm->mkConst(poly_utils::toRational(get_lower(di)));
+  Node upper = nm->mkConst(poly_utils::toRational(get_upper(di)));
 
   // Construct witness:
   return nm->mkNode(Kind::AND,
@@ -310,15 +310,15 @@ Node value_to_node(const poly::Value& v, const Node& ran_variable)
   auto* nm = NodeManager::currentNM();
   if (is_dyadic_rational(v))
   {
-    return nm->mkConst(poly_utils::to_rational(as_dyadic_rational(v)));
+    return nm->mkConst(poly_utils::toRational(as_dyadic_rational(v)));
   }
   if (is_integer(v))
   {
-    return nm->mkConst(poly_utils::to_rational(as_integer(v)));
+    return nm->mkConst(poly_utils::toRational(as_integer(v)));
   }
   if (is_rational(v))
   {
-    return nm->mkConst(poly_utils::to_rational(as_rational(v)));
+    return nm->mkConst(poly_utils::toRational(as_rational(v)));
   }
   Assert(false) << "All cases should be covered.";
   return nm->mkConst(Rational(0));
@@ -334,22 +334,22 @@ Node excluding_interval_to_lemma(const Node& variable, const poly::Interval& int
   if (poly::is_point(interval)) {
     if (is_algebraic_number(lv)) {
       return nm->mkNode(Kind::AND,
-        nm->mkNode(Kind::GT, variable, nm->mkConst(poly_utils::to_rational_below(lv))),
-        nm->mkNode(Kind::LT, variable, nm->mkConst(poly_utils::to_rational_above(lv)))
+        nm->mkNode(Kind::GT, variable, nm->mkConst(poly_utils::toRationalBelow(lv))),
+        nm->mkNode(Kind::LT, variable, nm->mkConst(poly_utils::toRationalAbove(lv)))
       );
     } else {
-      return nm->mkNode(Kind::EQUAL, variable, nm->mkConst(poly_utils::to_rational_below(lv)));
+      return nm->mkNode(Kind::EQUAL, variable, nm->mkConst(poly_utils::toRationalBelow(lv)));
     }
   }
   if (li) {
-    return nm->mkNode(Kind::GT, variable, nm->mkConst(poly_utils::to_rational_above(uv)));
+    return nm->mkNode(Kind::GT, variable, nm->mkConst(poly_utils::toRationalAbove(uv)));
   }
   if (ui) {
-    return nm->mkNode(Kind::LT, variable, nm->mkConst(poly_utils::to_rational_below(lv)));
+    return nm->mkNode(Kind::LT, variable, nm->mkConst(poly_utils::toRationalBelow(lv)));
   }
   return nm->mkNode(Kind::AND,
-    nm->mkNode(Kind::GT, variable, nm->mkConst(poly_utils::to_rational_above(uv))),
-    nm->mkNode(Kind::LT, variable, nm->mkConst(poly_utils::to_rational_below(lv)))
+    nm->mkNode(Kind::GT, variable, nm->mkConst(poly_utils::toRationalAbove(uv))),
+    nm->mkNode(Kind::LT, variable, nm->mkConst(poly_utils::toRationalBelow(lv)))
   );
 }
 
@@ -446,7 +446,7 @@ poly::AlgebraicNumber node_to_poly_ran(const Node& n, const Node& ran_variable)
   poly::UPolynomial pol = as_poly_upolynomial(
       std::get<0>(encoding), ran_variable);
   // Construct algebraic number
-  return poly_utils::to_poly_ran_with_refinement(
+  return poly_utils::toPolyRanWithRefinement(
       std::move(pol), std::get<1>(encoding), std::get<2>(encoding));
 }
 RealAlgebraicNumber node_to_ran(const Node& n, const Node& ran_variable)
@@ -458,7 +458,7 @@ poly::Value node_to_value(const Node& n, const Node& ran_variable)
 {
   if (n.isConst())
   {
-    return poly_utils::to_rational(n.getConst<Rational>());
+    return poly_utils::toRational(n.getConst<Rational>());
   }
   return node_to_poly_ran(n, ran_variable);
 }

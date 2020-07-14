@@ -25,8 +25,8 @@ void Constraints::sort_constraints()
               bool ua = is_univariate(a);
               bool ub = is_univariate(b);
               if (ua != ub) return ua;
-              std::size_t tda = poly_utils::total_degree(a);
-              std::size_t tdb = poly_utils::total_degree(b);
+              std::size_t tda = poly_utils::totalDegree(a);
+              std::size_t tdb = poly_utils::totalDegree(b);
               if (tda != tdb) return tda < tdb;
               return degree(a) < degree(b);
             });

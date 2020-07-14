@@ -31,7 +31,7 @@ std::vector<poly_utils::VariableInformation> collect_information(
     res.back().var = v;
     for (const auto& c : polys)
     {
-      poly_utils::get_variable_information(res.back(), std::get<0>(c));
+      poly_utils::getVariableInformation(res.back(), std::get<0>(c));
     }
   }
   if (with_totals)
@@ -39,7 +39,7 @@ std::vector<poly_utils::VariableInformation> collect_information(
     res.emplace_back();
     for (const auto& c : polys)
     {
-      poly_utils::get_variable_information(res.back(), std::get<0>(c));
+      poly_utils::getVariableInformation(res.back(), std::get<0>(c));
     }
   }
   return res;

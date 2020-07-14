@@ -70,7 +70,7 @@ NRAFeatures::NRAFeatures(const Constraints::ConstraintVector& constraints)
   for (const auto& c : constraints)
   {
     const auto& p = std::get<0>(c);
-    max_tdegree = std::max(max_tdegree, poly_utils::total_degree(p));
+    max_tdegree = std::max(max_tdegree, poly_utils::totalDegree(p));
   }
 }
 
