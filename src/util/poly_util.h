@@ -1,10 +1,32 @@
-#include "cvc4_public.h"
+/*********************                                                        */
+/*! \file poly_util.h
+ ** \verbatim
+ ** Top contributors (to current version):
+ **   Gereon Kremer
+ ** This file is part of the CVC4 project.
+ ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
+ ** in the top-level source directory) and their institutional affiliations.
+ ** All rights reserved.  See the file COPYING in the top-level source
+ ** directory for licensing information.\endverbatim
+ **
+ ** This file is part of the CVC4 project.
+ ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
+ ** in the top-level source directory) and their institutional affiliations.
+ ** All rights reserved.  See the file COPYING in the top-level source
+ ** directory for licensing information.\endverbatim
+ **
+ ** \brief Utilities for working with LibPoly.
+ **
+ ** Utilities for working with LibPoly.
+ **/
+
+#include "cvc4_private.h"
 
 #ifndef CVC4__POLY_UTIL_H
 #define CVC4__POLY_UTIL_H
 
 
-#include <map>
+#include <vector>
 
 #include "maybe.h"
 #include "util/integer.h"
@@ -14,12 +36,12 @@
 #ifdef CVC4_POLY_IMP
 
 #include <poly/polyxx.h>
-#include <iosfwd>
 
 namespace CVC4 {
-/** Utilities for working with libpoly.
+/**
+ * Utilities for working with libpoly.
  * This namespace contains various basic conversion routines necessary for the
- * integration of libpoly. Firstly, libpoly is based on GMP and hence we need
+ * integration of LibPoly. Firstly, LibPoly is based on GMP and hence we need
  * conversion from and to CLN (in case CLN is enabled). Otherwise, conversion of
  * number types mostly reduces to simple type casts.
  * Furthermore, conversions between poly::Rational and poly::DyadicRational and
@@ -29,60 +51,68 @@ namespace CVC4 {
 namespace poly_utils {
 
 /** Converts a poly::Integer to a CVC4::Integer. */
-Integer to_integer(const poly::Integer& i);
+Integer toInteger(const poly::Integer& i);
 /** Converts a poly::Integer to a CVC4::Rational. */
-Rational to_rational(const poly::Integer& r);
+Rational toRational(const poly::Integer& r);
 /** Converts a poly::Rational to a CVC4::Rational. */
-Rational to_rational(const poly::Rational& r);
+Rational toRational(const poly::Rational& r);
 /** Converts a poly::DyadicRational to a CVC4::Rational. */
-Rational to_rational(const poly::DyadicRational& dr);
+Rational toRational(const poly::DyadicRational& dr);
 
 /** Converts a poly::Value to a CVC4::Rational (that may be a bit above). */
-Rational to_rational_above(const poly::Value& v);
+Rational toRationalAbove(const poly::Value& v);
 /** Converts a poly::Value to a CVC4::Rational (that may be a bit below). */
-Rational to_rational_below(const poly::Value& v);
+Rational toRationalBelow(const poly::Value& v);
 
 /** Converts a CVC4::Integer to a poly::Integer. */
-poly::Integer to_integer(const Integer& i);
+poly::Integer toInteger(const Integer& i);
 /** Converts a vector of CVC4::Integers to a vector of poly::Integers. */
-std::vector<poly::Integer> to_integer(const std::vector<Integer>& vi);
+std::vector<poly::Integer> toInteger(const std::vector<Integer>& vi);
 /** Converts a CVC4::Rational to a poly::Rational. */
-poly::Rational to_rational(const Rational& r);
-/** Converts a CVC4::Rational to a poly::DyadicRational. If the input is not
- * dyadic, no result is produced. */
-Maybe<poly::DyadicRational> to_dyadic_rational(const Rational& r);
-/** Converts a poly::Rational to a poly::DyadicRational. If the input is not
- * dyadic, no result is produced. */
-Maybe<poly::DyadicRational> to_dyadic_rational(const poly::Rational& r);
+poly::Rational toRational(const Rational& r);
+/**
+ * Converts a CVC4::Rational to a poly::DyadicRational. If the input is not
+ * dyadic, no result is produced.
+ */
+Maybe<poly::DyadicRational> toDyadicRational(const Rational& r);
+/**
+ * Converts a poly::Rational to a poly::DyadicRational. If the input is not
+ * dyadic, no result is produced.
+ */
+Maybe<poly::DyadicRational> toDyadicRational(const poly::Rational& r);
 
-/** Iteratively approximates a poly::Rational by a dyadic poly::Rational.
+/**
+ * Iteratively approximates a poly::Rational by a dyadic poly::Rational.
  * Assuming that r is dyadic, makes one refinement step to move r closer to
  * original.
  * Assumes one starts with lower(original) or ceil(original) for r.
  */
-void approximate_to_dyadic(poly::Rational& r, const poly::Rational& original);
+poly::Rational approximateToDyadic(const poly::Rational& r, const poly::Rational& original);
 
-/** Constructs a poly::AlgebraicNumber, allowing for refinement of the
+/**
+ * Constructs a poly::AlgebraicNumber, allowing for refinement of the
  * CVC4::Rational bounds. As a poly::AlgebraicNumber works on
  * poly::DyadicRationals internally, the bounds are iteratively refined using
- * approximate_to_dyadic until the respective interval is isolating. If the
+ * approximateToDyadic until the respective interval is isolating. If the
  * provided rational bounds are already dyadic, the refinement is skipped.
  */
-poly::AlgebraicNumber to_poly_ran_with_refinement(poly::UPolynomial&& p,
+poly::AlgebraicNumber toPolyRanWithRefinement(poly::UPolynomial&& p,
                                                   const Rational& lower,
-                                                  const Rational upper);
+                                                  const Rational& upper);
 
-/** Constructs a CVC4::RealAlgebraicNumber, simply wrapping
- * to_poly_ran_with_refinement. */
-RealAlgebraicNumber to_ran_with_refinement(poly::UPolynomial&& p,
+/**
+ * Constructs a CVC4::RealAlgebraicNumber, simply wrapping
+ * toPolyRanWithRefinement.
+ */
+RealAlgebraicNumber toRanWithRefinement(poly::UPolynomial&& p,
                                            const Rational& lower,
-                                           const Rational upper);
+                                           const Rational& upper);
 
-std::size_t total_degree(const poly::Polynomial& p);
+std::size_t totalDegree(const poly::Polynomial& p);
 
-/** Collects information about a single variable in a set of polynomials.
+/**
+ * Collects information about a single variable in a set of polynomials.
  * Used for determining a variable ordering.
- * If var == poly::Variable(), only max_degree, sum_degree and num_terms are computed.
  */
 struct VariableInformation {
     poly::Variable var;
@@ -103,7 +133,7 @@ struct VariableInformation {
 };
 std::ostream& operator<<(std::ostream& os, const VariableInformation& vi);
 
-void get_variable_information(VariableInformation& vi, const poly::Polynomial& poly);
+void getVariableInformation(VariableInformation& vi, const poly::Polynomial& poly);
 
 }  // namespace poly_utils
 }  // namespace CVC4

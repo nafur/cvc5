@@ -1,3 +1,25 @@
+/*********************                                                        */
+/*! \file poly_util.cpp
+ ** \verbatim
+ ** Top contributors (to current version):
+ **   Gereon Kremer
+ ** This file is part of the CVC4 project.
+ ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
+ ** in the top-level source directory) and their institutional affiliations.
+ ** All rights reserved.  See the file COPYING in the top-level source
+ ** directory for licensing information.\endverbatim
+ **
+ ** This file is part of the CVC4 project.
+ ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
+ ** in the top-level source directory) and their institutional affiliations.
+ ** All rights reserved.  See the file COPYING in the top-level source
+ ** directory for licensing information.\endverbatim
+ **
+ ** \brief Utilities for working with LibPoly.
+ **
+ ** Utilities for working with LibPoly.
+ **/
+
 #include "poly_util.h"
 
 #ifdef CVC4_POLY_IMP
@@ -15,9 +37,11 @@
 namespace CVC4 {
 namespace poly_utils {
 
-/** Convert arbitrary data using a string as intermediary.
- * Assumes the existance of operator<<(std::ostream&, const From&) and To(const
- * std::string&); Should be the last resort for type conversions: it may not
+namespace {
+/**
+ * Convert arbitrary data using a string as intermediary.
+ * Assumes the existence of operator<<(std::ostream&, const From&) and To(const
+ * std::string&); should be the last resort for type conversions: it may not
  * only yield bad performance, but is also dependent on compatible string
  * representations. Use with care!
  */
@@ -28,8 +52,9 @@ To cast_by_string(const From& f)
   s << f;
   return To(s.str());
 }
+}
 
-Integer to_integer(const poly::Integer& i)
+Integer toInteger(const poly::Integer& i)
 {
   const mpz_class& gi = *poly::detail::cast_to_gmp(&i);
 #ifdef CVC4_GMP_IMP
@@ -47,48 +72,48 @@ Integer to_integer(const poly::Integer& i)
   }
 #endif
 }
-Rational to_rational(const poly::Integer& i) { return Rational(to_integer(i)); }
-Rational to_rational(const poly::Rational& r)
+Rational toRational(const poly::Integer& i) { return Rational(toInteger(i)); }
+Rational toRational(const poly::Rational& r)
 {
 #ifdef CVC4_GMP_IMP
   return Rational(*poly::detail::cast_to_gmp(&r));
 #endif
 #ifdef CVC4_CLN_IMP
-  return Rational(to_integer(numerator(r)), to_integer(denominator(r)));
+  return Rational(toInteger(numerator(r)), toInteger(denominator(r)));
 #endif
 }
-Rational to_rational(const poly::DyadicRational& dr)
+Rational toRational(const poly::DyadicRational& dr)
 {
-  return Rational(to_integer(numerator(dr)), to_integer(denominator(dr)));
+  return Rational(toInteger(numerator(dr)), toInteger(denominator(dr)));
 }
-Rational to_rational_above(const poly::Value& v) {
+Rational toRationalAbove(const poly::Value& v) {
   if (is_algebraic_number(v)) {
-    return to_rational(get_upper_bound(as_algebraic_number(v)));
+    return toRational(get_upper_bound(as_algebraic_number(v)));
   } else if (is_dyadic_rational(v)) {
-    return to_rational(as_dyadic_rational(v));
+    return toRational(as_dyadic_rational(v));
   } else if (is_integer(v)) {
-    return to_rational(as_integer(v));
+    return toRational(as_integer(v));
   } else if (is_rational(v)) {
-    return to_rational(as_rational(v));
+    return toRational(as_rational(v));
   }
   Assert(false) << "Can not convert " << v << " to rational.";
   return Rational();
 }
-Rational to_rational_below(const poly::Value& v) {
+Rational toRationalBelow(const poly::Value& v) {
   if (is_algebraic_number(v)) {
-    return to_rational(get_lower_bound(as_algebraic_number(v)));
+    return toRational(get_lower_bound(as_algebraic_number(v)));
   } else if (is_dyadic_rational(v)) {
-    return to_rational(as_dyadic_rational(v));
+    return toRational(as_dyadic_rational(v));
   } else if (is_integer(v)) {
-    return to_rational(as_integer(v));
+    return toRational(as_integer(v));
   } else if (is_rational(v)) {
-    return to_rational(as_rational(v));
+    return toRational(as_rational(v));
   }
   Assert(false) << "Can not convert " << v << " to rational.";
   return Rational();
 }
 
-poly::Integer to_integer(const Integer& i)
+poly::Integer toInteger(const Integer& i)
 {
 #ifdef CVC4_GMP_IMP
   return poly::Integer(i.getValue());
@@ -105,40 +130,41 @@ poly::Integer to_integer(const Integer& i)
   }
 #endif
 }
-std::vector<poly::Integer> to_integer(const std::vector<Integer>& vi)
+std::vector<poly::Integer> toInteger(const std::vector<Integer>& vi)
 {
   std::vector<poly::Integer> res;
-  for (const auto& i : vi) res.emplace_back(to_integer(i));
+  for (const auto& i : vi) res.emplace_back(toInteger(i));
   return res;
 }
-poly::Rational to_rational(const Rational& r)
+poly::Rational toRational(const Rational& r)
 {
 #ifdef CVC4_GMP_IMP
   return poly::Rational(r.getValue());
 #endif
 #ifdef CVC4_CLN_IMP
-  return poly::Rational(to_integer(r.getNumerator()),
-                        to_integer(r.getDenominator()));
+  return poly::Rational(toInteger(r.getNumerator()),
+                        toInteger(r.getDenominator()));
 #endif
 }
 
-Maybe<poly::DyadicRational> to_dyadic_rational(const Rational& r)
+Maybe<poly::DyadicRational> toDyadicRational(const Rational& r)
 {
   Integer den = r.getDenominator();
   if (den.isOne())
   {  // It's an integer anyway.
-    return poly::DyadicRational(to_integer(r.getNumerator()));
+    return poly::DyadicRational(toInteger(r.getNumerator()));
   }
   unsigned long exp = den.isPow2();
   if (exp > 0)
   {
     // It's a dyadic rational.
-    return div_2exp(poly::DyadicRational(to_integer(r.getNumerator())),
+    return div_2exp(poly::DyadicRational(toInteger(r.getNumerator())),
                     exp - 1);
   }
   return Maybe<poly::DyadicRational>();
 }
-Maybe<poly::DyadicRational> to_dyadic_rational(const poly::Rational& r)
+
+Maybe<poly::DyadicRational> toDyadicRational(const poly::Rational& r)
 {
   poly::Integer den = denominator(r);
   if (den == poly::Integer(1))
@@ -155,7 +181,7 @@ Maybe<poly::DyadicRational> to_dyadic_rational(const poly::Rational& r)
   return Maybe<poly::DyadicRational>();
 }
 
-void approximate_to_dyadic(poly::Rational& r, const poly::Rational& original)
+poly::Rational approximateToDyadic(const poly::Rational& r, const poly::Rational& original)
 {
   // Multiply both numerator and denominator by two.
   // Increase or decrease the numerator, depending on whether r is too small or
@@ -169,49 +195,49 @@ void approximate_to_dyadic(poly::Rational& r, const poly::Rational& original)
   {
     --n;
   }
-  r = poly::Rational(n, mul_pow2(denominator(r), 1));
+  return poly::Rational(n, mul_pow2(denominator(r), 1));
 }
 
-poly::AlgebraicNumber to_poly_ran_with_refinement(poly::UPolynomial&& p,
+poly::AlgebraicNumber toPolyRanWithRefinement(poly::UPolynomial&& p,
                                                   const Rational& lower,
-                                                  const Rational upper)
+                                                  const Rational& upper)
 {
-  Maybe<poly::DyadicRational> ml = to_dyadic_rational(lower);
-  Maybe<poly::DyadicRational> mu = to_dyadic_rational(upper);
+  Maybe<poly::DyadicRational> ml = toDyadicRational(lower);
+  Maybe<poly::DyadicRational> mu = toDyadicRational(upper);
   if (ml && mu)
   {
     return poly::AlgebraicNumber(std::move(p),
                                  poly::DyadicInterval(ml.value(), mu.value()));
   }
   // The encoded real algebraic number did not have dyadic rational endpoints.
-  poly::Rational origl = to_rational(lower);
-  poly::Rational origu = to_rational(upper);
+  poly::Rational origl = toRational(lower);
+  poly::Rational origu = toRational(upper);
   poly::Rational l(floor(origl));
   poly::Rational u(ceil(origu));
   poly::RationalInterval ri(l, u);
   while (count_real_roots(p, ri) != 1)
   {
-    approximate_to_dyadic(l, origl);
-    approximate_to_dyadic(u, origu);
+    l = approximateToDyadic(l, origl);
+    u = approximateToDyadic(u, origu);
     ri = poly::RationalInterval(l, u);
   }
   Assert(count_real_roots(p, poly::RationalInterval(l, u)) == 1);
-  ml = to_dyadic_rational(l);
-  mu = to_dyadic_rational(u);
+  ml = toDyadicRational(l);
+  mu = toDyadicRational(u);
   Assert(ml && mu) << "Both bounds should be dyadic by now.";
   return poly::AlgebraicNumber(std::move(p),
                                poly::DyadicInterval(ml.value(), mu.value()));
 }
 
-RealAlgebraicNumber to_ran_with_refinement(poly::UPolynomial&& p,
+RealAlgebraicNumber toRanWithRefinement(poly::UPolynomial&& p,
                                            const Rational& lower,
-                                           const Rational upper)
+                                           const Rational& upper)
 {
   return RealAlgebraicNumber(
-      to_poly_ran_with_refinement(std::move(p), lower, upper));
+      toPolyRanWithRefinement(std::move(p), lower, upper));
 }
 
-std::size_t total_degree(const poly::Polynomial& p)
+std::size_t totalDegree(const poly::Polynomial& p)
 {
   std::size_t tdeg = 0;
 
@@ -258,7 +284,7 @@ struct GetVarInfo {
   std::size_t cur_var_degree = 0;
   std::size_t cur_lc_degree = 0;
 };
-void get_variable_information(VariableInformation& vi, const poly::Polynomial& poly) {
+void getVariableInformation(VariableInformation& vi, const poly::Polynomial& poly) {
   GetVarInfo varinfo;
   varinfo.info = &vi;
   lp_polynomial_traverse_f f =

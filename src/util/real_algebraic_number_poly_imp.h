@@ -1,10 +1,10 @@
 /*********************                                                        */
-/*! \file rational_gmp_imp.h
+/*! \file real_algebraic_number_poly_imp.h
  ** \verbatim
  ** Top contributors (to current version):
- **   Tim King, Morgan Deters, Christopher L. Conway
+ **   Gereon Kremer
  ** This file is part of the CVC4 project.
- ** Copyright (c) 2009-2019 by the authors listed in the file AUTHORS
+ ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
  ** in the top-level source directory) and their institutional affiliations.
  ** All rights reserved.  See the file COPYING in the top-level source
  ** directory for licensing information.\endverbatim
@@ -14,39 +14,34 @@
  ** Algebraic number constants; wraps a libpoly algebraic number.
  **/
 
-#include "cvc4_public.h"
+#include "cvc4_private.h"
 
 #ifndef CVC4__REAL_ALGEBRAIC_NUMBER_H
 #define CVC4__REAL_ALGEBRAIC_NUMBER_H
 
-#include <poly/polyxx.h>
-
 #include <vector>
+
+#include <poly/polyxx.h>
 
 #include "util/integer.h"
 #include "util/rational.h"
 
 namespace CVC4 {
 
-/** Represents a real algebraic number based on poly::AlgebraicNumber.
- * This real algebraic number is represented by a (univariate) polynomial and in
+/**
+ * Represents a real algebraic number based on poly::AlgebraicNumber.
+ * This real algebraic number is represented by a (univariate) polynomial and an
  * isolating interval. The interval contains exactly one real root of the
  * polynomial, which is the number the real algebraic number as a whole
  * represents.
  * This representation can hold rationals (where the interval can be a point
  * interval and the polynomial is omitted), an irrational algebraic number (like
  * square roots), but no trancendentals (like pi).
- * Note that the interval representation used dyadic rationals (denominators are
+ * Note that the interval representation uses dyadic rationals (denominators are
  * only powers of two).
  */
 class CVC4_PUBLIC RealAlgebraicNumber
 {
- private:
-  /**
-   * Stores the actual real algebraic number.
-   */
-  poly::AlgebraicNumber d_value;
-
  public:
   /** Construct as zero. */
   RealAlgebraicNumber() = default;
@@ -54,26 +49,29 @@ class CVC4_PUBLIC RealAlgebraicNumber
   RealAlgebraicNumber(poly::AlgebraicNumber&& an);
   /** Copy from an Integer. */
   RealAlgebraicNumber(const Integer& i);
-  /** Copy from an Integer. */
+  /** Copy from a Rational. */
   RealAlgebraicNumber(const Rational& r);
-  /** Construct from a polynomial with the given coefficients and an open
+  /**
+   * Construct from a polynomial with the given coefficients and an open
    * interval with the given bounds.
    */
   RealAlgebraicNumber(const std::vector<long>& coefficients,
                       long lower,
                       long upper);
-  /** Construct from a polynomial with the given coefficients and an open
+  /**
+   * Construct from a polynomial with the given coefficients and an open
    * interval with the given bounds. If the bounds are not dyadic, we need to
    * perform refinement to find a suitable dyadic interval.
-   * See poly_utils::to_ran_with_refinement for more details.
+   * See poly_utils::toRanWithRefinement for more details.
    */
   RealAlgebraicNumber(const std::vector<Integer>& coefficients,
                       const Rational& lower,
                       const Rational& upper);
-  /** Construct from a polynomial with the given coefficients and an open
+  /**
+   * Construct from a polynomial with the given coefficients and an open
    * interval with the given bounds. If the bounds are not dyadic, we need to
    * perform refinement to find a suitable dyadic interval.
-   * See poly_utils::to_ran_with_refinement for more details.
+   * See poly_utils::toRanWithRefinement for more details.
    */
   RealAlgebraicNumber(const std::vector<Rational>& coefficients,
                       const Rational& lower,
@@ -97,6 +95,11 @@ class CVC4_PUBLIC RealAlgebraicNumber
   /** Get the internal value as a non-const reference. */
   poly::AlgebraicNumber& getValue() { return d_value; }
 
+ private:
+  /**
+   * Stores the actual real algebraic number.
+   */
+  poly::AlgebraicNumber d_value;
 }; /* class RealAlgebraicNumber */
 
 /** Stream a real algebraic number to an output stream. */
@@ -148,9 +151,9 @@ CVC4_PUBLIC RealAlgebraicNumber& operator*=(RealAlgebraicNumber& lhs,
 CVC4_PUBLIC int sgn(const RealAlgebraicNumber& ran);
 
 /** Check whether a real algebraic number is zero. */
-CVC4_PUBLIC bool is_zero(const RealAlgebraicNumber& ran);
+CVC4_PUBLIC bool isZero(const RealAlgebraicNumber& ran);
 /** Check whether a real algebraic number is one. */
-CVC4_PUBLIC bool is_one(const RealAlgebraicNumber& ran);
+CVC4_PUBLIC bool isOne(const RealAlgebraicNumber& ran);
 
 }  // namespace CVC4
 

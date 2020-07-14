@@ -1,3 +1,19 @@
+/*********************                                                        */
+/*! \file real_algebraic_number_black.h
+ ** \verbatim
+ ** Top contributors (to current version):
+ **   Gereon Kremer
+ ** This file is part of the CVC4 project.
+ ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
+ ** in the top-level source directory) and their institutional affiliations.
+ ** All rights reserved.  See the file COPYING in the top-level source
+ ** directory for licensing information.\endverbatim
+ **
+ ** \brief Black box testing of CVC4::RealAlgebraicNumber.
+ **
+ ** Black box testing of CVC4::RealAlgebraicNumber.
+ **/
+
 #include <cxxtest/TestSuite.h>
 
 #include "util/real_algebraic_number.h"
@@ -12,16 +28,16 @@ using namespace std;
 class RealAlgebraicNumberBlack : public CxxTest::TestSuite {
 public:
 
-  void test_creation() {
-    TS_ASSERT(is_zero(RealAlgebraicNumber()));
-    TS_ASSERT(is_one(RealAlgebraicNumber(Integer(1))));
-    TS_ASSERT(!is_one(RealAlgebraicNumber(Rational(2))));
+  void testCreation() {
+    TS_ASSERT(isZero(RealAlgebraicNumber()));
+    TS_ASSERT(isOne(RealAlgebraicNumber(Integer(1))));
+    TS_ASSERT(!isOne(RealAlgebraicNumber(Rational(2))));
     RealAlgebraicNumber sqrt2({-2, 0, 1}, 1, 2);
     TS_ASSERT(RealAlgebraicNumber(Integer(1)) < sqrt2);
     TS_ASSERT(sqrt2 < RealAlgebraicNumber(Integer(2)));
   }
 
-  void test_comparison() {
+  void testComparison() {
     RealAlgebraicNumber msqrt3({-3, 0, 1}, -2, -1);
     RealAlgebraicNumber msqrt2({-2, 0, 1}, -2, -1);
     RealAlgebraicNumber zero;
@@ -40,25 +56,24 @@ public:
     TS_ASSERT(sqrt2 < sqrt3);
   }
 
-  void test_sgn() {
+  void testSgn() {
     RealAlgebraicNumber msqrt2({-2, 0, 1}, -2, -1);
     RealAlgebraicNumber zero;
     RealAlgebraicNumber sqrt2({-2, 0, 1}, 1, 2);
 
-    TS_ASSERT(sgn(msqrt2) == -1);
-    TS_ASSERT(sgn(zero) == 0);
-    TS_ASSERT(sgn(sqrt2) == 1);
+    TS_ASSERT_EQUALS(sgn(msqrt2), -1);
+    TS_ASSERT_EQUALS(sgn(zero), 0);
+    TS_ASSERT_EQUALS(sgn(sqrt2), 1);
   }
 
-  void test_arithmetic() {
+  void testArithmetic() {
     RealAlgebraicNumber msqrt2({-2, 0, 1}, -2, -1);
     RealAlgebraicNumber zero;
     RealAlgebraicNumber sqrt2({-2, 0, 1}, 1, 2);
 
-    TS_ASSERT(msqrt2 + sqrt2 == zero);
-    TS_ASSERT(-msqrt2 == sqrt2);
-    TS_ASSERT(-msqrt2 + sqrt2 == sqrt2 + sqrt2);
-    //TS_ASSERT(-msqrt2 + sqrt2 == RealAlgebraicNumber(Integer(2)) * sqrt2);
-    TS_ASSERT(msqrt2 * sqrt2 == RealAlgebraicNumber(Integer(-2)));
+    TS_ASSERT_EQUALS(msqrt2 + sqrt2, zero);
+    TS_ASSERT_EQUALS(-msqrt2, sqrt2);
+    TS_ASSERT_EQUALS(-msqrt2 + sqrt2, sqrt2 + sqrt2);
+    TS_ASSERT_EQUALS(msqrt2 * sqrt2, RealAlgebraicNumber(Integer(-2)));
   }
 };

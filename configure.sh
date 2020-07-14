@@ -62,7 +62,7 @@ The following flags enable optional packages (disable with --no-<option name>).
   --drat2er                use drat2er (required for eager BV proofs)
   --kissat                 use the Kissat SAT solver
   --lfsc                   use the LFSC proof checker
-  --poly                   use the libpoly library
+  --poly                   use the LibPoly library
   --dlib                   use the dlib library
   --symfpu                 use SymFPU for floating point solver
   --readline               support the readline library
@@ -78,7 +78,7 @@ Optional Path to Optional Packages:
   --gmp-dir=PATH           path to top level of GMP installation
   --kissat-dir=PATH        path to top level of Kissat source tree
   --lfsc-dir=PATH          path to top level of LFSC source tree
-  --poly-dir=PATH          path to top level of libpoly source tree
+  --poly-dir=PATH          path to top level of LibPoly source tree
   --dlib-dir=PATH          path to top level of dlib source tree
   --symfpu-dir=PATH        path to top level of SymFPU source tree
 
