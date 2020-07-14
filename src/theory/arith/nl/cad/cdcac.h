@@ -36,6 +36,19 @@ class CDCAC
 
   CDCACDebugger debugger;
 
+  /**
+   * Check whether the current sample satisfies the integrality condition of the
+   * current variable. Returns true if the variable is not integral or the
+   * sample is integral.
+   */
+  bool check_integrality(std::size_t cur_variable, const poly::Value& value);
+  /**
+   * Constructs an interval that excludes the non-integral region around the
+   * current sample. Assumes !check_integrality(cur_variable, value).
+   */
+  CACInterval build_integrality_interval(std::size_t cur_variable,
+                                         const poly::Value& value);
+
  public:
   /** Initialize without a variable ordering. */
   CDCAC();

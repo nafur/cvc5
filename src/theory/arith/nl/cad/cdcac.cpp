@@ -25,6 +25,33 @@ void remove_duplicates(std::vector<T>& v)
   v.erase(std::unique(v.begin(), v.end()), v.end());
 }
 
+bool CDCAC::check_integrality(std::size_t cur_variable,
+                              const poly::Value& value)
+{
+  Node var = mConstraints.var_mapper()(mVariableOrdering[cur_variable]);
+  if (var.getType() != NodeManager::currentNM()->integerType())
+  {
+    // variable is not integral
+    return true;
+  }
+  return poly::represents_integer(value);
+}
+
+CACInterval CDCAC::build_integrality_interval(std::size_t cur_variable,
+                                              const poly::Value& value)
+{
+  poly::Variable var = mVariableOrdering[cur_variable];
+  poly::Integer below = poly::floor(value);
+  poly::Integer above = poly::ceil(value);
+  // construct var \in (below, above)
+  return CACInterval{poly::Interval(below, above),
+                     {var - below},
+                     {var - above},
+                     {var - below, var - above},
+                     {},
+                     {}};
+}
+
 CDCAC::CDCAC() : debugger(mVariableOrdering) {}
 
 CDCAC::CDCAC(const std::vector<Variable>& ordering)
@@ -348,6 +375,18 @@ std::vector<CACInterval> CDCAC::get_unsat_cover(std::size_t cur_variable,
 
   while (sample_outside_with_initial(intervals, sample, cur_variable))
   {
+    if (!check_integrality(cur_variable, sample))
+    {
+      // the variable is integral, but the sample is not.
+      Trace("cdcac") << "Used " << sample << " for integer variable "
+                     << mVariableOrdering[cur_variable] << std::endl;
+      auto new_interval = build_integrality_interval(cur_variable, sample);
+      Trace("cdcac") << "Adding integrality interval " << new_interval.mInterval
+                     << std::endl;
+      intervals.emplace_back(new_interval);
+      clean_intervals(intervals);
+      continue;
+    }
     mAssignment.set(mVariableOrdering[cur_variable], sample);
     Trace("cdcac") << "Sample: " << mAssignment << std::endl;
     if (cur_variable == mVariableOrdering.size() - 1)
