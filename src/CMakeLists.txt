@@ -118,8 +118,6 @@ libcvc4_add_sources(
   printer/printer.h
   printer/smt2/smt2_printer.cpp
   printer/smt2/smt2_printer.h
-  printer/sygus_print_callback.cpp
-  printer/sygus_print_callback.h
   printer/tptp/tptp_printer.cpp
   printer/tptp/tptp_printer.h
   proof/arith_proof.cpp
@@ -223,6 +221,10 @@ libcvc4_add_sources(
   prop/sat_solver_types.h
   prop/theory_proxy.cpp
   prop/theory_proxy.h
+  smt/abduction_solver.cpp
+  smt/abduction_solver.h
+  smt/abstract_values.cpp
+  smt/abstract_values.h
   smt/command.cpp
   smt/command.h
   smt/command_list.cpp
@@ -791,6 +793,7 @@ libcvc4_add_sources(
   theory/theory_preprocessor.h
   theory/theory_proof_step_buffer.cpp
   theory/theory_proof_step_buffer.h
+  theory/theory_rewriter.cpp
   theory/theory_rewriter.h
   theory/theory_registrar.h
   theory/theory_test_utils.h
@@ -804,6 +807,8 @@ libcvc4_add_sources(
   theory/uf/equality_engine.cpp
   theory/uf/equality_engine.h
   theory/uf/equality_engine_types.h
+  theory/uf/eq_proof.cpp
+  theory/uf/eq_proof.h
   theory/uf/proof_checker.cpp
   theory/uf/proof_checker.h
   theory/uf/ho_extension.cpp
@@ -984,6 +989,7 @@ install(FILES
           expr/emptyset.h
           expr/expr_iomanip.h
           expr/record.h
+          expr/sequence.h
           expr/symbol_table.h
           expr/type.h
           expr/uninterpreted_constant.h
@@ -1010,7 +1016,6 @@ install(FILES
         DESTINATION
           ${INCLUDE_INSTALL_DIR}/cvc4/parser)
 install(FILES
-          printer/sygus_print_callback.h
         DESTINATION
           ${INCLUDE_INSTALL_DIR}/cvc4/printer)
 install(FILES
