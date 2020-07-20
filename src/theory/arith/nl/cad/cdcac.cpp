@@ -1,9 +1,33 @@
+/*********************                                                        */
+/*! \file cdcac.cpp
+ ** \verbatim
+ ** Top contributors (to current version):
+ **   Gereon Kremer
+ ** This file is part of the CVC4 project.
+ ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
+ ** in the top-level source directory) and their institutional affiliations.
+ ** All rights reserved.  See the file COPYING in the top-level source
+ ** directory for licensing information.\endverbatim
+ **
+ ** This file is part of the CVC4 project.
+ ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
+ ** in the top-level source directory) and their institutional affiliations.
+ ** All rights reserved.  See the file COPYING in the top-level source
+ ** directory for licensing information.\endverbatim
+ **
+ ** \brief Implements the CDCAC approach.
+ **
+ ** Implements the CDCAC approach as described in
+ ** https://arxiv.org/pdf/2003.05633.pdf.
+ **/
+
 #include "cdcac.h"
 
 #include "projections.h"
 #include "variable_ordering.h"
 
 namespace std {
+/** Generic streaming operator for std::vector. */
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
 {
@@ -18,12 +42,15 @@ namespace arith {
 namespace nl {
 namespace cad {
 
+namespace {
+/** Removed duplicates from a vector. */
 template <typename T>
 void remove_duplicates(std::vector<T>& v)
 {
   std::sort(v.begin(), v.end());
   v.erase(std::unique(v.begin(), v.end()), v.end());
 }
+}  // namespace
 
 bool CDCAC::check_integrality(std::size_t cur_variable,
                               const poly::Value& value)
@@ -67,8 +94,9 @@ void CDCAC::reset()
 
 void CDCAC::compute_variable_ordering()
 {
+  // Actually compute the variable ordering
   mVariableOrdering = mVarOrder(mConstraints.get_constraints(),
-                                VariableOrderingStrategy::Brown);
+                                VariableOrderingStrategy::BROWN);
   Trace("cdcac") << "Variable ordering is now " << mVariableOrdering
                  << std::endl;
 
@@ -118,6 +146,7 @@ std::vector<CACInterval> CDCAC::get_unsat_intervals(
 
     if (main_variable(p) != mVariableOrdering[cur_variable])
     {
+      // Constraint is in another variable, ignore it.
       continue;
     }
 
@@ -193,11 +222,7 @@ void add_polynomial(
 std::vector<Polynomial> CDCAC::construct_characterization(
     std::vector<CACInterval>& intervals)
 {
-  // TODO(Gereon): origins from a single interval are a squarefree basis. What
-  // about resultants of polys from different intervals?
   Assert(!intervals.empty()) << "A covering can not be empty";
-  // TODO(Gereon): We might want to reduce the covering by removing redundancies
-  // as of section 4.5.2
   Trace("cdcac") << "Constructing characterization now" << std::endl;
   std::vector<Polynomial> res;
 
@@ -210,16 +235,19 @@ std::vector<Polynomial> CDCAC::construct_characterization(
     Trace("cdcac") << "-> " << i.mOrigins << std::endl;
     for (const auto& p : i.mDownPolys)
     {
+      // Add all polynomial from lower levels.
       add_polynomial(res, p);
     }
     for (const auto& p : i.mMainPolys)
     {
       Trace("cdcac") << "Discriminant of " << p << " -> " << discriminant(p)
                      << std::endl;
+      // Add all discriminants
       add_polynomial(res, discriminant(p));
 
       for (const auto& q : required_coefficients(p))
       {
+        // Add all required coefficients
         Trace("cdcac") << "Coeff of " << p << " -> " << q << std::endl;
         add_polynomial(res, q);
       }
@@ -244,6 +272,7 @@ std::vector<Polynomial> CDCAC::construct_characterization(
 
   for (std::size_t i = 0; i < intervals.size() - 1; ++i)
   {
+    // Add resultants of consecutive intervals.
     cad::make_finest_square_free_basis(intervals[i].mUpperPolys,
                                        intervals[i + 1].mLowerPolys);
     for (const auto& p : intervals[i].mUpperPolys)
@@ -275,6 +304,7 @@ CACInterval CDCAC::interval_from_characterization(
 
   for (const auto& p : characterization)
   {
+    // Add polynomials to either main or down
     if (main_variable(p) == mVariableOrdering[cur_variable])
     {
       m.emplace_back(p);
@@ -285,6 +315,7 @@ CACInterval CDCAC::interval_from_characterization(
     }
   }
 
+  // Collect -oo, all roots, oo
   std::vector<Value> roots;
   roots.emplace_back(Value::minus_infty());
   for (const auto& p : m)
@@ -295,6 +326,7 @@ CACInterval CDCAC::interval_from_characterization(
   roots.emplace_back(Value::plus_infty());
   std::sort(roots.begin(), roots.end());
 
+  // Now find the interval bounds
   Value lower;
   Value upper;
   for (std::size_t i = 0; i < roots.size(); ++i)
@@ -316,6 +348,7 @@ CACInterval CDCAC::interval_from_characterization(
 
   if (lower != Value::minus_infty())
   {
+    // Identify polynomials that have a root at the lower bound
     mAssignment.set(mVariableOrdering[cur_variable], lower);
     for (const auto& p : m)
     {
@@ -328,6 +361,7 @@ CACInterval CDCAC::interval_from_characterization(
   }
   if (upper != Value::plus_infty())
   {
+    // Identify polynomials that have a root at the upper bound
     mAssignment.set(mVariableOrdering[cur_variable], upper);
     for (const auto& p : m)
     {
@@ -341,10 +375,12 @@ CACInterval CDCAC::interval_from_characterization(
 
   if (lower == upper)
   {
+    // construct a point interval
     return CACInterval{Interval(lower, false, upper, false), l, u, m, d, {}};
   }
   else
   {
+    // construct an open interval
     Assert(lower < upper);
     return CACInterval{Interval(lower, true, upper, true), l, u, m, d, {}};
   }

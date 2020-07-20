@@ -1,3 +1,25 @@
+/*********************                                                        */
+/*! \file cdcac_utils.cpp
+ ** \verbatim
+ ** Top contributors (to current version):
+ **   Gereon Kremer
+ ** This file is part of the CVC4 project.
+ ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
+ ** in the top-level source directory) and their institutional affiliations.
+ ** All rights reserved.  See the file COPYING in the top-level source
+ ** directory for licensing information.\endverbatim
+ **
+ ** This file is part of the CVC4 project.
+ ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
+ ** in the top-level source directory) and their institutional affiliations.
+ ** All rights reserved.  See the file COPYING in the top-level source
+ ** directory for licensing information.\endverbatim
+ **
+ ** \brief Implements utilities for cdcac.
+ **
+ ** Implements utilities for cdcac.
+ **/
+
 #include "cdcac_utils.h"
 
 #include <fstream>
@@ -10,7 +32,8 @@ namespace cad {
 
 using namespace poly;
 
-/** Induces an ordering on poly intervals that is suitable for redundancy
+/**
+ * Induces an ordering on poly intervals that is suitable for redundancy
  * removal as implemented in clean_intervals.
  */
 inline bool compare_for_cleanup(const Interval& lhs, const Interval& rhs)
@@ -174,11 +197,13 @@ bool sample_outside(const std::vector<CACInterval>& infeasible, Value& sample)
 {
   if (infeasible.empty())
   {
+    // No infeasible region, just take anything: zero
     sample = poly::Integer();
     return true;
   }
   if (!is_minus_infinity(get_lower(infeasible.front().mInterval)))
   {
+    // First does not cover -oo, just take sufficiently low value
     Trace("cdcac") << "Sample before " << infeasible.front().mInterval
                    << std::endl;
     const auto* i = infeasible.front().mInterval.get_internal();
@@ -188,8 +213,10 @@ bool sample_outside(const std::vector<CACInterval>& infeasible, Value& sample)
   }
   for (std::size_t i = 0; i < infeasible.size() - 1; ++i)
   {
+    // Search for two subsequent intervals that do not connect
     if (!interval_connect(infeasible[i].mInterval, infeasible[i + 1].mInterval))
     {
+      // Two intervals do not connect, take something from the gap
       const auto* l = infeasible[i].mInterval.get_internal();
       const auto* r = infeasible[i + 1].mInterval.get_internal();
 
@@ -214,6 +241,7 @@ bool sample_outside(const std::vector<CACInterval>& infeasible, Value& sample)
   }
   if (!is_plus_infinity(get_upper(infeasible.back().mInterval)))
   {
+    // Last does not cover oo, just take something sufficiently large
     Trace("cdcac") << "Sample above " << infeasible.back().mInterval
                    << std::endl;
     const auto* i = infeasible.back().mInterval.get_internal();
