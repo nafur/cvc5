@@ -129,6 +129,7 @@ gpl=default
 kissat=default
 lfsc=default
 poly=default
+dlib=default
 muzzle=default
 ninja=default
 optimized=default
