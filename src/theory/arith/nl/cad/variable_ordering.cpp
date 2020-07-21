@@ -1,4 +1,28 @@
+/*********************                                                        */
+/*! \file variable_ordering.cpp
+ ** \verbatim
+ ** Top contributors (to current version):
+ **   Gereon Kremer
+ ** This file is part of the CVC4 project.
+ ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
+ ** in the top-level source directory) and their institutional affiliations.
+ ** All rights reserved.  See the file COPYING in the top-level source
+ ** directory for licensing information.\endverbatim
+ **
+ ** This file is part of the CVC4 project.
+ ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
+ ** in the top-level source directory) and their institutional affiliations.
+ ** All rights reserved.  See the file COPYING in the top-level source
+ ** directory for licensing information.\endverbatim
+ **
+ ** \brief Implements variable orderings tailored to CAD.
+ **
+ ** Implements variable orderings tailored to CAD.
+ **/
+
 #include "variable_ordering.h"
+
+#ifdef CVC4_POLY_IMP
 
 #include "cdcac_stats.h"
 
@@ -56,7 +80,8 @@ std::vector<poly::Variable> get_variables(
   return res;
 }
 
-std::vector<poly::Variable> sort_byid(const Constraints::ConstraintVector& polys)
+std::vector<poly::Variable> sort_byid(
+    const Constraints::ConstraintVector& polys)
 {
   auto vi = collect_information(polys);
   std::sort(
@@ -67,7 +92,8 @@ std::vector<poly::Variable> sort_byid(const Constraints::ConstraintVector& polys
   return get_variables(vi);
 };
 
-std::vector<poly::Variable> sort_brown(const Constraints::ConstraintVector& polys)
+std::vector<poly::Variable> sort_brown(
+    const Constraints::ConstraintVector& polys)
 {
   auto vi = collect_information(polys);
   std::sort(vi.begin(),
@@ -83,7 +109,8 @@ std::vector<poly::Variable> sort_brown(const Constraints::ConstraintVector& poly
   return get_variables(vi);
 };
 
-std::vector<poly::Variable> sort_triangular(const Constraints::ConstraintVector& polys)
+std::vector<poly::Variable> sort_triangular(
+    const Constraints::ConstraintVector& polys)
 {
   auto vi = collect_information(polys);
   std::sort(vi.begin(),
@@ -152,9 +179,9 @@ std::vector<poly::Variable> VariableOrdering::operator()(
 {
   switch (vos)
   {
-    case VariableOrderingStrategy::ByID: return sort_byid(polys);
-    case VariableOrderingStrategy::Brown: return sort_brown(polys);
-    case VariableOrderingStrategy::Triangular: return sort_triangular(polys);
+    case VariableOrderingStrategy::BYID: return sort_byid(polys);
+    case VariableOrderingStrategy::BROWN: return sort_brown(polys);
+    case VariableOrderingStrategy::TRIANGULAR: return sort_triangular(polys);
 #ifdef CVC4_USE_DLIB
     case VariableOrderingStrategy::ML: return sort_ml(polys, state_ml);
 #endif
@@ -168,3 +195,5 @@ std::vector<poly::Variable> VariableOrdering::operator()(
 }  // namespace arith
 }  // namespace theory
 }  // namespace CVC4
+
+#endif
