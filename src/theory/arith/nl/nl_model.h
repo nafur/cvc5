@@ -320,14 +320,6 @@ class NlModel
    */
   std::map<Node, Node> d_check_model_witnesses;
   /**
-   * witnesses for check model
-   *
-   * Stores witnesses for vatiables that define implicit variable assignments.
-   * For some variable v, we map to a formulas that is true for exactly one
-   * value of v.
-   */
-  std::map<Node, Node> d_check_model_witnesses;
-  /**
    * The map from literals that our model construction solved, to the variable
    * that was solved for. Examples of such literals are:
    * (1) Equalities x = t, which we turned into a model substitution x -> t,
