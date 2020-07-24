@@ -312,7 +312,8 @@ class NlModel
    * involves approximations of square roots.
    */
   std::map<Node, std::pair<Node, Node>> d_check_model_bounds;
-  /** witnesses for check model
+  /**
+   * witnesses for check model
    *
    * Stores witnesses for vatiables that define implicit variable assignments.
    * For some variable v, we map to a formulas that is true for exactly one

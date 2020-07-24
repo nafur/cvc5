@@ -1127,7 +1127,6 @@ bool NlModel::simpleCheckModelMsum(const std::map<Node, Node>& msum, bool pol)
           return false;
           }
         }
-      }
       // whether we will try to minimize/maximize (-1/1) the absolute value
       int setAbs = (set_lower == has_neg_factor) ? 1 : -1;
       Trace("nl-ext-cms-debug")
