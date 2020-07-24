@@ -363,10 +363,9 @@ bool NlModel::addCheckModelSubstitution(TNode v, TNode s)
       return false;
     }
   }
-  auto itw = d_check_model_witnesses.find(v);
-  if (itw != d_check_model_witnesses.end()) {
-    // TODO(Gereon): Check whether s satisfies itw->second.
-  }
+  Assert(d_check_model_witnesses.find(v) == d_check_model_witnesses.end())
+      << "We tried to add a substitution where we already had a witness term."
+      << std::endl;
   std::vector<Node> varsTmp;
   varsTmp.push_back(v);
   std::vector<Node> subsTmp;
@@ -422,14 +421,15 @@ bool NlModel::addCheckModelBound(TNode v, TNode l, TNode u)
 
 bool NlModel::addCheckModelWitness(TNode v, TNode w)
 {
-  Trace("nl-ext-model") << "* check model witness : " << v << " -> " << w << std::endl;
+  Trace("nl-ext-model") << "* check model witness : " << v << " -> " << w
+                        << std::endl;
   // should not set a witness for a value that is already set
   if (std::find(d_check_model_vars.begin(), d_check_model_vars.end(), v)
       != d_check_model_vars.end())
   {
-    Trace("nl-ext-model")
-        << "...ERROR: setting witness for variable that already has a constant value."
-        << std::endl;
+    Trace("nl-ext-model") << "...ERROR: setting witness for variable that "
+                             "already has a constant value."
+                          << std::endl;
     Assert(false);
     return false;
   }
@@ -1113,13 +1113,11 @@ bool NlModel::simpleCheckModelMsum(const std::map<Node, Node>& msum, bool pol)
         }
         else
         {
-          auto wit =
-            d_check_model_witnesses.find(vc);
-          if (wit != d_check_model_witnesses.end()) {
-            //TODO(Gereon): Should do something here.
-            std::cout << "Do something with " << vc << " = " << wit->second << std::endl;
-          } else {
-
+          Assert(d_check_model_witnesses.find(vc)
+                 == d_check_model_witnesses.end())
+              << "No variable should be assigned a witness term if we get "
+                 "here. "
+              << vc << " is, though." << std::endl;
           Trace("nl-ext-cms-debug") << std::endl;
           Trace("nl-ext-cms")
               << "  failed due to unknown bound for " << vc << std::endl;
@@ -1349,7 +1347,8 @@ void NlModel::getModelValueRepair(
       Trace("nl-model") << v << " exact approximation is " << l << std::endl;
     }
   }
-  for (const auto& vw: d_check_model_witnesses) {
+  for (const auto& vw : d_check_model_witnesses)
+  {
     Trace("nl-model") << vw.first << " witness is " << vw.second << std::endl;
     witnesses.emplace(vw.first, vw.second);
   }

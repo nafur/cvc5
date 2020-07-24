@@ -1,4 +1,28 @@
+/*********************                                                        */
+/*! \file projections.cpp
+ ** \verbatim
+ ** Top contributors (to current version):
+ **   Gereon Kremer
+ ** This file is part of the CVC4 project.
+ ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
+ ** in the top-level source directory) and their institutional affiliations.
+ ** All rights reserved.  See the file COPYING in the top-level source
+ ** directory for licensing information.\endverbatim
+ **
+ ** This file is part of the CVC4 project.
+ ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
+ ** in the top-level source directory) and their institutional affiliations.
+ ** All rights reserved.  See the file COPYING in the top-level source
+ ** directory for licensing information.\endverbatim
+ **
+ ** \brief Implements utilities for CAD projection operators.
+ **
+ ** Implements utilities for CAD projection operators.
+ **/
+
 #include "projections.h"
+
+#ifdef CVC4_POLY_IMP
 
 namespace CVC4 {
 namespace theory {
@@ -32,9 +56,9 @@ void add_polynomials(std::vector<Polynomial>& polys,
 
 void make_finest_square_free_basis(std::vector<Polynomial>& polys)
 {
-  for (std::size_t i = 0; i < polys.size(); ++i)
+  for (std::size_t i = 0, n = polys.size(); i < n; ++i)
   {
-    for (std::size_t j = i + 1; j < polys.size(); ++j)
+    for (std::size_t j = i + 1; j < n; ++j)
     {
       Polynomial g = gcd(polys[i], polys[j]);
       if (!is_constant(g))
@@ -52,11 +76,12 @@ void make_finest_square_free_basis(std::vector<Polynomial>& polys)
   reduce_projection_polynomials(polys);
 }
 
-void make_finest_square_free_basis(std::vector<poly::Polynomial>& lhs, std::vector<poly::Polynomial>& rhs) {
-
-  for (std::size_t i = 0; i < lhs.size(); ++i)
+void make_finest_square_free_basis(std::vector<poly::Polynomial>& lhs,
+                                   std::vector<poly::Polynomial>& rhs)
+{
+  for (std::size_t i = 0, ln = lhs.size(); i < ln; ++i)
   {
-    for (std::size_t j = 0; j < rhs.size(); ++j)
+    for (std::size_t j = 0, rn = rhs.size(); j < rn; ++j)
     {
       if (lhs[i] == rhs[j]) continue;
       Polynomial g = gcd(lhs[i], rhs[j]);
@@ -86,9 +111,9 @@ std::vector<Polynomial> projection_mccallum(
     }
     add_polynomial(res, discriminant(p));
   }
-  for (std::size_t i = 0; i < polys.size(); ++i)
+  for (std::size_t i = 0, n = polys.size(); i < n; ++i)
   {
-    for (std::size_t j = i + 1; j < polys.size(); ++j)
+    for (std::size_t j = i + 1; j < n; ++j)
     {
       add_polynomial(res, resultant(polys[i], polys[j]));
     }
@@ -103,3 +128,5 @@ std::vector<Polynomial> projection_mccallum(
 }  // namespace arith
 }  // namespace theory
 }  // namespace CVC4
+
+#endif

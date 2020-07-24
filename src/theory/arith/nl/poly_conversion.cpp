@@ -1,4 +1,28 @@
+/*********************                                                        */
+/*! \file poly_conversion.cpp
+ ** \verbatim
+ ** Top contributors (to current version):
+ **   Gereon Kremer
+ ** This file is part of the CVC4 project.
+ ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
+ ** in the top-level source directory) and their institutional affiliations.
+ ** All rights reserved.  See the file COPYING in the top-level source
+ ** directory for licensing information.\endverbatim
+ **
+ ** This file is part of the CVC4 project.
+ ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
+ ** in the top-level source directory) and their institutional affiliations.
+ ** All rights reserved.  See the file COPYING in the top-level source
+ ** directory for licensing information.\endverbatim
+ **
+ ** \brief Utilities for converting to and from LibPoly objects.
+ **
+ ** Utilities for converting to and from LibPoly objects.
+ **/
+
 #include "poly_conversion.h"
+
+#ifdef CVC4_POLY_IMP
 
 #include "expr/node.h"
 #include "expr/node_manager_attributes.h"
@@ -17,14 +41,18 @@ poly::Variable VariableMapper::operator()(const CVC4::Node& n)
   if (it == mVarCVCpoly.end())
   {
     std::string name;
-    if (n.isVar()) {
+    if (n.isVar())
+    {
       if (!n.getAttribute(expr::VarNameAttr(), name))
       {
         Trace("poly::conversion")
-            << "Variable " << n << " has no name, using ID instead." << std::endl;
+            << "Variable " << n << " has no name, using ID instead."
+            << std::endl;
         name = "v_" + std::to_string(n.getId());
       }
-    } else {
+    }
+    else
+    {
       name = "v_" + std::to_string(n.getId());
     }
     it = mVarCVCpoly.emplace(n, poly::Variable(name.c_str())).first;
@@ -36,7 +64,8 @@ poly::Variable VariableMapper::operator()(const CVC4::Node& n)
 CVC4::Node VariableMapper::operator()(const poly::Variable& n)
 {
   auto it = mVarpolyCVC.find(n);
-  Assert(it != mVarpolyCVC.end()) << "Expect variable " << n << " to be added already.";
+  Assert(it != mVarpolyCVC.end())
+      << "Expect variable " << n << " to be added already.";
   return it->second;
 }
 
@@ -51,7 +80,7 @@ CVC4::Node as_cvc_upolynomial(const poly::UPolynomial& p, const CVC4::Node& var)
 
   Node res = nm->mkConst(Rational(0));
   Node monomial = nm->mkConst(Rational(1));
-  for (std::size_t i = 0; i < coeffs.size(); ++i)
+  for (std::size_t i = 0, n = coeffs.size(); i < n; ++i)
   {
     if (!is_zero(coeffs[i]))
     {
@@ -169,8 +198,7 @@ poly::Polynomial as_poly_polynomial_impl(const CVC4::Node& n,
       }
       return res;
     }
-    default:
-      return poly::Polynomial(vm(n));
+    default: return poly::Polynomial(vm(n));
   }
   return poly::Polynomial();
 }
@@ -324,33 +352,49 @@ Node value_to_node(const poly::Value& v, const Node& ran_variable)
   return nm->mkConst(Rational(0));
 }
 
-Node excluding_interval_to_lemma(const Node& variable, const poly::Interval& interval) {
+Node excluding_interval_to_lemma(const Node& variable,
+                                 const poly::Interval& interval)
+{
   auto* nm = NodeManager::currentNM();
   const auto& lv = poly::get_lower(interval);
   const auto& uv = poly::get_upper(interval);
   bool li = poly::is_minus_infinity(lv);
   bool ui = poly::is_plus_infinity(uv);
   if (li && ui) return nm->mkConst(true);
-  if (poly::is_point(interval)) {
-    if (is_algebraic_number(lv)) {
-      return nm->mkNode(Kind::AND,
-        nm->mkNode(Kind::GT, variable, nm->mkConst(poly_utils::toRationalBelow(lv))),
-        nm->mkNode(Kind::LT, variable, nm->mkConst(poly_utils::toRationalAbove(lv)))
-      );
-    } else {
-      return nm->mkNode(Kind::EQUAL, variable, nm->mkConst(poly_utils::toRationalBelow(lv)));
+  if (poly::is_point(interval))
+  {
+    if (is_algebraic_number(lv))
+    {
+      return nm->mkNode(
+          Kind::AND,
+          nm->mkNode(
+              Kind::GT, variable, nm->mkConst(poly_utils::toRationalBelow(lv))),
+          nm->mkNode(Kind::LT,
+                     variable,
+                     nm->mkConst(poly_utils::toRationalAbove(lv))));
+    }
+    else
+    {
+      return nm->mkNode(
+          Kind::EQUAL, variable, nm->mkConst(poly_utils::toRationalBelow(lv)));
     }
   }
-  if (li) {
-    return nm->mkNode(Kind::GT, variable, nm->mkConst(poly_utils::toRationalAbove(uv)));
+  if (li)
+  {
+    return nm->mkNode(
+        Kind::GT, variable, nm->mkConst(poly_utils::toRationalAbove(uv)));
   }
-  if (ui) {
-    return nm->mkNode(Kind::LT, variable, nm->mkConst(poly_utils::toRationalBelow(lv)));
+  if (ui)
+  {
+    return nm->mkNode(
+        Kind::LT, variable, nm->mkConst(poly_utils::toRationalBelow(lv)));
   }
-  return nm->mkNode(Kind::AND,
-    nm->mkNode(Kind::GT, variable, nm->mkConst(poly_utils::toRationalAbove(uv))),
-    nm->mkNode(Kind::LT, variable, nm->mkConst(poly_utils::toRationalBelow(lv)))
-  );
+  return nm->mkNode(
+      Kind::AND,
+      nm->mkNode(
+          Kind::GT, variable, nm->mkConst(poly_utils::toRationalAbove(uv))),
+      nm->mkNode(
+          Kind::LT, variable, nm->mkConst(poly_utils::toRationalBelow(lv))));
 }
 
 Maybe<Rational> get_lower_bound(const Node& n)
@@ -435,7 +479,8 @@ std::tuple<Node, Rational, Rational> detect_ran_encoding(const Node& n)
   if (!upper) upper = get_upper_bound(n[2]);
   Assert(upper) << "Could not identify upper bound.";
 
-  return std::tuple<Node, Rational, Rational>(poly, lower.value(), upper.value());
+  return std::tuple<Node, Rational, Rational>(
+      poly, lower.value(), upper.value());
 }
 
 poly::AlgebraicNumber node_to_poly_ran(const Node& n, const Node& ran_variable)
@@ -443,8 +488,8 @@ poly::AlgebraicNumber node_to_poly_ran(const Node& n, const Node& ran_variable)
   // Identify poly, lower and upper
   auto encoding = detect_ran_encoding(n);
   // Construct polynomial
-  poly::UPolynomial pol = as_poly_upolynomial(
-      std::get<0>(encoding), ran_variable);
+  poly::UPolynomial pol =
+      as_poly_upolynomial(std::get<0>(encoding), ran_variable);
   // Construct algebraic number
   return poly_utils::toPolyRanWithRefinement(
       std::move(pol), std::get<1>(encoding), std::get<2>(encoding));
@@ -467,3 +512,5 @@ poly::Value node_to_value(const Node& n, const Node& ran_variable)
 }  // namespace arith
 }  // namespace theory
 }  // namespace CVC4
+
+#endif

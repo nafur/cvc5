@@ -1,6 +1,31 @@
+/*********************                                                        */
+/*! \file projections.h
+ ** \verbatim
+ ** Top contributors (to current version):
+ **   Gereon Kremer
+ ** This file is part of the CVC4 project.
+ ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
+ ** in the top-level source directory) and their institutional affiliations.
+ ** All rights reserved.  See the file COPYING in the top-level source
+ ** directory for licensing information.\endverbatim
+ **
+ ** This file is part of the CVC4 project.
+ ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
+ ** in the top-level source directory) and their institutional affiliations.
+ ** All rights reserved.  See the file COPYING in the top-level source
+ ** directory for licensing information.\endverbatim
+ **
+ ** \brief Implements utilities for CAD projection operators.
+ **
+ ** Implements utilities for CAD projection operators.
+ **/
 
-#ifndef CVC4__THEORY__NLARITH__CAD_PROJECTIONS_H
-#define CVC4__THEORY__NLARITH__CAD_PROJECTIONS_H
+#ifndef CVC4__THEORY__ARITH__NL__CAD_PROJECTIONS_H
+#define CVC4__THEORY__ARITH__NL__CAD_PROJECTIONS_H
+
+#include "util/real_algebraic_number.h"
+
+#ifdef CVC4_USE_POLY
 
 #include <poly/polyxx.h>
 
@@ -31,8 +56,12 @@ void add_polynomials(std::vector<poly::Polynomial>& polys,
 /** Make a set of polynomials a finest square-free basis. */
 void make_finest_square_free_basis(std::vector<poly::Polynomial>& polys);
 
-/** Ensure that two sets of polynomials are finest square-free basis relative to each other. */
-void make_finest_square_free_basis(std::vector<poly::Polynomial>& lhs, std::vector<poly::Polynomial>& rhs);
+/**
+ * Ensure that two sets of polynomials are finest square-free basis relative to
+ * each other.
+ */
+void make_finest_square_free_basis(std::vector<poly::Polynomial>& lhs,
+                                   std::vector<poly::Polynomial>& rhs);
 
 /**
  * Computes McCallum's projection operator.
@@ -45,5 +74,7 @@ std::vector<poly::Polynomial> projection_mccallum(
 }  // namespace arith
 }  // namespace theory
 }  // namespace CVC4
+
+#endif
 
 #endif
