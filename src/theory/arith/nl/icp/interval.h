@@ -84,6 +84,7 @@ public:
         return res;
     }
     bool add(const Node& n) {
+        Trace("nl-icp") << "Add bound " << n << std::endl;
         auto comp = Comparison::parseNormalForm(n);
         auto foo = comp.decompose(true);
         if (std::get<0>(foo).isVariable()) {

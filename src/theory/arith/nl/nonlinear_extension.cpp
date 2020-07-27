@@ -430,7 +430,10 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
   //std::cout << "***** START" << std::endl;
   icp::Propagator prop;
   for (const auto& n: assertions) {
-    prop.add(Rewriter::rewrite(n));
+    Node tmp = Rewriter::rewrite(n);
+    if (tmp.getKind() != Kind::CONST_BOOLEAN) {
+      prop.add(tmp);
+    }
   }
   auto ia = prop.getInitial();
   //prop.print();
