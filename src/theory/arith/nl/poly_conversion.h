@@ -39,6 +39,8 @@ namespace theory {
 namespace arith {
 namespace nl {
 
+poly::SignCondition to_sign_condition(CVC4::Kind kind);
+
 /** Bijective mapping between CVC4 variables and poly variables. */
 struct VariableMapper
 {
@@ -71,6 +73,7 @@ poly::UPolynomial as_poly_upolynomial(const CVC4::Node& n,
  * denominator (except for its sign, which is always positive, though).
  */
 poly::Polynomial as_poly_polynomial(const CVC4::Node& n, VariableMapper& vm);
+poly::Polynomial as_poly_polynomial(const CVC4::Node& n, VariableMapper& vm, poly::Rational& denominator);
 
 /**
  * Constructs a constraints (a polynomial and a sign condition) from the given

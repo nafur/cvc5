@@ -72,6 +72,7 @@ enum class Inference : uint32_t
   CAD_CONFLICT,
   // excludes an interval for a single variable
   CAD_EXCLUDED_INTERVAL,
+  ICP_PROPAGATION,
   //-------------------- unknown
   UNKNOWN,
 };

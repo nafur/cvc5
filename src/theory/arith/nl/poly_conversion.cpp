@@ -35,6 +35,21 @@ namespace theory {
 namespace arith {
 namespace nl {
 
+poly::SignCondition to_sign_condition(CVC4::Kind kind) {
+  switch (kind)
+  {
+    case Kind::LT: return poly::SignCondition::LT;
+    case Kind::LEQ: return poly::SignCondition::LE;
+    case Kind::EQUAL: return poly::SignCondition::EQ;
+    case Kind::DISTINCT: return poly::SignCondition::NE;
+    case Kind::GT: return poly::SignCondition::GT;
+    case Kind::GEQ: return poly::SignCondition::GE;
+    default:
+      Assert(false) << "Unexpected kind: " << kind;
+      return poly::SignCondition::EQ;
+  }
+}
+
 poly::Variable VariableMapper::operator()(const CVC4::Node& n)
 {
   auto it = mVarCVCpoly.find(n);
@@ -198,7 +213,8 @@ poly::Polynomial as_poly_polynomial_impl(const CVC4::Node& n,
       }
       return res;
     }
-    default: return poly::Polynomial(vm(n));
+    default: 
+      return poly::Polynomial(vm(n));
   }
   return poly::Polynomial();
 }
@@ -206,6 +222,12 @@ poly::Polynomial as_poly_polynomial(const CVC4::Node& n, VariableMapper& vm)
 {
   poly::Integer denom;
   return as_poly_polynomial_impl(n, denom, vm);
+}
+poly::Polynomial as_poly_polynomial(const CVC4::Node& n, VariableMapper& vm, poly::Rational& denominator) {
+  poly::Integer denom;
+  auto res = as_poly_polynomial_impl(n, denom, vm);
+  denominator = poly::Rational(denom);
+  return res;
 }
 
 poly::SignCondition normalize_kind(CVC4::Kind kind,
