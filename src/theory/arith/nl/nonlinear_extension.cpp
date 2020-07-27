@@ -23,6 +23,8 @@
 #include "theory/ext_theory.h"
 #include "theory/theory_model.h"
 
+#include "icp/interval.h"
+
 using namespace CVC4::kind;
 
 namespace CVC4 {
@@ -424,6 +426,28 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
                                       std::vector<NlLemma>& wlems)
 {
   std::vector<NlLemma> lemmas;
+
+  icp::Propagator prop;
+  for (const auto& n: assertions) {
+    prop.add(n);
+  }
+  auto ia = prop.getInitial();
+  //prop.print();
+  bool did_progress = true;
+  while (did_progress) {
+    did_progress = prop.doIt(ia);
+  }
+  for (const auto& l: prop.asLemmas(ia)) {
+    //std::cout << "Adding " << l << std::endl;
+    lemmas.emplace_back(l, Inference::ICP_PROPAGATION);
+  }
+  filterLemmas(lemmas, lems);
+  if (!lems.empty())
+  {
+    Trace("nl-ext") << "  ...finished with " << lems.size()
+                    << " new lemmas during registration." << std::endl;
+    return lems.size();
+  }
 
   ++(d_stats.d_checkRuns);
 
