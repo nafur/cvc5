@@ -18,11 +18,11 @@ namespace icp {
 class VariableBounds {
     VariableMapper& mMapper;
     struct Interval {
-        poly::Value lower;
-        bool lower_strict;
+        poly::Value lower = poly::Value::minus_infty();
+        bool lower_strict = true;
         Node lower_origin;
-        poly::Value upper;
-        bool upper_strict;
+        poly::Value upper = poly::Value::plus_infty();
+        bool upper_strict = true;
         Node upper_origin;
     };
     std::map<Node,Interval> mIntervals;
@@ -184,13 +184,17 @@ class Propagator {
     std::vector<Node> mLastConflict;
 
     void addCandidate(const Node& n) {
+        auto comp = Comparison::parseNormalForm(n).decompose(false);
+        Kind k = std::get<1>(comp);
+        if (k == Kind::DISTINCT) {
+            return;
+        }
+        auto poly = std::get<0>(comp);
+
         std::unordered_set<TNode, TNodeHashFunction> vars;
         expr::getVariables(n, vars);
         for (const auto& v: vars) {
             //std::cout << "Checking " << n << " for " << v << std::endl;
-            auto comp = Comparison::parseNormalForm(n).decompose(false);
-            auto poly = std::get<0>(comp);
-            Kind k = std::get<1>(comp);
 
             std::map<Node, Node> msum;
             ArithMSum::getMonomialSum(poly.getNode(), msum);
@@ -222,7 +226,7 @@ class Propagator {
                 }
                     
                 mCandidates.emplace_back(Candidate{lhs, rel, rhs, rhsmult});
-                //std::cout << "1: Added " << mCandidates.back() << std::endl;
+                std::cout << "1: Added " << mCandidates.back() << std::endl;
             } else if (res == -1) {
                 poly::Variable lhs = mMapper(v);
                 poly::SignCondition rel;
@@ -242,7 +246,7 @@ class Propagator {
                     rhsmult = poly_utils::toRational(veq_c.getConst<Rational>());
                 }
                 mCandidates.emplace_back(Candidate{lhs, rel, rhs, rhsmult});
-                //std::cout << "-1: Added " << mCandidates.back() << std::endl;
+                std::cout << "-1: Added " << mCandidates.back() << std::endl;
             }
         }
     }
@@ -279,6 +283,7 @@ public:
             if (!ia.has(vars.second)) continue;
             Node v = vars.first;
             poly::Interval i = ia.get(vars.second);
+            //std::cout << v << " -> " << i << std::endl;
             if (!is_minus_infinity(get_lower(i))) {
                 Kind rel = get_lower_open(i) ? Kind::GT : Kind::GEQ;
                 Node c = nm->mkNode(rel, v, value_to_node(get_lower(i), v));
