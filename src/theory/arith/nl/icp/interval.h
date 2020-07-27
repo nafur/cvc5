@@ -146,6 +146,7 @@ struct Candidate {
     poly::SignCondition rel;
     poly::Polynomial rhs;
     poly::Rational rhsmult;
+    Node origin;
 
     bool propagate(poly::IntervalAssignment& ia) const {
         auto res = poly::evaluate(rhs, ia) * poly::Interval(poly::Value(rhsmult));
@@ -160,21 +161,30 @@ struct Candidate {
         auto cur = ia.get(lhs);
         bool changed = false;
         if (get_lower(res) > get_lower(cur)) {
-            cur.set_lower(get_lower(res), false);
-            changed = true;
+            static const poly::Value min_threshold = poly::Value(poly::Integer(-1000000));
+            if (get_lower(cur) > min_threshold) {
+                cur.set_lower(get_lower(res), false);
+                changed = true;
+            }
         }
         if (get_upper(res) < get_upper(cur)) {
-            cur.set_upper(get_upper(res), false);
-            changed = true;
+            static const poly::Value max_threshold = poly::Value(poly::Integer(1000000));
+            if (get_upper(cur) < max_threshold) {
+                cur.set_upper(get_upper(res), false);
+                changed = true;
+            }
         }
         if (changed) {
+            Trace("nl-icp") << *this << " propagated " << lhs << " -> " << cur << std::endl;
             ia.set(lhs, cur);
         }
         return changed;
     }
 };
 inline std::ostream& operator<<(std::ostream& os, const Candidate& c) {
-    return os << c.lhs << " " << c.rel << " " << c.rhsmult << " * " << c.rhs;
+    os << c.lhs << " " << c.rel << " ";
+    if (c.rhsmult != poly::Rational(1)) os << c.rhsmult << " * ";
+    return os << c.rhs;
 }
 
 class Propagator {
@@ -182,6 +192,7 @@ class Propagator {
     VariableBounds mBounds;
     std::vector<Candidate> mCandidates;
     std::vector<Node> mLastConflict;
+    std::set<Node> mUsedCandidates;
 
     void addCandidate(const Node& n) {
         auto comp = Comparison::parseNormalForm(n).decompose(false);
@@ -225,8 +236,8 @@ class Propagator {
                     rhsmult = poly_utils::toRational(veq_c.getConst<Rational>());
                 }
                     
-                mCandidates.emplace_back(Candidate{lhs, rel, rhs, rhsmult});
-                std::cout << "1: Added " << mCandidates.back() << std::endl;
+                mCandidates.emplace_back(Candidate{lhs, rel, rhs, rhsmult, n});
+                Trace("nl-icp") << "Added " << mCandidates.back() << " from " << n << std::endl;
             } else if (res == -1) {
                 poly::Variable lhs = mMapper(v);
                 poly::SignCondition rel;
@@ -245,8 +256,8 @@ class Propagator {
                 if (!veq_c.isNull()) {
                     rhsmult = poly_utils::toRational(veq_c.getConst<Rational>());
                 }
-                mCandidates.emplace_back(Candidate{lhs, rel, rhs, rhsmult});
-                std::cout << "-1: Added " << mCandidates.back() << std::endl;
+                mCandidates.emplace_back(Candidate{lhs, rel, rhs, rhsmult, n});
+                Trace("nl-icp") << "Added " << mCandidates.back() << " from " << n << std::endl;
             }
         }
     }
@@ -266,16 +277,22 @@ public:
     }
 
     bool doIt(poly::IntervalAssignment& ia) {
+        Trace("nl-icp") << "Starting propagation with " << ia << std::endl;
         bool propagated = false;
         for (const auto& c: mCandidates) {
-            propagated = propagated || c.propagate(ia);
+            if (c.propagate(ia)) {
+                propagated = true;
+                mUsedCandidates.insert(c.origin);
+            }
         }
         return propagated;
     }
 
     std::vector<Node> asLemmas(const poly::IntervalAssignment& ia) const {
         auto nm = NodeManager::currentNM();
-        Node premises = nm->mkNode(Kind::AND, mBounds.getOrigins());
+        std::vector<Node> premises = mBounds.getOrigins();
+        premises.insert(premises.end(), mUsedCandidates.begin(), mUsedCandidates.end());
+        Node premise = nm->mkNode(Kind::AND, premises);
         std::vector<Node> conclusions;
 
 
@@ -298,11 +315,13 @@ public:
 
         std::vector<Node> lemmas;
         for (const auto& c: conclusions) {
-            Node lemma = Rewriter::rewrite(nm->mkNode(Kind::IMPLIES, premises, c));
-            if (lemma.isConst()) {
-                Assert(lemma == nm->mkConst<bool>(true));
+            Node lemma = nm->mkNode(Kind::IMPLIES, premise, c);
+            Node rewritten = Rewriter::rewrite(lemma);
+            if (rewritten.isConst()) {
+                Assert(rewritten == nm->mkConst<bool>(true));
             } else {
-                lemmas.emplace_back(lemma);
+                Trace("nl-icp") << "Adding lemma " << lemma << std::endl;
+                lemmas.emplace_back(rewritten);
             }
         }
         

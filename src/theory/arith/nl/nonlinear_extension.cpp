@@ -427,21 +427,27 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
 {
   std::vector<NlLemma> lemmas;
 
+  //std::cout << "***** START" << std::endl;
   icp::Propagator prop;
   for (const auto& n: assertions) {
-    prop.add(n);
+    prop.add(Rewriter::rewrite(n));
   }
   auto ia = prop.getInitial();
   //prop.print();
-  bool did_progress = true;
-  while (did_progress) {
-    did_progress = prop.doIt(ia);
+  bool did_progress = false;
+  bool progress = false;
+  do {
+    progress = prop.doIt(ia);
+    did_progress = did_progress || progress;
+  } while (progress);
+
+  if (did_progress) {
+    for (const auto& l: prop.asLemmas(ia)) {
+      lemmas.emplace_back(l, Inference::ICP_PROPAGATION);
+    }
+    filterLemmas(lemmas, lems);
   }
-  for (const auto& l: prop.asLemmas(ia)) {
-    //std::cout << "Adding " << l << std::endl;
-    lemmas.emplace_back(l, Inference::ICP_PROPAGATION);
-  }
-  filterLemmas(lemmas, lems);
+  //std::cout << "***** DONE" << std::endl;
   if (!lems.empty())
   {
     Trace("nl-ext") << "  ...finished with " << lems.size()
