@@ -855,7 +855,7 @@ std::tuple<Polynomial,Kind,Constant> Comparison::decompose(bool split_constant) 
   Polynomial poly = getLeft() - getRight();
 
   if (!split_constant) {
-    return {poly, rel, Constant::mkZero()};
+    return std::tuple<Polynomial,Kind,Constant>{poly, rel, Constant::mkZero()};
   }
 
   Constant right = Constant::mkZero(); 
@@ -883,7 +883,7 @@ std::tuple<Polynomial,Kind,Constant> Comparison::decompose(bool split_constant) 
     right = right * invlcoeff;
   }
 
-  return { poly, rel, right};
+  return std::tuple<Polynomial,Kind,Constant>{ poly, rel, right};
 }
 
 Comparison Comparison::parseNormalForm(TNode n) {
