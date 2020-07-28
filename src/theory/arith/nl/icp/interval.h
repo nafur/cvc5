@@ -162,15 +162,13 @@ struct Candidate {
         auto cur = ia.get(lhs);
         bool changed = false;
         if (get_lower(res) > get_lower(cur)) {
-            static const poly::Value min_threshold = poly::Value(poly::Integer(-1000000));
-            if (get_lower(cur) > min_threshold) {
+            if (bitsize(get_lower(cur)) < 100) {
                 cur.set_lower(get_lower(res), false);
                 changed = true;
             }
         }
         if (get_upper(res) < get_upper(cur)) {
-            static const poly::Value max_threshold = poly::Value(poly::Integer(1000000));
-            if (get_upper(cur) < max_threshold) {
+            if (bitsize(get_upper(cur)) < 100) {
                 cur.set_upper(get_upper(res), false);
                 changed = true;
             }

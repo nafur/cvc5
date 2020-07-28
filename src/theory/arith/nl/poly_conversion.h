@@ -128,6 +128,45 @@ RealAlgebraicNumber node_to_ran(const Node& n, const Node& ran_variable);
  */
 poly::Value node_to_value(const Node& n, const Node& ran_variable);
 
+inline std::size_t bitsize(const poly::DyadicRational& v) {
+  return bit_size(numerator(v)) + bit_size(denominator(v));
+}
+inline std::size_t bitsize(const poly::Integer& v) {
+  return bit_size(v);
+}
+inline std::size_t bitsize(const poly::Rational& v) {
+  return bit_size(numerator(v)) + bit_size(denominator(v));
+}
+inline std::size_t bitsize(const poly::UPolynomial& v) {
+  std::size_t sum = 0;
+  for (const auto& c: coefficients(v)) {
+    sum += bitsize(c);
+  }
+  return sum;
+}
+inline std::size_t bitsize(const poly::AlgebraicNumber& v) {
+  return bitsize(get_lower_bound(v)) + bitsize(get_upper_bound(v)) + bitsize(get_defining_polynomial(v));
+}
+inline std::size_t bitsize(const poly::Value& v) {
+  if (is_algebraic_number(v)) {
+    return bitsize(as_algebraic_number(v));
+  } else if (is_dyadic_rational(v)) {
+    return bitsize(as_dyadic_rational(v));
+  } else if (is_integer(v)) {
+    return bitsize(as_integer(v));
+  } else if (is_minus_infinity(v)) {
+    return 1;
+  } else if (is_none(v)) {
+    return 0;
+  } else if (is_plus_infinity(v)) {
+    return 1;
+  } else if (is_rational(v)) {
+    return bitsize(as_rational(v));
+  }
+  Assert(false);
+  return 0;
+}
+
 }  // namespace nl
 }  // namespace arith
 }  // namespace theory
