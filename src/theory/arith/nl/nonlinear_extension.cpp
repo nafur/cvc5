@@ -442,6 +442,11 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
   do {
     progress = prop.doIt(ia);
     did_progress = did_progress || progress;
+    if (prop.isConflicting(ia)) {
+      Trace("nl-icp") << "Found a conflict: " << prop.getConflict() << std::endl;
+      lemmas.emplace_back(prop.getConflict(), Inference::ICP_PROPAGATION);
+      break;
+    }
   } while (progress);
 
   if (did_progress) {

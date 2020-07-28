@@ -287,6 +287,27 @@ public:
         return propagated;
     }
 
+    bool isConflicting(const poly::IntervalAssignment& ia) const {
+        for (const auto& vars: mMapper.mVarCVCpoly) {
+            if (!ia.has(vars.second)) continue;
+            poly::Interval i = ia.get(vars.second);
+            if (get_lower(i) > get_upper(i)) return true;
+            if (get_lower_open(i) || get_upper_open(i)) {
+                if (get_lower(i) == get_upper(i)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    Node getConflict() const {
+        auto nm = NodeManager::currentNM();
+        std::vector<Node> conflict = mBounds.getOrigins();
+        conflict.insert(conflict.end(), mUsedCandidates.begin(), mUsedCandidates.end());
+        return nm->mkNode(Kind::NOT, nm->mkNode(Kind::AND, conflict));
+    }
+
     std::vector<Node> asLemmas(const poly::IntervalAssignment& ia) const {
         auto nm = NodeManager::currentNM();
         std::vector<Node> premises = mBounds.getOrigins();
