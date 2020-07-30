@@ -44,6 +44,8 @@ libcvc4_add_sources(
   preprocessing/passes/apply_substs.h
   preprocessing/passes/arith_eliminate_factors.cpp
   preprocessing/passes/arith_eliminate_factors.h
+  preprocessing/passes/arith_split_zero_equalities.cpp
+  preprocessing/passes/arith_split_zero_equalities.h
   preprocessing/passes/bool_to_bv.cpp
   preprocessing/passes/bool_to_bv.h
   preprocessing/passes/bv_abstraction.cpp
