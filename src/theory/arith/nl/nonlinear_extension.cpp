@@ -17,13 +17,12 @@
 
 #include "theory/arith/nl/nonlinear_extension.h"
 
+#include "icp/interval.h"
 #include "options/arith_options.h"
 #include "theory/arith/arith_utilities.h"
 #include "theory/arith/theory_arith.h"
 #include "theory/ext_theory.h"
 #include "theory/theory_model.h"
-
-#include "icp/interval.h"
 
 using namespace CVC4::kind;
 
@@ -427,40 +426,52 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
 {
   std::vector<NlLemma> lemmas;
 
-  //std::cout << "***** START" << std::endl;
-  icp::Propagator prop;
-  for (const auto& n: assertions) {
-    Node tmp = Rewriter::rewrite(n);
-    if (tmp.getKind() != Kind::CONST_BOOLEAN) {
-      prop.add(tmp);
-    }
-  }
-  auto ia = prop.getInitial();
-  //prop.print();
-  bool did_progress = false;
-  bool progress = false;
-  do {
-    progress = prop.doIt(ia);
-    did_progress = did_progress || progress;
-    if (prop.isConflicting(ia)) {
-      Trace("nl-icp") << "Found a conflict: " << prop.getConflict() << std::endl;
-      lemmas.emplace_back(prop.getConflict(), Inference::ICP_PROPAGATION);
-      break;
-    }
-  } while (progress);
-
-  if (did_progress) {
-    for (const auto& l: prop.asLemmas(ia)) {
-      lemmas.emplace_back(l, Inference::ICP_PROPAGATION);
-    }
-    filterLemmas(lemmas, lems);
-  }
-  //std::cout << "***** DONE" << std::endl;
-  if (!lems.empty())
+  if (options::nlICP())
   {
-    Trace("nl-ext") << "  ...finished with " << lems.size()
-                    << " new lemmas during registration." << std::endl;
-    return lems.size();
+    Trace("nl-ext") << "Doing ICP" << std::endl;
+    icp::Propagator prop;
+    for (const auto& n : assertions)
+    {
+      Node tmp = Rewriter::rewrite(n);
+      if (tmp.getKind() != Kind::CONST_BOOLEAN)
+      {
+        prop.add(tmp);
+      }
+    }
+    prop.print();
+    auto ia = prop.getInitial();
+    // prop.print();
+    bool did_progress = false;
+    bool progress = false;
+    do
+    {
+      progress = prop.doIt(ia);
+      did_progress = did_progress || progress;
+      if (prop.isConflicting(ia))
+      {
+        Trace("nl-icp") << "Found a conflict: " << prop.getConflict()
+                        << std::endl;
+        lemmas.emplace_back(prop.getConflict(), Inference::ICP_PROPAGATION);
+        break;
+      }
+    } while (progress);
+
+    if (did_progress)
+    {
+      for (const auto& l : prop.asLemmas(ia))
+      {
+        lemmas.emplace_back(l, Inference::ICP_PROPAGATION);
+      }
+      filterLemmas(lemmas, lems);
+    }
+    // std::cout << "***** DONE" << std::endl;
+    if (!lems.empty())
+    {
+      Trace("nl-ext") << "  ...finished with " << lems.size()
+                      << " new lemmas during registration." << std::endl;
+      return lems.size();
+    }
+    Trace("nl-ext") << "Done with ICP" << std::endl;
   }
 
   ++(d_stats.d_checkRuns);
