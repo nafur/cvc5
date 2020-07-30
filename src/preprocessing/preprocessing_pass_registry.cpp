@@ -26,6 +26,7 @@
 #include "preprocessing/passes/ackermann.h"
 #include "preprocessing/passes/apply_substs.h"
 #include "preprocessing/passes/arith_eliminate_factors.h"
+#include "preprocessing/passes/arith_split_zero_equalities.h"
 #include "preprocessing/passes/bool_to_bv.h"
 #include "preprocessing/passes/bv_abstraction.h"
 #include "preprocessing/passes/bv_eager_atoms.h"
@@ -149,6 +150,7 @@ PreprocessingPassRegistry::PreprocessingPassRegistry()
   registerPassInfo("bool-to-bv", callCtor<BoolToBV>);
   registerPassInfo("ho-elim", callCtor<HoElim>);
   registerPassInfo("arith-elim-factors", callCtor<ArithEliminateFactors>);
+  registerPassInfo("arith-split-zero-equalities", callCtor<ArithSplitZeroEqualities>);
 }
 
 }  // namespace preprocessing
