@@ -22,7 +22,7 @@ bool is_zero_equality(const TNode& node)
   });
 }
 
-Node build_splitting_lemma(const TNode& node)
+Node build_splitting_lemma(const TNode& node, const TNode& premise)
 {
   Assert(node.getKind() == Kind::NONLINEAR_MULT);
   auto* nm = NodeManager::currentNM();
@@ -32,7 +32,7 @@ Node build_splitting_lemma(const TNode& node)
     children.emplace_back(nm->mkNode(Kind::EQUAL, c, nm->mkConst(Rational())));
   }
   return Rewriter::rewrite(
-      nm->mkNode(Kind::IMPLIES, node, nm->mkNode(Kind::OR, children)));
+      nm->mkNode(Kind::IMPLIES, premise, nm->mkNode(Kind::OR, children)));
 }
 }  // namespace
 
@@ -51,7 +51,7 @@ PreprocessingPassResult ArithSplitZeroEqualities::applyInternal(
       {
         if (c.getKind() == Kind::NONLINEAR_MULT)
         {
-          Node lemma = build_splitting_lemma(c);
+          Node lemma = build_splitting_lemma(c, node);
           Trace("arith-split-zero-equalities") << node << " -> " << lemma << std::endl;
           assertionsToPreprocess->push_back(lemma);
         }
