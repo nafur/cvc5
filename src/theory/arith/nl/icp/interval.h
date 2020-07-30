@@ -15,20 +15,26 @@ namespace arith {
 namespace nl {
 namespace icp {
 
+struct Interval {
+    poly::Value lower = poly::Value::minus_infty();
+    bool lower_strict = true;
+    Node lower_origin;
+    poly::Value upper = poly::Value::plus_infty();
+    bool upper_strict = true;
+    Node upper_origin;
+};
+
+inline std::ostream& operator<<(std::ostream& os, const Interval& i) {
+    return os << (i.lower_strict ? '(' : '[') << i.lower << " .. " << i.upper << (i.upper_strict ? ')' : ']');
+}
+
 class VariableBounds {
     VariableMapper& mMapper;
-    struct Interval {
-        poly::Value lower = poly::Value::minus_infty();
-        bool lower_strict = true;
-        Node lower_origin;
-        poly::Value upper = poly::Value::plus_infty();
-        bool upper_strict = true;
-        Node upper_origin;
-    };
     std::map<Node,Interval> mIntervals;
 
     void update_lower_bound(const Node& origin, const Node& variable, const poly::Value& value, bool strict) {
         // variable > or >= value because of origin
+        Trace("nl-icp") << "\tNew bound " << variable << (strict ? ">" : ">=") << value << " due to " << origin << std::endl;
         Interval& i = get(variable);
         if (poly::is_none(i.lower) || i.lower < value) {
             i.lower = value;
@@ -41,6 +47,7 @@ class VariableBounds {
     }
     void update_upper_bound(const Node& origin, const Node& variable, const poly::Value& value, bool strict) {
         // variable < or <= value because of origin
+        Trace("nl-icp") << "\tNew bound " << variable << (strict ? "<" : "<=") << value << " due to " << origin << std::endl;
         Interval& i = get(variable);
         if (poly::is_none(i.upper) || i.upper > value) {
             i.upper = value;
@@ -51,6 +58,13 @@ class VariableBounds {
             i.upper_origin = origin;
         }
     }
+public:
+    VariableBounds(VariableMapper& mapper): mMapper(mapper) {}
+
+    const VariableMapper& getMapper() const {
+        return mMapper;
+    }
+
     Interval& get(const Variable& v) {
         auto it = mIntervals.find(v.getNode());
         if (it == mIntervals.end()) {
@@ -58,8 +72,13 @@ class VariableBounds {
         }
         return it->second;
     }
-public:
-    VariableBounds(VariableMapper& mapper): mMapper(mapper) {}
+    Interval get(const Variable& v) const {
+        auto it = mIntervals.find(v.getNode());
+        if (it == mIntervals.end()) {
+            return Interval{};
+        }
+        return it->second;
+    }
 
     std::vector<Node> getOrigins() const {
         std::vector<Node> res;
@@ -84,7 +103,6 @@ public:
         return res;
     }
     bool add(const Node& n) {
-        Trace("nl-icp") << "Add bound " << n << std::endl;
         auto comp = Comparison::parseNormalForm(n);
         auto foo = comp.decompose(true);
         if (std::get<0>(foo).isVariable()) {
@@ -129,17 +147,14 @@ public:
         }
         return Maybe<std::pair<Node,Node>>();
     }
-
-    void print() {
-        std::cout << "Intervals:" << std::endl;
-        for (const auto& i: mIntervals) {
-            std::cout << "\t" << i.first << " -> " << i.second.lower << " .. " << i.second.upper << std::endl;
-        }
-    }
 };
 
 inline std::ostream& operator<<(std::ostream& os, const VariableBounds& vb) {
-    return os << "Bounds: " << std::endl << vb.get() << std::endl;
+    os << "Bounds:" << std::endl;
+    for (const auto& var: vb.getMapper().mVarCVCpoly) {
+        os << "\t" << var.first << " -> " << vb.get(var.first) << std::endl;;
+    }
+    return os;
 }
 
 struct Candidate {
@@ -151,6 +166,7 @@ struct Candidate {
 
     bool propagate(poly::IntervalAssignment& ia) const {
         auto res = poly::evaluate(rhs, ia) * poly::Interval(poly::Value(rhsmult));
+        Trace("nl-icp") << "Prop: " << *this << " -> " << res << std::endl;
         switch (rel) {
             case poly::SignCondition::LT: res.set_lower(poly::Value::minus_infty(), true); break;
             case poly::SignCondition::LE: res.set_lower(poly::Value::minus_infty(), true); break;
@@ -204,7 +220,7 @@ class Propagator {
         std::unordered_set<TNode, TNodeHashFunction> vars;
         expr::getVariables(n, vars);
         for (const auto& v: vars) {
-            //std::cout << "Checking " << n << " for " << v << std::endl;
+            Trace("nl-icp") << "\tChecking " << n << " for " << v << std::endl;
 
             std::map<Node, Node> msum;
             ArithMSum::getMonomialSum(poly.getNode(), msum);
@@ -213,7 +229,6 @@ class Propagator {
             Node val;
             
             int res = ArithMSum::isolate(v, msum, veq_c, val, k);
-            //std::cout << "Isolate: " << veq_c << " and " << val << std::endl;
             if (res == 1) {
                 poly::Variable lhs = mMapper(v);
                 poly::SignCondition rel;
@@ -236,7 +251,7 @@ class Propagator {
                 }
                     
                 mCandidates.emplace_back(Candidate{lhs, rel, rhs, rhsmult, n});
-                Trace("nl-icp") << "Added " << mCandidates.back() << " from " << n << std::endl;
+                Trace("nl-icp") << "\tAdded " << mCandidates.back() << " from " << n << std::endl;
             } else if (res == -1) {
                 poly::Variable lhs = mMapper(v);
                 poly::SignCondition rel;
@@ -256,7 +271,7 @@ class Propagator {
                     rhsmult = poly_utils::toRational(veq_c.getConst<Rational>());
                 }
                 mCandidates.emplace_back(Candidate{lhs, rel, rhs, rhsmult, n});
-                Trace("nl-icp") << "Added " << mCandidates.back() << " from " << n << std::endl;
+                Trace("nl-icp") << "\tAdded " << mCandidates.back() << " from " << n << std::endl;
             }
         }
     }
@@ -266,6 +281,7 @@ public:
     Propagator(): mBounds(mMapper) {}
 
     void add(const Node& n) {
+        Trace("nl-icp") << "Trying to add " << n << std::endl;
         if (!mBounds.add(n)) {
             addCandidate(n);
         }
@@ -349,7 +365,7 @@ public:
     }
 
     void print() {
-        mBounds.print();
+        std::cout << mBounds << std::endl;
         std::cout << "Candidates:" << std::endl;
         for (const auto& c: mCandidates) {
             std::cout << "\t" << c << std::endl;
