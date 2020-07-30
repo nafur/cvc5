@@ -438,9 +438,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
         prop.add(tmp);
       }
     }
-    prop.print();
     auto ia = prop.getInitial();
-    // prop.print();
     bool did_progress = false;
     bool progress = false;
     do
@@ -464,7 +462,6 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
       }
       filterLemmas(lemmas, lems);
     }
-    // std::cout << "***** DONE" << std::endl;
     if (!lems.empty())
     {
       Trace("nl-ext") << "  ...finished with " << lems.size()
@@ -489,10 +486,10 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
   {
     d_cadSlv.initLastCall(assertions, false_asserts, xts);
   }
-  
+
   // init last call with IAND
   d_iandSlv.initLastCall(assertions, false_asserts, xts);
-  
+
   if (!lems.empty())
   {
     Trace("nl-ext") << "  ...finished with " << lems.size()
@@ -550,7 +547,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
                     << std::endl;
     return lems.size();
   }
-  
+
   // main calls to nlExt
   if (options::nlExt())
   {
