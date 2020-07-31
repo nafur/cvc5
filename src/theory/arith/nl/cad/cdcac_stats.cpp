@@ -12,7 +12,7 @@ namespace cad {
 
 NRAFeatures::NRAFeatures(const Constraints::ConstraintVector& constraints)
 {
-  auto data = cad::collect_information(constraints, true);
+  auto data = cad::collectInformation(constraints, true);
 
   poly_utils::VariableInformation totals = data.back();
   data.pop_back();

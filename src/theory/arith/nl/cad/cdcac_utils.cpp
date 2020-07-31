@@ -9,20 +9,14 @@
  ** All rights reserved.  See the file COPYING in the top-level source
  ** directory for licensing information.\endverbatim
  **
- ** This file is part of the CVC4 project.
- ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
- ** in the top-level source directory) and their institutional affiliations.
- ** All rights reserved.  See the file COPYING in the top-level source
- ** directory for licensing information.\endverbatim
- **
  ** \brief Implements utilities for cdcac.
  **
  ** Implements utilities for cdcac.
  **/
 
-#include "cdcac_utils.h"
+#include "theory/arith/nl/cad/cdcac_utils.h"
 
-#include <fstream>
+#ifdef CVC4_POLY_IMP
 
 namespace CVC4 {
 namespace theory {
@@ -32,11 +26,20 @@ namespace cad {
 
 using namespace poly;
 
+bool operator==(const CACInterval& lhs, const CACInterval& rhs)
+{
+  return lhs.d_interval == rhs.d_interval;
+}
+bool operator<(const CACInterval& lhs, const CACInterval& rhs)
+{
+  return lhs.d_interval < rhs.d_interval;
+}
+
 /**
  * Induces an ordering on poly intervals that is suitable for redundancy
  * removal as implemented in clean_intervals.
  */
-inline bool compare_for_cleanup(const Interval& lhs, const Interval& rhs)
+inline bool compareForCleanup(const Interval& lhs, const Interval& rhs)
 {
   const lp_value_t* ll = &(lhs.get_internal()->a);
   const lp_value_t* lu =
@@ -70,7 +73,7 @@ inline bool compare_for_cleanup(const Interval& lhs, const Interval& rhs)
   return false;
 }
 
-bool interval_covers(const Interval& lhs, const Interval& rhs)
+bool intervalCovers(const Interval& lhs, const Interval& rhs)
 {
   const lp_value_t* ll = &(lhs.get_internal()->a);
   const lp_value_t* lu =
@@ -102,7 +105,7 @@ bool interval_covers(const Interval& lhs, const Interval& rhs)
   return true;
 }
 
-bool interval_connect(const Interval& lhs, const Interval& rhs)
+bool intervalConnect(const Interval& lhs, const Interval& rhs)
 {
   Assert(lhs < rhs) << "Can only check for a connection if lhs < rhs.";
   const lp_value_t* lu = lhs.get_internal()->is_point
@@ -134,7 +137,7 @@ bool interval_connect(const Interval& lhs, const Interval& rhs)
   return false;
 }
 
-void clean_intervals(std::vector<CACInterval>& intervals)
+void cleanIntervals(std::vector<CACInterval>& intervals)
 {
   // Simplifies removal of redundancies later on.
   if (intervals.size() < 2) return;
@@ -143,7 +146,7 @@ void clean_intervals(std::vector<CACInterval>& intervals)
   std::sort(intervals.begin(),
             intervals.end(),
             [](const CACInterval& lhs, const CACInterval& rhs) {
-              return compare_for_cleanup(lhs.mInterval, rhs.mInterval);
+              return compareForCleanup(lhs.d_interval, rhs.d_interval);
             });
 
   // Remove intervals that are covered by others.
@@ -151,10 +154,10 @@ void clean_intervals(std::vector<CACInterval>& intervals)
   // https://en.cppreference.com/w/cpp/algorithm/remove Find first interval that
   // covers the next one.
   std::size_t first = 0;
-  for (; first < intervals.size() - 1; ++first)
+  for (std::size_t n = intervals.size(); first < n - 1; ++first)
   {
-    if (interval_covers(intervals[first].mInterval,
-                        intervals[first + 1].mInterval))
+    if (intervalCovers(intervals[first].d_interval,
+                       intervals[first + 1].d_interval))
     {
       break;
     }
@@ -162,9 +165,9 @@ void clean_intervals(std::vector<CACInterval>& intervals)
   // If such an interval exists, remove accordingly.
   if (first < intervals.size() - 1)
   {
-    for (std::size_t i = first + 2; i < intervals.size(); ++i)
+    for (std::size_t i = first + 2, n = intervals.size(); i < n; ++i)
     {
-      if (!interval_covers(intervals[first].mInterval, intervals[i].mInterval))
+      if (!intervalCovers(intervals[first].d_interval, intervals[i].d_interval))
       {
         // Interval is not covered. Move it to the front and bump front.
         ++first;
@@ -180,12 +183,12 @@ void clean_intervals(std::vector<CACInterval>& intervals)
   }
 }
 
-std::vector<Node> collect_constraints(const std::vector<CACInterval>& intervals)
+std::vector<Node> collectConstraints(const std::vector<CACInterval>& intervals)
 {
   std::vector<Node> res;
   for (const auto& i : intervals)
   {
-    res.insert(res.end(), i.mOrigins.begin(), i.mOrigins.end());
+    res.insert(res.end(), i.d_origins.begin(), i.d_origins.end());
   }
   std::sort(res.begin(), res.end());
   auto it = std::unique(res.begin(), res.end());
@@ -193,7 +196,7 @@ std::vector<Node> collect_constraints(const std::vector<CACInterval>& intervals)
   return res;
 }
 
-bool sample_outside(const std::vector<CACInterval>& infeasible, Value& sample)
+bool sampleOutside(const std::vector<CACInterval>& infeasible, Value& sample)
 {
   if (infeasible.empty())
   {
@@ -201,27 +204,28 @@ bool sample_outside(const std::vector<CACInterval>& infeasible, Value& sample)
     sample = poly::Integer();
     return true;
   }
-  if (!is_minus_infinity(get_lower(infeasible.front().mInterval)))
+  if (!is_minus_infinity(get_lower(infeasible.front().d_interval)))
   {
     // First does not cover -oo, just take sufficiently low value
-    Trace("cdcac") << "Sample before " << infeasible.front().mInterval
+    Trace("cdcac") << "Sample before " << infeasible.front().d_interval
                    << std::endl;
-    const auto* i = infeasible.front().mInterval.get_internal();
+    const auto* i = infeasible.front().d_interval.get_internal();
     sample = value_between(
         Value::minus_infty().get_internal(), true, &i->a, !i->a_open);
     return true;
   }
-  for (std::size_t i = 0; i < infeasible.size() - 1; ++i)
+  for (std::size_t i = 0, n = infeasible.size(); i < n - 1; ++i)
   {
     // Search for two subsequent intervals that do not connect
-    if (!interval_connect(infeasible[i].mInterval, infeasible[i + 1].mInterval))
+    if (!intervalConnect(infeasible[i].d_interval,
+                         infeasible[i + 1].d_interval))
     {
       // Two intervals do not connect, take something from the gap
-      const auto* l = infeasible[i].mInterval.get_internal();
-      const auto* r = infeasible[i + 1].mInterval.get_internal();
+      const auto* l = infeasible[i].d_interval.get_internal();
+      const auto* r = infeasible[i + 1].d_interval.get_internal();
 
-      Trace("cdcac") << "Sample between " << infeasible[i].mInterval << " and "
-                     << infeasible[i + 1].mInterval << std::endl;
+      Trace("cdcac") << "Sample between " << infeasible[i].d_interval << " and "
+                     << infeasible[i + 1].d_interval << std::endl;
 
       if (l->is_point)
       {
@@ -235,16 +239,16 @@ bool sample_outside(const std::vector<CACInterval>& infeasible, Value& sample)
     }
     else
     {
-      Trace("cdcac") << infeasible[i].mInterval << " and "
-                     << infeasible[i + 1].mInterval << " connect" << std::endl;
+      Trace("cdcac") << infeasible[i].d_interval << " and "
+                     << infeasible[i + 1].d_interval << " connect" << std::endl;
     }
   }
-  if (!is_plus_infinity(get_upper(infeasible.back().mInterval)))
+  if (!is_plus_infinity(get_upper(infeasible.back().d_interval)))
   {
     // Last does not cover oo, just take something sufficiently large
-    Trace("cdcac") << "Sample above " << infeasible.back().mInterval
+    Trace("cdcac") << "Sample above " << infeasible.back().d_interval
                    << std::endl;
-    const auto* i = infeasible.back().mInterval.get_internal();
+    const auto* i = infeasible.back().d_interval.get_internal();
     if (i->is_point)
     {
       sample =
@@ -382,7 +386,7 @@ void CDCACDebugger::check_interval(const Assignment& a,
     out << "(declare-fun " << v << " () Real)" << std::endl;
   }
   out << "; Constraints used as origins" << std::endl;
-  for (const auto& o : i.mOrigins)
+  for (const auto& o : i.d_origins)
   {
     out << "(assert " << o << ")" << std::endl;
   }
@@ -397,7 +401,7 @@ void CDCACDebugger::check_interval(const Assignment& a,
     }
   }
   out << "; Excluded interval for " << variable << std::endl;
-  render(out, variable, i.mInterval);
+  render(out, variable, i.d_interval);
   out << "(check-sat)" << std::endl;
 }
 
@@ -406,3 +410,5 @@ void CDCACDebugger::check_interval(const Assignment& a,
 }  // namespace arith
 }  // namespace theory
 }  // namespace CVC4
+
+#endif

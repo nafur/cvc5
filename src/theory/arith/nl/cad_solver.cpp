@@ -38,10 +38,10 @@ namespace nl {
 
 bool CadSolver::construct_model()
 {
-  for (const auto& v : mCAC.get_variable_ordering())
+  for (const auto& v : mCAC.getVariableOrdering())
   {
-    Node variable = mCAC.get_constraints().var_mapper()(v);
-    Node value = value_to_node(mCAC.get_model().get(v), ran_variable);
+    Node variable = mCAC.getConstraints().varMapper()(v);
+    Node value = value_to_node(mCAC.getModel().get(v), ran_variable);
     if (value.isConst())
     {
       d_model.addCheckModelSubstitution(variable, value);
@@ -89,7 +89,7 @@ void CadSolver::initLastCall(const std::vector<Node>& assertions,
   mCAC.reset();
   for (const Node& a : assertions)
   {
-    mCAC.get_constraints().add_constraint(a);
+    mCAC.getConstraints().addConstraint(a);
   }
 #ifdef EXPORT_THEORY_CALLS
   static std::size_t theory_calls = 0;
@@ -97,7 +97,7 @@ void CadSolver::initLastCall(const std::vector<Node>& assertions,
   cad::NRAFeatures stats(mCAC.get_constraints().get_constraints());
   cad::export_theory_call(theory_calls, assertions, stats);
 #endif
-  mCAC.compute_variable_ordering();
+  mCAC.computeVariableOrdering();
   mCAC.retrieve_initial_assignment(d_model, ran_variable);
 }
 
@@ -122,8 +122,8 @@ void CadSolver::preprocessAssertionsCheckModel(std::vector<Node>& assertions)
 {
   if (found_satisfiability)
   {
-    Notice() << "Storing " << mCAC.get_model() << std::endl;
-    Trace("cdcac") << "Storing " << mCAC.get_model() << std::endl;
+    Notice() << "Storing " << mCAC.getModel() << std::endl;
+    Trace("cdcac") << "Storing " << mCAC.getModel() << std::endl;
     construct_model();
     assertions.clear();
   }
@@ -132,16 +132,16 @@ void CadSolver::preprocessAssertionsCheckModel(std::vector<Node>& assertions)
 std::vector<NlLemma> CadSolver::check_full()
 {
   std::vector<NlLemma> lems;
-  auto covering = mCAC.get_unsat_cover();
+  auto covering = mCAC.getUnsatCover();
   if (covering.empty())
   {
     found_satisfiability = true;
-    Notice() << "SAT: " << mCAC.get_model() << std::endl;
+    Notice() << "SAT: " << mCAC.getModel() << std::endl;
   }
   else
   {
     found_satisfiability = false;
-    auto mis = collect_constraints(covering);
+    auto mis = collectConstraints(covering);
     Notice() << "Collected MIS: " << mis << std::endl;
     auto* nm = NodeManager::currentNM();
     for (auto& n : mis)
@@ -165,17 +165,17 @@ std::vector<NlLemma> CadSolver::check_full()
 std::vector<NlLemma> CadSolver::check_partial()
 {
   std::vector<NlLemma> lems;
-  auto covering = mCAC.get_unsat_cover(0, true);
+  auto covering = mCAC.getUnsatCover(0, true);
   if (covering.empty())
   {
     found_satisfiability = true;
-    Notice() << "SAT: " << mCAC.get_model() << std::endl;
+    Notice() << "SAT: " << mCAC.getModel() << std::endl;
   }
   else
   {
     for (const auto& interval: covering) {
-      Node first_var = mCAC.get_constraints().var_mapper()(mCAC.get_variable_ordering()[0]);
-      Node lemma = excluding_interval_to_lemma(first_var, interval.mInterval);
+      Node first_var = mCAC.getConstraints().varMapper()(mCAC.getVariableOrdering()[0]);
+      Node lemma = excluding_interval_to_lemma(first_var, interval.d_interval);
       lems.emplace_back(lemma, Inference::CAD_EXCLUDED_INTERVAL);
     }
   }
