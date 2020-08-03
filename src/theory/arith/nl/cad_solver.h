@@ -44,9 +44,7 @@ class CadSolver
    * model, and xts is the set of extended function terms that are active in
    * the current context.
    */
-  void initLastCall(const std::vector<Node>& assertions,
-                    const std::vector<Node>& false_asserts,
-                    const std::vector<Node>& xts);
+  void initLastCall(const std::vector<Node>& assertions);
 
   /**
    * Perform a full check, returning either {} or a single lemma.

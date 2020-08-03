@@ -497,7 +497,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
   }
   if (options::nlCad())
   {
-    d_cadSlv.initLastCall(assertions, false_asserts, xts);
+    d_cadSlv.initLastCall(assertions);
   }
 
   // init last call with IAND
@@ -665,7 +665,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
   {
     lemmas = d_cadSlv.checkFull();
     if (lemmas.empty()) {
-      Trace("cdcac") << "CDCAC found SAT!" << std::endl;
+      Trace("nl-cad") << "nl-cad found SAT!" << std::endl;
     }
     filterLemmas(lemmas, wlems);
   }

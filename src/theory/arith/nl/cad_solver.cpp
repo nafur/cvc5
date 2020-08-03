@@ -16,11 +16,11 @@
 
 #include <poly/polyxx.h>
 
+#include "cad/theory_call_exporter.h"
 #include "inference.h"
 #include "theory/arith/nl/cad/cdcac.h"
 #include "theory/arith/nl/poly_conversion.h"
 #include "util/poly_util.h"
-#include "cad/theory_call_exporter.h"
 
 namespace CVC4 {
 namespace theory {
@@ -29,57 +29,28 @@ namespace nl {
 
 // #define EXPORT_THEORY_CALLS
 
-bool CadSolver::constructModelIfAvailable(std::vector<Node>& assertions)
-{
-  if (d_foundSatisfiability) {
-    assertions.clear();
-    for (const auto& v : d_CAC.getVariableOrdering())
-    {
-      Node variable = d_CAC.getConstraints().varMapper()(v);
-      Node value = value_to_node(d_CAC.getModel().get(v), d_ranVariable);
-      if (value.isConst())
-      {
-        d_model.addCheckModelSubstitution(variable, value);
-      }
-      else
-      {
-        d_model.addCheckModelWitness(variable, value);
-      }
-      Trace("cad-check") << "-> " << v << " = " << value << std::endl;
-    }
-    return true;
-  }
-  return false;
-}
-
 CadSolver::CadSolver(TheoryArith& containing, NlModel& model)
-    : d_ranVariable(NodeManager::currentNM()->mkSkolem("__z", NodeManager::currentNM()->realType(), "", NodeManager::SKOLEM_EXACT_NAME)), d_containing(containing), d_model(model)
+    : d_ranVariable(
+        NodeManager::currentNM()->mkSkolem("__z",
+                                           NodeManager::currentNM()->realType(),
+                                           "",
+                                           NodeManager::SKOLEM_EXACT_NAME)),
+      d_containing(containing),
+      d_model(model)
 {
 }
 
 CadSolver::~CadSolver() {}
 
-void CadSolver::initLastCall(const std::vector<Node>& assertions,
-                             const std::vector<Node>& false_asserts,
-                             const std::vector<Node>& xts)
+void CadSolver::initLastCall(const std::vector<Node>& assertions)
 {
-  if (Trace.isOn("cad-check"))
+  if (Trace.isOn("nl-cad"))
   {
-    Trace("cad-check") << "CadSolver::initLastCall" << std::endl;
-    Trace("cad-check") << "* Assertions: " << std::endl;
+    Trace("nl-cad") << "CadSolver::initLastCall" << std::endl;
+    Trace("nl-cad") << "* Assertions: " << std::endl;
     for (const Node& a : assertions)
     {
-      Trace("cad-check") << "  " << a << std::endl;
-      if (std::find(false_asserts.begin(), false_asserts.end(), a)
-          != false_asserts.end())
-      {
-        Trace("cad-check") << " (false in candidate model)" << std::endl;
-      }
-    }
-    Trace("cad-check") << "* Extended terms: " << std::endl;
-    for (const Node& t : xts)
-    {
-      Trace("cad-check") << "  " << t << std::endl;
+      Trace("nl-cad") << "  " << a << std::endl;
     }
   }
   // store or process assertions
@@ -147,13 +118,39 @@ std::vector<NlLemma> CadSolver::checkPartial()
   }
   else
   {
-    for (const auto& interval: covering) {
-      Node first_var = d_CAC.getConstraints().varMapper()(d_CAC.getVariableOrdering()[0]);
+    for (const auto& interval : covering)
+    {
+      Node first_var =
+          d_CAC.getConstraints().varMapper()(d_CAC.getVariableOrdering()[0]);
       Node lemma = excluding_interval_to_lemma(first_var, interval.d_interval);
       lems.emplace_back(lemma, Inference::CAD_EXCLUDED_INTERVAL);
     }
   }
   return lems;
+}
+
+bool CadSolver::constructModelIfAvailable(std::vector<Node>& assertions)
+{
+  if (!d_foundSatisfiability)
+  {
+    return false;
+  }
+  assertions.clear();
+  for (const auto& v : d_CAC.getVariableOrdering())
+  {
+    Node variable = d_CAC.getConstraints().varMapper()(v);
+    Node value = value_to_node(d_CAC.getModel().get(v), d_ranVariable);
+    if (value.isConst())
+    {
+      d_model.addCheckModelSubstitution(variable, value);
+    }
+    else
+    {
+      d_model.addCheckModelWitness(variable, value);
+    }
+    Trace("nl-cad") << "-> " << v << " = " << value << std::endl;
+  }
+  return true;
 }
 
 }  // namespace nl
