@@ -2,59 +2,42 @@
 /*! \file cad_solver.h
  ** \verbatim
  ** Top contributors (to current version):
- **   Andrew Reynolds
+ **   Gereon Kremer
  ** This file is part of the CVC4 project.
  ** Copyright (c) 2009-2019 by the authors listed in the file AUTHORS
  ** in the top-level source directory) and their institutional affiliations.
  ** All rights reserved.  See the file COPYING in the top-level source
  ** directory for licensing information.\endverbatim
  **
- ** \brief New non-linear solver
+ ** \brief CAD-based solver based on https://arxiv.org/pdf/2003.05633.pdf.
  **/
 
 #ifndef CVC4__THEORY__ARITH__CAD_SOLVER_H
 #define CVC4__THEORY__ARITH__CAD_SOLVER_H
 
-#include <map>
 #include <vector>
 
-#include "context/cdhashset.h"
 #include "expr/node.h"
 #include "theory/arith/nl/cad/cdcac.h"
 #include "theory/arith/nl/nl_model.h"
 #include "theory/arith/theory_arith.h"
-#include "cad/cdcac_stats.h"
-#include "util/statistics_registry.h"
 
 namespace CVC4 {
 namespace theory {
 namespace arith {
 namespace nl {
 
-/** Cylindrical algebraic decomposition (CAD) solver class
- *
+/**
+ * A solver for nonlinear arithmetic that implements the CAD-based method
+ * described in https://arxiv.org/pdf/2003.05633.pdf.
  */
 class CadSolver
 {
-  typedef context::CDHashSet<Node, NodeHashFunction> NodeSet;
-
-  cad::CDCAC mCAC;
-
-  /** Fill d_model with the model computed by mCAC. */
-  bool construct_model();
-
-  /** Indicates whether we found satisfiability in the last call to
-   * checkFullRefine. */
-  bool found_satisfiability = false;
-
-  Node ran_variable;
-
  public:
   CadSolver(TheoryArith& containing, NlModel& model);
   ~CadSolver();
 
-  /** init last call
-   *
+  /**
    * This is called at the beginning of last call effort check, where
    * assertions are the set of assertions belonging to arithmetic,
    * false_asserts is the subset of assertions that are false in the current
@@ -64,37 +47,50 @@ class CadSolver
   void initLastCall(const std::vector<Node>& assertions,
                     const std::vector<Node>& false_asserts,
                     const std::vector<Node>& xts);
-  /** check initial refine
-   *
-   * This should be a heuristic incomplete check that only introduces a
-   * small number of new terms in the lemmas it returns.
+
+  /**
+   * Perform a full check, returning either {} or a single lemma.
+   * If the result is empty, the input is satisfiable and a model is available
+   * for construct_model_if_available. Otherwise, the single lemma can be used
+   * as an infeasible subset.
    */
-  std::vector<NlLemma> checkInitialRefine();
-  /** check full refine
-   *
-   * This should be a complete check that returns at least one lemma to
-   * rule out the current model.
+  std::vector<NlLemma> checkFull();
+
+  /**
+   * Perform a partial check, returning either {} or a list of lemmas.
+   * If the result is empty, the input is satisfiable and a model is available
+   * for construct_model_if_available. Otherwise, the lemmas exclude some part
+   * of the search space.
    */
-  std::vector<NlLemma> checkFullRefine();
-  /** preprocess assertions check model
-   *
-   * This modifies the given assertions in preparation for running a call
-   * to NlModel::checkModel.
-   *
-   * This method returns false if NlModel::checkModel should not be run.
+  std::vector<NlLemma> checkPartial();
+
+  /**
+   * If a model is available (indicated by the last call to check_full() or
+   * check_partial()) this method puts a satisfying assignment in d_model,
+   * clears the list of assertions, and returns true.
+   * Otherwise, this method returns false.
    */
-  void preprocessAssertionsCheckModel(std::vector<Node>& assertions);
+  bool constructModelIfAvailable(std::vector<Node>& assertions);
 
  private:
+  /**
+   * The variable used to encode real algebraic numbers to nodes.
+   */
+  Node d_ranVariable;
+  /**
+   * The object implementing the actual decision procedure.
+   */
+  cad::CDCAC d_CAC;
+  /**
+   * Indicates whether we found satisfiability in the last call to
+   * checkFullRefine.
+   */
+  bool d_foundSatisfiability = false;
 
-  std::vector<NlLemma> check_full();
-  std::vector<NlLemma> check_partial();
-
-  // The theory of arithmetic containing this extension.
+  /** The theory of arithmetic containing this extension.*/
   TheoryArith& d_containing;
   /** Reference to the non-linear model object */
   NlModel& d_model;
-
 }; /* class CadSolver */
 
 }  // namespace nl

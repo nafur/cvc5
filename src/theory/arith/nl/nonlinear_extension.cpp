@@ -410,7 +410,7 @@ bool NonlinearExtension::checkModel(const std::vector<Node>& assertions,
   }
   if (options::nlCad())
   {
-    d_cadSlv.preprocessAssertionsCheckModel(passertions);
+    d_cadSlv.constructModelIfAvailable(passertions);
   }
 
   Trace("nl-ext-cm") << "-----" << std::endl;
@@ -538,19 +538,6 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
     }
   }
 
-  //-----------------------------------initial lemmas based on CAD
-  if (options::nlCad())
-  {
-    Trace("nl-ext") << "Get CAD lemmas..." << std::endl;
-    lemmas = d_cadSlv.checkInitialRefine();
-    filterLemmas(lemmas, lems);
-    if (!lems.empty())
-    {
-      Trace("nl-ext") << "  ...finished with " << lems.size() << " new lemmas."
-                      << std::endl;
-      return lems.size();
-    }
-  }
   //-----------------------------------initial lemmas for iand
   lemmas = d_iandSlv.checkInitialRefine();
   filterLemmas(lemmas, lems);
@@ -676,7 +663,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
   }
   if (options::nlCad())
   {
-    lemmas = d_cadSlv.checkFullRefine();
+    lemmas = d_cadSlv.checkFull();
     if (lemmas.empty()) {
       Trace("cdcac") << "CDCAC found SAT!" << std::endl;
     }
