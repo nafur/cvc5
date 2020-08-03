@@ -165,6 +165,13 @@ enum class PropagationResult {
 
 PropagationResult intersect_interval_with(poly::Interval& cur, const poly::Interval& res) {
     Trace("nl-icp") << "Updating " << cur << " with " << res << std::endl;
+
+    constexpr std::size_t size_threshold = 100;
+    if (bitsize(get_lower(res)) > size_threshold || bitsize(get_upper(res)) > size_threshold) {
+        Trace("nl-icp") << "Reached bitsize threshold" << std::endl;
+        return PropagationResult::NOT_CHANGED;
+    }
+
     // bounds for res have 5 positions:
     // 1 < 2 (lower(cur)) < 3 < 4 (upper(cur)) < 5
 
