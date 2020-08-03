@@ -14,7 +14,9 @@
 
 #include "theory/arith/nl/cad_solver.h"
 
+#ifdef CVC4_POLY_IMP
 #include <poly/polyxx.h>
+#endif
 
 #include "cad/theory_call_exporter.h"
 #include "inference.h"
@@ -44,6 +46,7 @@ CadSolver::~CadSolver() {}
 
 void CadSolver::initLastCall(const std::vector<Node>& assertions)
 {
+#ifdef CVC4_POLY_IMP
   if (Trace.isOn("nl-cad"))
   {
     Trace("nl-cad") << "CadSolver::initLastCall" << std::endl;
@@ -67,10 +70,14 @@ void CadSolver::initLastCall(const std::vector<Node>& assertions)
 #endif
   d_CAC.computeVariableOrdering();
   d_CAC.retrieve_initial_assignment(d_model, d_ranVariable);
+#else
+  Warning() << "Tried to use CadSolver but libpoly is not available. Compile with --poly." << std::endl;
+#endif
 }
 
 std::vector<NlLemma> CadSolver::checkFull()
 {
+#ifdef CVC4_POLY_IMP
 #ifdef EXPORT_THEORY_CALLS
   std::cout << "Abort solving as we only export theory calls." << std::endl;
   return {};
@@ -81,13 +88,13 @@ std::vector<NlLemma> CadSolver::checkFull()
   if (covering.empty())
   {
     d_foundSatisfiability = true;
-    Notice() << "SAT: " << d_CAC.getModel() << std::endl;
+    Trace("nl-cad") << "SAT: " << d_CAC.getModel() << std::endl;
   }
   else
   {
     d_foundSatisfiability = false;
     auto mis = collectConstraints(covering);
-    Notice() << "Collected MIS: " << mis << std::endl;
+    Trace("nl-cad") << "Collected MIS: " << mis << std::endl;
     auto* nm = NodeManager::currentNM();
     for (auto& n : mis)
     {
@@ -102,19 +109,23 @@ std::vector<NlLemma> CadSolver::checkFull()
     {
       lems.emplace_back(nm->mkNode(Kind::OR, mis), Inference::CAD_CONFLICT);
     }
-    Notice() << "UNSAT with MIS: " << lems.back().d_lemma << std::endl;
+    Trace("nl-cad") << "UNSAT with MIS: " << lems.back().d_lemma << std::endl;
   }
   return lems;
+#else
+  Warning() << "Tried to use CadSolver but libpoly is not available. Compile with --poly." << std::endl;
+#endif
 }
 
 std::vector<NlLemma> CadSolver::checkPartial()
 {
+#ifdef CVC4_POLY_IMP
   std::vector<NlLemma> lems;
   auto covering = d_CAC.getUnsatCover(0, true);
   if (covering.empty())
   {
     d_foundSatisfiability = true;
-    Notice() << "SAT: " << d_CAC.getModel() << std::endl;
+    Trace("nl-cad") << "SAT: " << d_CAC.getModel() << std::endl;
   }
   else
   {
@@ -123,14 +134,19 @@ std::vector<NlLemma> CadSolver::checkPartial()
       Node first_var =
           d_CAC.getConstraints().varMapper()(d_CAC.getVariableOrdering()[0]);
       Node lemma = excluding_interval_to_lemma(first_var, interval.d_interval);
+      Trace("nl-cad") << "Excluding " << first_var << " -> " << interval.d_interval << " using " << lemma << std::endl;
       lems.emplace_back(lemma, Inference::CAD_EXCLUDED_INTERVAL);
     }
   }
   return lems;
+#else
+  Warning() << "Tried to use CadSolver but libpoly is not available. Compile with --poly." << std::endl;
+#endif
 }
 
 bool CadSolver::constructModelIfAvailable(std::vector<Node>& assertions)
 {
+#ifdef CVC4_POLY_IMP
   if (!d_foundSatisfiability)
   {
     return false;
@@ -151,6 +167,9 @@ bool CadSolver::constructModelIfAvailable(std::vector<Node>& assertions)
     Trace("nl-cad") << "-> " << v << " = " << value << std::endl;
   }
   return true;
+#else
+  Warning() << "Tried to use CadSolver but libpoly is not available. Compile with --poly." << std::endl;
+#endif
 }
 
 }  // namespace nl
