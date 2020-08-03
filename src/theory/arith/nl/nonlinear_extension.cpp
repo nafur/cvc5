@@ -430,17 +430,21 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
 
   if (options::nlICP())
   {
+    std::vector<Node> sorted_assertions(assertions);
+    std::sort(sorted_assertions.begin(), sorted_assertions.end());
     Trace("nl-ext") << "Doing ICP" << std::endl;
     icp::Propagator prop;
-    for (const auto& n : assertions)
+    for (const auto& n : sorted_assertions)
     {
       Node tmp = Rewriter::rewrite(n);
+      Trace("nl-ext") << "Adding " << tmp << std::endl;
       if (tmp.getKind() != Kind::CONST_BOOLEAN)
       {
         prop.add(tmp);
       }
     }
     auto ia = prop.getInitial();
+    Trace("nl-ext") << "Initial " << ia << std::endl;
     bool did_progress = false;
     bool progress = false;
     do
