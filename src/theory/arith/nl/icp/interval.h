@@ -157,6 +157,126 @@ inline std::ostream& operator<<(std::ostream& os, const VariableBounds& vb) {
     return os;
 }
 
+enum class PropagationResult {
+    NOT_CHANGED,
+    CONTRACTED,
+    CONFLICT
+};
+
+PropagationResult intersect_interval_with(poly::Interval& cur, const poly::Interval& res) {
+    // { is either ( or [, } is either ) or ]
+    // bounds for res have 5 positions:
+    // 1 < 2 (lower(cur)) < 3 < 4 (upper(cur)) < 5
+
+    if (get_upper(res) < get_lower(cur)) {
+        // upper(res) at 1
+        return PropagationResult::CONFLICT;
+    }
+    if (get_upper(res) == get_lower(cur)) {
+        // upper(res) at 2
+        if (get_upper_open(res) || get_lower_open(cur)) {
+            return PropagationResult::CONFLICT;
+        }
+        if (!is_point(cur)) {
+            cur = poly::Interval(get_upper(res));
+            return PropagationResult::CONTRACTED;
+        }
+        return PropagationResult::NOT_CHANGED;
+    }
+    Assert(get_upper(res) > get_lower(cur)) << "Comparison operator does weird stuff.";
+    if (get_upper(res) < get_upper(cur)) {
+        // upper(res) at 3
+        if (get_lower(res) < get_lower(cur)) {
+            // lower(res) at 1
+            cur = poly::Interval(
+                get_lower(cur), get_lower_open(cur), get_upper(res), get_upper_open(res)
+            );
+            return PropagationResult::CONTRACTED;
+        }
+        if (get_lower(res) == get_lower(cur)) {
+            // lower(res) at 2
+            cur = poly::Interval(
+                get_lower(cur), get_lower_open(cur) || get_lower_open(res), get_upper(res), get_upper_open(res)
+            );
+            return PropagationResult::CONTRACTED;
+        }
+        Assert(get_lower(res) > get_lower(cur)) << "Comparison operator does weird stuff.";
+        // lower(res) at 3
+        cur = res;
+        return PropagationResult::CONTRACTED;
+    }
+    if (get_upper(res) == get_upper(cur)) {
+        // upper(res) at 4
+        if (get_lower(res) < get_lower(cur)) {
+            // lower(res) at 1
+            if (get_upper_open(res) && !get_upper_open(cur)) {
+                cur.set_upper(get_upper(cur), true);
+                return PropagationResult::CONTRACTED;
+            }
+            return PropagationResult::NOT_CHANGED;
+        }
+        if (get_lower(res) == get_lower(cur)) {
+            // lower(res) at 2
+            bool changed = false;
+            if (get_lower_open(res) && !get_lower_open(cur)) {
+                changed = true;
+                cur.set_lower(get_lower(cur), true);
+            }
+            if (get_upper_open(res) && !get_upper_open(cur)) {
+                changed = true;
+                cur.set_upper(get_upper(cur), true);
+            }
+            if (changed) {
+                return PropagationResult::CONTRACTED;
+            }
+            return PropagationResult::NOT_CHANGED;
+        }
+        Assert(get_lower(res) > get_lower(cur)) << "Comparison operator does weird stuff.";
+        // lower(res) at 3
+        cur = poly::Interval(
+            get_lower(res), get_lower_open(res), get_upper(res), get_upper_open(cur) || get_upper_open(res)
+        );
+        return PropagationResult::CONTRACTED;
+    }
+
+    Assert(get_upper(res) > get_upper(cur)) << "Comparison operator does weird stuff.";
+    // upper(res) at 5
+    
+    if (get_lower(res) < get_lower(cur)) {
+        // lower(res) at 1
+        return PropagationResult::NOT_CHANGED;
+    }
+    if (get_lower(res) == get_lower(cur)) {
+        // lower(res) at 2
+        if (get_lower_open(res) && !get_lower_open(cur)) {
+            cur.set_lower(get_lower(cur), true);
+            return PropagationResult::CONTRACTED;
+        }
+        return PropagationResult::NOT_CHANGED;
+    }
+    Assert(get_lower(res) > get_lower(cur)) << "Comparison operator does weird stuff.";
+    if (get_lower(res) < get_upper(cur)) {
+        // lower(res) at 3
+        cur.set_lower(get_lower(res), get_lower_open(res));
+        return PropagationResult::CONTRACTED;
+    }
+    if (get_lower(res) == get_upper(cur)) {
+        // lower(res) at 4
+        if (get_lower_open(res) || get_upper_open(cur)) {
+            return PropagationResult::CONFLICT;
+        }
+        if (!is_point(cur)) {
+            cur = poly::Interval(get_lower(res));
+            return PropagationResult::CONTRACTED;
+        }
+        return PropagationResult::NOT_CHANGED;
+    }
+
+    Assert(get_lower(res) > get_upper(cur));
+    // lower(res) at 5
+    return PropagationResult::CONFLICT;
+}
+
 struct Candidate {
     poly::Variable lhs;
     poly::SignCondition rel;
@@ -164,7 +284,7 @@ struct Candidate {
     poly::Rational rhsmult;
     Node origin;
 
-    bool propagate(poly::IntervalAssignment& ia) const {
+    PropagationResult propagate(poly::IntervalAssignment& ia) const {
         auto res = poly::evaluate(rhs, ia) * poly::Interval(poly::Value(rhsmult));
         Trace("nl-icp") << "Prop: " << *this << " -> " << res << std::endl;
         switch (rel) {
@@ -176,30 +296,85 @@ struct Candidate {
             case poly::SignCondition::GE: res.set_upper(poly::Value::plus_infty(), true); break;
         }
         auto cur = ia.get(lhs);
-        bool changed = false;
-        if (get_lower(res) > get_lower(cur)) {
-            if (bitsize(get_lower(cur)) < 100) {
-                cur.set_lower(get_lower(res), false);
-                changed = true;
-            }
-        }
-        if (get_upper(res) < get_upper(cur)) {
-            if (bitsize(get_upper(cur)) < 100) {
-                cur.set_upper(get_upper(res), false);
-                changed = true;
-            }
-        }
-        if (changed) {
-            Trace("nl-icp") << *this << " propagated " << lhs << " -> " << cur << std::endl;
+        Trace("nl-icp") << "-> " << res << " used to update " << cur << std::endl;
+
+        PropagationResult result = intersect_interval_with(cur, res);
+        if (result == PropagationResult::CONTRACTED) {
+            Trace("nl-icp") << *this << " contracted " << lhs << " -> " << cur << std::endl;
             ia.set(lhs, cur);
         }
-        return changed;
+        return result;
+
+
+        bool changed = false;
+       
+        if (get_lower(res) > get_upper(cur)) {
+            
+            cur = poly::Interval();
+            changed = true;
+        } else if (get_lower(res) ==  get_upper(cur)) {
+            if (get_lower_open(res) || get_upper_open(cur)) {
+                Trace("nl-icp") << "Found direct conflict " << res << " > " << cur << std::endl;
+                cur = poly::Interval();
+                changed = true;
+            } else {
+                cur = poly::Interval(get_lower(res));
+                Trace("nl-icp") << "Updated to point interval " << cur << std::endl;
+                changed = true;
+            }
+        } else if (get_upper(res) < get_lower(cur)) {
+            Trace("nl-icp") << "Found direct conflict " << res << " < " << cur << std::endl;
+            cur = poly::Interval();
+            changed = true;
+        } else if (get_upper(res) ==  get_lower(cur)) {
+            if (get_upper_open(res) || get_lower_open(cur)) {
+                Trace("nl-icp") << "Found direct conflict " << res << " > " << cur << std::endl;
+                cur = poly::Interval();
+                changed = true;
+            } else {
+                cur = poly::Interval(get_upper(res));
+                Trace("nl-icp") << "Updated to point interval " << cur << std::endl;
+                changed = true;
+            }
+        } else if (compare_lower(res, cur) > 0) {
+            if (bitsize(get_lower(cur)) < 100) {
+                cur.set_lower(get_lower(res), get_lower_open(res));
+                Trace("nl-icp") << "Updating lower to " << get_lower(res) << " / " << get_lower_open(res) << " -> " << cur << std::endl;
+                changed = true;
+            }
+        } else if (compare_upper(res, cur) < 0) {
+            if (bitsize(get_upper(cur)) < 100) {
+                cur.set_upper(get_upper(res), get_upper_open(res));
+                Trace("nl-icp") << "Updating upper to " << get_upper(res) << " / " << get_upper_open(res) << " -> " << cur << std::endl;
+                changed = true;
+            }
+        }
     }
 };
 inline std::ostream& operator<<(std::ostream& os, const Candidate& c) {
     os << c.lhs << " " << c.rel << " ";
     if (c.rhsmult != poly::Rational(1)) os << c.rhsmult << " * ";
     return os << c.rhs;
+}
+
+struct IAWrapper {
+    const poly::IntervalAssignment& ia;
+    const VariableMapper& vm;
+};
+inline std::ostream& operator<<(std::ostream& os, const IAWrapper& iaw) {
+    os << "{ ";
+    bool first = true;
+    for (const auto& v: iaw.vm.mVarpolyCVC) {
+        if (iaw.ia.has(v.first)) {
+            if (first) {
+                first = false;
+            } else {
+                os << ", ";
+            }
+            os << v.first << " -> " << iaw.ia.get(v.first);
+        }
+    }
+    return os << " }";
 }
 
 class Propagator {
@@ -291,30 +466,24 @@ public:
         return mBounds.get();
     }
 
-    bool doIt(poly::IntervalAssignment& ia) {
-        Trace("nl-icp") << "Starting propagation with " << ia << std::endl;
-        bool propagated = false;
+    PropagationResult doIt(poly::IntervalAssignment& ia) {
+        Trace("nl-icp") << "Starting propagation with " << IAWrapper{ia, mMapper} << std::endl;
+        PropagationResult res = PropagationResult::NOT_CHANGED;
         for (const auto& c: mCandidates) {
-            if (c.propagate(ia)) {
-                propagated = true;
-                mUsedCandidates.insert(c.origin);
+            PropagationResult cres = c.propagate(ia);
+            switch (cres) {
+                case PropagationResult::NOT_CHANGED:
+                    break;
+                case PropagationResult::CONTRACTED:
+                    mUsedCandidates.insert(c.origin);
+                    res = PropagationResult::CONTRACTED;
+                    break;
+                case PropagationResult::CONFLICT:
+                    mUsedCandidates.insert(c.origin);
+                    return PropagationResult::CONFLICT;
             }
         }
-        return propagated;
-    }
-
-    bool isConflicting(const poly::IntervalAssignment& ia) const {
-        for (const auto& vars: mMapper.mVarCVCpoly) {
-            if (!ia.has(vars.second)) continue;
-            poly::Interval i = ia.get(vars.second);
-            if (get_lower(i) > get_upper(i)) return true;
-            if (get_lower_open(i) || get_upper_open(i)) {
-                if (get_lower(i) == get_upper(i)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return res;
     }
 
     Node getConflict() const {
