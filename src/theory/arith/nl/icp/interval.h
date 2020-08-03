@@ -164,20 +164,23 @@ enum class PropagationResult {
 };
 
 PropagationResult intersect_interval_with(poly::Interval& cur, const poly::Interval& res) {
-    // { is either ( or [, } is either ) or ]
+    Trace("nl-icp") << "Updating " << cur << " with " << res << std::endl;
     // bounds for res have 5 positions:
     // 1 < 2 (lower(cur)) < 3 < 4 (upper(cur)) < 5
 
     if (get_upper(res) < get_lower(cur)) {
         // upper(res) at 1
+        Trace("nl-icp") << "res < cur -> conflict" << std::endl;
         return PropagationResult::CONFLICT;
     }
     if (get_upper(res) == get_lower(cur)) {
         // upper(res) at 2
         if (get_upper_open(res) || get_lower_open(cur)) {
+            Trace("nl-icp") << "meet at lower, but one is open -> conflict" << std::endl;
             return PropagationResult::CONFLICT;
         }
         if (!is_point(cur)) {
+            Trace("nl-icp") << "contracts to point interval at lower" << std::endl;
             cur = poly::Interval(get_upper(res));
             return PropagationResult::CONTRACTED;
         }
@@ -188,13 +191,13 @@ PropagationResult intersect_interval_with(poly::Interval& cur, const poly::Inter
         // upper(res) at 3
         if (get_lower(res) < get_lower(cur)) {
             // lower(res) at 1
-            cur = poly::Interval(
-                get_lower(cur), get_lower_open(cur), get_upper(res), get_upper_open(res)
-            );
+            Trace("nl-icp") << "lower(cur) .. upper(res)" << std::endl;
+            cur.set_upper(get_upper(res), get_upper_open(res));
             return PropagationResult::CONTRACTED;
         }
         if (get_lower(res) == get_lower(cur)) {
             // lower(res) at 2
+            Trace("nl-icp") << "meet at lower, lower(cur) .. upper(res)" << std::endl;
             cur = poly::Interval(
                 get_lower(cur), get_lower_open(cur) || get_lower_open(res), get_upper(res), get_upper_open(res)
             );
@@ -202,6 +205,7 @@ PropagationResult intersect_interval_with(poly::Interval& cur, const poly::Inter
         }
         Assert(get_lower(res) > get_lower(cur)) << "Comparison operator does weird stuff.";
         // lower(res) at 3
+        Trace("nl-icp") << "cur covers res" << std::endl;
         cur = res;
         return PropagationResult::CONTRACTED;
     }
@@ -209,6 +213,7 @@ PropagationResult intersect_interval_with(poly::Interval& cur, const poly::Inter
         // upper(res) at 4
         if (get_lower(res) < get_lower(cur)) {
             // lower(res) at 1
+            Trace("nl-icp") << "cur covers res but meet at upper" << std::endl;
             if (get_upper_open(res) && !get_upper_open(cur)) {
                 cur.set_upper(get_upper(cur), true);
                 return PropagationResult::CONTRACTED;
@@ -217,6 +222,7 @@ PropagationResult intersect_interval_with(poly::Interval& cur, const poly::Inter
         }
         if (get_lower(res) == get_lower(cur)) {
             // lower(res) at 2
+            Trace("nl-icp") << "same bounds but check openness" << std::endl;
             bool changed = false;
             if (get_lower_open(res) && !get_lower_open(cur)) {
                 changed = true;
@@ -233,6 +239,7 @@ PropagationResult intersect_interval_with(poly::Interval& cur, const poly::Inter
         }
         Assert(get_lower(res) > get_lower(cur)) << "Comparison operator does weird stuff.";
         // lower(res) at 3
+        Trace("nl-icp") << "res covers cur but meet at upper" << std::endl;
         cur = poly::Interval(
             get_lower(res), get_lower_open(res), get_upper(res), get_upper_open(cur) || get_upper_open(res)
         );
@@ -244,10 +251,12 @@ PropagationResult intersect_interval_with(poly::Interval& cur, const poly::Inter
     
     if (get_lower(res) < get_lower(cur)) {
         // lower(res) at 1
+        Trace("nl-icp") << "res covers cur" << std::endl;
         return PropagationResult::NOT_CHANGED;
     }
     if (get_lower(res) == get_lower(cur)) {
         // lower(res) at 2
+        Trace("nl-icp") << "res covers cur but meet at lower" << std::endl;
         if (get_lower_open(res) && !get_lower_open(cur)) {
             cur.set_lower(get_lower(cur), true);
             return PropagationResult::CONTRACTED;
@@ -257,15 +266,18 @@ PropagationResult intersect_interval_with(poly::Interval& cur, const poly::Inter
     Assert(get_lower(res) > get_lower(cur)) << "Comparison operator does weird stuff.";
     if (get_lower(res) < get_upper(cur)) {
         // lower(res) at 3
+        Trace("nl-icp") << "lower(res) .. upper(cur)" << std::endl;
         cur.set_lower(get_lower(res), get_lower_open(res));
         return PropagationResult::CONTRACTED;
     }
     if (get_lower(res) == get_upper(cur)) {
         // lower(res) at 4
         if (get_lower_open(res) || get_upper_open(cur)) {
+            Trace("nl-icp") << "meet at upper, but one is open -> conflict" << std::endl;
             return PropagationResult::CONFLICT;
         }
         if (!is_point(cur)) {
+            Trace("nl-icp") << "contracts to point interval at upper" << std::endl;
             cur = poly::Interval(get_lower(res));
             return PropagationResult::CONTRACTED;
         }
@@ -274,6 +286,7 @@ PropagationResult intersect_interval_with(poly::Interval& cur, const poly::Inter
 
     Assert(get_lower(res) > get_upper(cur));
     // lower(res) at 5
+    Trace("nl-icp") << "res > cur -> conflict" << std::endl;
     return PropagationResult::CONFLICT;
 }
 
@@ -304,51 +317,6 @@ struct Candidate {
             ia.set(lhs, cur);
         }
         return result;
-
-
-        bool changed = false;
-       
-        if (get_lower(res) > get_upper(cur)) {
-            
-            cur = poly::Interval();
-            changed = true;
-        } else if (get_lower(res) ==  get_upper(cur)) {
-            if (get_lower_open(res) || get_upper_open(cur)) {
-                Trace("nl-icp") << "Found direct conflict " << res << " > " << cur << std::endl;
-                cur = poly::Interval();
-                changed = true;
-            } else {
-                cur = poly::Interval(get_lower(res));
-                Trace("nl-icp") << "Updated to point interval " << cur << std::endl;
-                changed = true;
-            }
-        } else if (get_upper(res) < get_lower(cur)) {
-            Trace("nl-icp") << "Found direct conflict " << res << " < " << cur << std::endl;
-            cur = poly::Interval();
-            changed = true;
-        } else if (get_upper(res) ==  get_lower(cur)) {
-            if (get_upper_open(res) || get_lower_open(cur)) {
-                Trace("nl-icp") << "Found direct conflict " << res << " > " << cur << std::endl;
-                cur = poly::Interval();
-                changed = true;
-            } else {
-                cur = poly::Interval(get_upper(res));
-                Trace("nl-icp") << "Updated to point interval " << cur << std::endl;
-                changed = true;
-            }
-        } else if (compare_lower(res, cur) > 0) {
-            if (bitsize(get_lower(cur)) < 100) {
-                cur.set_lower(get_lower(res), get_lower_open(res));
-                Trace("nl-icp") << "Updating lower to " << get_lower(res) << " / " << get_lower_open(res) << " -> " << cur << std::endl;
-                changed = true;
-            }
-        } else if (compare_upper(res, cur) < 0) {
-            if (bitsize(get_upper(cur)) < 100) {
-                cur.set_upper(get_upper(res), get_upper_open(res));
-                Trace("nl-icp") << "Updating upper to " << get_upper(res) << " / " << get_upper_open(res) << " -> " << cur << std::endl;
-                changed = true;
-            }
-        }
     }
 };
 inline std::ostream& operator<<(std::ostream& os, const Candidate& c) {
