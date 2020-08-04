@@ -537,7 +537,6 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
       return lems.size();
     }
   }
-
   //-----------------------------------initial lemmas for iand
   lemmas = d_iandSlv.checkInitialRefine();
   filterLemmas(lemmas, lems);
@@ -664,7 +663,8 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
   if (options::nlCad())
   {
     lemmas = d_cadSlv.checkFull();
-    if (lemmas.empty()) {
+    if (lemmas.empty())
+    {
       Trace("nl-cad") << "nl-cad found SAT!" << std::endl;
     }
     filterLemmas(lemmas, wlems);

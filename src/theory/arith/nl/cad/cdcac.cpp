@@ -48,7 +48,7 @@ void removeDuplicates(std::vector<T>& v)
 }
 }  // namespace
 
-CDCAC::CDCAC(): d_variableOrdering(), d_debugger(d_variableOrdering) {}
+CDCAC::CDCAC() : d_variableOrdering(), d_debugger(d_variableOrdering) {}
 
 CDCAC::CDCAC(const std::vector<poly::Variable>& ordering)
     : d_variableOrdering(ordering), d_debugger(d_variableOrdering)
@@ -78,8 +78,7 @@ void CDCAC::computeVariableOrdering()
   }
 }
 
-void CDCAC::retrieve_initial_assignment(NlModel& model,
-                                        const Node& ran_variable)
+void CDCAC::retrieveInitialAssignment(NlModel& model, const Node& ran_variable)
 {
   d_initialAssignment.clear();
   Trace("cdcac") << "Retrieving initial assignment:" << std::endl;
@@ -135,8 +134,7 @@ std::vector<CACInterval> CDCAC::getUnsatIntervals(
   return res;
 }
 
-bool CDCAC::sample_outside_with_initial(
-    const std::vector<CACInterval>& infeasible,
+bool CDCAC::sampleOutsideWithInitial(const std::vector<CACInterval>& infeasible,
     poly::Value& sample,
     std::size_t cur_variable)
 {
@@ -344,7 +342,8 @@ CACInterval CDCAC::intervalFromCharacterization(
   }
 }
 
-std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t cur_variable, bool return_first_interval)
+std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t cur_variable,
+                                              bool return_first_interval)
 {
   if (cur_variable == 0)
   {
@@ -371,16 +370,16 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t cur_variable, bool ret
   }
   poly::Value sample;
 
-  while (sample_outside_with_initial(intervals, sample, cur_variable))
+  while (sampleOutsideWithInitial(intervals, sample, cur_variable))
   {
-    if (!check_integrality(cur_variable, sample))
+    if (!checkIntegrality(cur_variable, sample))
     {
       // the variable is integral, but the sample is not.
       Trace("cdcac") << "Used " << sample << " for integer variable "
                      << d_variableOrdering[cur_variable] << std::endl;
-      auto new_interval = build_integrality_interval(cur_variable, sample);
-      Trace("cdcac") << "Adding integrality interval " << new_interval.d_interval
-                     << std::endl;
+      auto new_interval = buildIntegralityInterval(cur_variable, sample);
+      Trace("cdcac") << "Adding integrality interval "
+                     << new_interval.d_interval << std::endl;
       intervals.emplace_back(new_interval);
       cleanIntervals(intervals);
       continue;
@@ -445,8 +444,7 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t cur_variable, bool ret
   return intervals;
 }
 
-bool CDCAC::check_integrality(std::size_t cur_variable,
-                              const poly::Value& value)
+bool CDCAC::checkIntegrality(std::size_t cur_variable, const poly::Value& value)
 {
   Node var = d_constraints.varMapper()(d_variableOrdering[cur_variable]);
   if (var.getType() != NodeManager::currentNM()->integerType())
@@ -457,8 +455,8 @@ bool CDCAC::check_integrality(std::size_t cur_variable,
   return poly::represents_integer(value);
 }
 
-CACInterval CDCAC::build_integrality_interval(std::size_t cur_variable,
-                                              const poly::Value& value)
+CACInterval CDCAC::buildIntegralityInterval(std::size_t cur_variable,
+                                            const poly::Value& value)
 {
   poly::Variable var = d_variableOrdering[cur_variable];
   poly::Integer below = poly::floor(value);

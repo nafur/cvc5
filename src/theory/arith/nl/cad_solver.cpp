@@ -2,7 +2,7 @@
 /*! \file cad_solver.cpp
  ** \verbatim
  ** Top contributors (to current version):
- **   Andrew Reynolds
+ **   Gereon Kremer
  ** This file is part of the CVC4 project.
  ** Copyright (c) 2009-2019 by the authors listed in the file AUTHORS
  ** in the top-level source directory) and their institutional affiliations.
@@ -32,14 +32,13 @@ namespace nl {
 // #define EXPORT_THEORY_CALLS
 
 CadSolver::CadSolver(TheoryArith& containing, NlModel& model)
-    : d_ranVariable(
+    : d_foundSatisfiability(false), d_containing(containing), d_model(model)
+{
+  d_ranVariable =
         NodeManager::currentNM()->mkSkolem("__z",
                                            NodeManager::currentNM()->realType(),
                                            "",
-                                           NodeManager::SKOLEM_EXACT_NAME)),
-      d_containing(containing),
-      d_model(model)
-{
+                                         NodeManager::SKOLEM_EXACT_NAME);
 }
 
 CadSolver::~CadSolver() {}
@@ -69,9 +68,11 @@ void CadSolver::initLastCall(const std::vector<Node>& assertions)
   cad::export_theory_call(theory_calls, assertions, stats);
 #endif
   d_CAC.computeVariableOrdering();
-  d_CAC.retrieve_initial_assignment(d_model, d_ranVariable);
+  d_CAC.retrieveInitialAssignment(d_model, d_ranVariable);
 #else
-  Warning() << "Tried to use CadSolver but libpoly is not available. Compile with --poly." << std::endl;
+  Warning() << "Tried to use CadSolver but libpoly is not available. Compile "
+               "with --poly."
+            << std::endl;
 #endif
 }
 
@@ -140,7 +141,9 @@ std::vector<NlLemma> CadSolver::checkPartial()
   }
   return lems;
 #else
-  Warning() << "Tried to use CadSolver but libpoly is not available. Compile with --poly." << std::endl;
+  Warning() << "Tried to use CadSolver but libpoly is not available. Compile "
+               "with --poly."
+            << std::endl;
 #endif
 }
 
@@ -168,7 +171,9 @@ bool CadSolver::constructModelIfAvailable(std::vector<Node>& assertions)
   }
   return true;
 #else
-  Warning() << "Tried to use CadSolver but libpoly is not available. Compile with --poly." << std::endl;
+  Warning() << "Tried to use CadSolver but libpoly is not available. Compile "
+               "with --poly."
+            << std::endl;
 #endif
 }
 

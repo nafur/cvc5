@@ -57,7 +57,11 @@ class CDCAC
   /** Collect variables from the constraints and compute a variable ordering. */
   void computeVariableOrdering();
 
-  void retrieve_initial_assignment(NlModel& model, const Node& ran_variable);
+  /**
+   * Extract an initial assignment from the given model.
+   * This initial assignment is used to guide sampling if possible.
+   */
+  void retrieveInitialAssignment(NlModel& model, const Node& ran_variable);
 
   /**
    * Returns the constraints as a non-const reference. Can be used to add new
@@ -83,10 +87,11 @@ class CDCAC
    */
   std::vector<CACInterval> getUnsatIntervals(std::size_t cur_variable) const;
 
-  /** Sample outside of the set of intervals.
+  /**
+   * Sample outside of the set of intervals.
    * Uses a given initial value from mInitialAssignment if possible.
    */
-  bool sample_outside_with_initial(const std::vector<CACInterval>& infeasible,
+  bool sampleOutsideWithInitial(const std::vector<CACInterval>& infeasible,
                                    poly::Value& sample,
                                    std::size_t cur_variable);
 
@@ -123,21 +128,22 @@ class CDCAC
    * UNSAT and an infeasible subset can be extracted from the returned covering.
    * Implements Algorithm 2.
    */
-  std::vector<CACInterval> getUnsatCover(std::size_t cur_variable = 0, bool return_first_interval = false);
+  std::vector<CACInterval> getUnsatCover(std::size_t cur_variable = 0,
+                                         bool return_first_interval = false);
 
  private:
-   /**
+  /**
    * Check whether the current sample satisfies the integrality condition of the
    * current variable. Returns true if the variable is not integral or the
    * sample is integral.
    */
-  bool check_integrality(std::size_t cur_variable, const poly::Value& value);
+  bool checkIntegrality(std::size_t cur_variable, const poly::Value& value);
   /**
    * Constructs an interval that excludes the non-integral region around the
    * current sample. Assumes !check_integrality(cur_variable, value).
    */
-  CACInterval build_integrality_interval(std::size_t cur_variable,
-                                         const poly::Value& value);
+  CACInterval buildIntegralityInterval(std::size_t cur_variable,
+                                       const poly::Value& value);
 
   /**
    * The current assignment. When the method terminates with SAT, it contains a
