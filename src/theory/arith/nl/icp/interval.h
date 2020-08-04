@@ -264,7 +264,10 @@ PropagationResult intersect_interval_with(poly::Interval& cur, const poly::Inter
     if (get_lower(res) == get_lower(cur)) {
         // lower(res) at 2
         Trace("nl-icp") << "res covers cur but meet at lower" << std::endl;
-        if (get_lower_open(res) && !get_lower_open(cur)) {
+        if (get_lower_open(res) && is_point(cur)) {
+            return PropagationResult::CONFLICT;
+        }
+        else if (get_lower_open(res) && !get_lower_open(cur)) {
             cur.set_lower(get_lower(cur), true);
             return PropagationResult::CONTRACTED;
         }
