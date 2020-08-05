@@ -455,6 +455,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
           progress = false;
           break;
         case icp::PropagationResult::CONTRACTED:
+        case icp::PropagationResult::CONTRACTED_WITHOUT_CURRENT:
           did_progress = true;
           progress = true;
           break;

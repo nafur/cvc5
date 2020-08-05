@@ -166,6 +166,7 @@ inline std::ostream& operator<<(std::ostream& os, const VariableBounds& vb) {
 enum class PropagationResult {
     NOT_CHANGED,
     CONTRACTED,
+    CONTRACTED_WITHOUT_CURRENT,
     CONFLICT
 };
 
@@ -379,8 +380,14 @@ class ContractionOriginManager {
         }
     }
 public:
-    void add(const Node& targetVariable,const Node& candidate, const std::vector<Node>& originVariables) {
+    void add(const Node& targetVariable,const Node& candidate, const std::vector<Node>& originVariables, bool addTarget = true) {
         std::vector<ContractionOrigin*> origins;
+        if (addTarget) {
+            auto it = d_currentOrigins.find(targetVariable);
+            if (it != d_currentOrigins.end()) {
+                origins.emplace_back(it->second);
+            }
+        }
         for (const auto& v: originVariables) {
             auto it = d_currentOrigins.find(v);
             if (it != d_currentOrigins.end()) {
@@ -543,6 +550,10 @@ public:
                     break;
                 case PropagationResult::CONTRACTED:
                     mOrigins.add(mMapper(c.lhs), c.origin, c.rhsVariables);
+                    res = PropagationResult::CONTRACTED;
+                    break;
+                case PropagationResult::CONTRACTED_WITHOUT_CURRENT:
+                    mOrigins.add(mMapper(c.lhs), c.origin, c.rhsVariables, false);
                     res = PropagationResult::CONTRACTED;
                     break;
                 case PropagationResult::CONFLICT:
