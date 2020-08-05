@@ -67,9 +67,12 @@ public:
     }
 
     Interval& get(const Variable& v) {
-        auto it = mIntervals.find(v.getNode());
+        return get(v.getNode());
+    }
+    Interval& get(const Node& v) {
+        auto it = mIntervals.find(v);
         if (it == mIntervals.end()) {
-            it = mIntervals.emplace(v.getNode(), Interval()).first;
+            it = mIntervals.emplace(v, Interval()).first;
         }
         return it->second;
     }
@@ -105,13 +108,13 @@ public:
         }
         return res;
     }
-    Node add(const Node& n) {
+    bool add(const Node& n) {
         auto comp = Comparison::parseNormalForm(n);
         auto foo = comp.decompose(true);
         if (std::get<0>(foo).isVariable()) {
             Variable v = std::get<0>(foo).getVariable();
             Kind relation = std::get<1>(foo);
-            if (relation == Kind::DISTINCT) return Node();
+            if (relation == Kind::DISTINCT) return false;
             Constant bound = std::get<2>(foo);
 
             //std::cout << n << std::endl;
@@ -133,9 +136,9 @@ public:
                 default:
                     Assert(false);
             }
-            return v.getNode();
+            return true;
         }
-        return Node();
+        return false;
     }
 
     Maybe<std::pair<Node,Node>> hasConflict() const {
@@ -364,6 +367,8 @@ class ContractionOriginManager {
         Node candidate;
         std::vector<ContractionOrigin*> origins;
     };
+    friend std::ostream& operator<<(std::ostream& os, const ContractionOriginManager& com);
+    friend void print(std::ostream& os, const std::string& indent, const ContractionOrigin* co);
 
     void getOrigins(ContractionOrigin const * const origin, std::set<Node>& res) const {
         if (!origin->candidate.isNull()) {
@@ -396,6 +401,26 @@ private:
     std::map<Node,ContractionOrigin*> d_currentOrigins;
     std::vector<std::unique_ptr<ContractionOrigin>> d_allocations;
 };
+
+inline void print(std::ostream& os, const std::string& indent, const ContractionOriginManager::ContractionOrigin* co) {
+    if (!co->candidate.isNull()) {
+        os << indent << co->candidate << std::endl;
+    } else {
+        os << indent << "<null>" << std::endl;
+    }
+    for (const auto& o: co->origins) {
+        print(os, indent + "\t", o);
+    }
+}
+
+inline std::ostream& operator<<(std::ostream& os, const ContractionOriginManager& com) {
+    os << "ContractionOrigins:" << std::endl;
+    for (const auto& vars: com.d_currentOrigins) {
+        os << vars.first << ":" << std::endl;
+        print(os, "\t", vars.second);
+    }
+    return os;
+}
 
 class Propagator {
     VariableMapper mMapper;
@@ -486,11 +511,20 @@ public:
 
     void add(const Node& n) {
         Trace("nl-icp") << "Trying to add " << n << std::endl;
-        Node var = mBounds.add(n);
-        if (!var.isNull()) {
-            mOrigins.add(var, n, {});
-        } else {
+        if (!mBounds.add(n)) {
             addCandidate(n);
+        }
+    }
+
+    void init() {
+        for (const auto& vars: mMapper.mVarCVCpoly) {
+            auto& i = mBounds.get(vars.first);
+            if (!i.lower_origin.isNull()) {
+                mOrigins.add(vars.first, i.lower_origin, {});
+            }
+            if (!i.upper_origin.isNull()) {
+                mOrigins.add(vars.first, i.upper_origin, {});
+            }
         }
     }
 
@@ -538,6 +572,7 @@ public:
                 Kind rel = get_lower_open(i) ? Kind::GT : Kind::GEQ;
                 Node c = nm->mkNode(rel, v, value_to_node(get_lower(i), v));
                 Node premise = nm->mkNode(Kind::AND, mOrigins.getOrigins(v));
+                Trace("nl-icp") << premise << " => " << c << std::endl;
                 Node lemma = Rewriter::rewrite(nm->mkNode(Kind::IMPLIES, premise, c));
                 if (lemma.isConst()) {
                     Assert(lemma == nm->mkConst<bool>(true));
@@ -550,6 +585,7 @@ public:
                 Kind rel = get_upper_open(i) ? Kind::LT : Kind::LEQ;
                 Node c = nm->mkNode(rel, v, value_to_node(get_upper(i), v));
                 Node premise = nm->mkNode(Kind::AND, mOrigins.getOrigins(v));
+                Trace("nl-icp") << premise << " => " << c << std::endl;
                 Node lemma = Rewriter::rewrite(nm->mkNode(Kind::IMPLIES, premise, c));
                 if (lemma.isConst()) {
                     Assert(lemma == nm->mkConst<bool>(true));
@@ -568,6 +604,7 @@ public:
         for (const auto& c: mCandidates) {
             std::cout << "\t" << c << std::endl;
         }
+        std::cout << mOrigins << std::endl;
     }
 };
 

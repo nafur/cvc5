@@ -443,6 +443,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
         prop.add(tmp);
       }
     }
+    prop.init();
     auto ia = prop.getInitial();
     Trace("nl-ext") << "Initial " << ia << std::endl;
     bool did_progress = false;
