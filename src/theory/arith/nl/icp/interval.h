@@ -136,6 +136,7 @@ public:
                 default:
                     Assert(false);
             }
+            mMapper(v.getNode());
             return true;
         }
         return false;
@@ -401,7 +402,8 @@ class ContractionOriginManager {
         }
     }
 public:
-    void add(const Node& targetVariable,const Node& candidate, const std::vector<Node>& originVariables, bool addTarget = true) {
+    void add(const Node& targetVariable, const Node& candidate, const std::vector<Node>& originVariables, bool addTarget = true) {
+        Trace("nl-icp") << "Adding contraction for " << targetVariable << std::endl;
         std::vector<ContractionOrigin*> origins;
         if (addTarget) {
             auto it = d_currentOrigins.find(targetVariable);
@@ -420,8 +422,9 @@ public:
     }
 
     std::vector<Node> getOrigins(const Node& variable) const {
+        Trace("nl-icp") << "Obtaining origins for " << variable << std::endl;
         std::set<Node> origins;
-        Assert(d_currentOrigins.find(v) != d_currentOrigins.end()) << "Using variable as origin that is unknown yet.";
+        Assert(d_currentOrigins.find(variable) != d_currentOrigins.end()) << "Using variable as origin that is unknown yet.";
         getOrigins(d_currentOrigins.at(variable), origins);
         return std::vector<Node>(origins.begin(), origins.end());
     }
@@ -547,10 +550,13 @@ public:
     void init() {
         for (const auto& vars: mMapper.mVarCVCpoly) {
             auto& i = mBounds.get(vars.first);
+            Trace("nl-icp") << "Adding initial " << vars.first << " -> " << i << std::endl;
             if (!i.lower_origin.isNull()) {
+                Trace("nl-icp") << "\tAdding lower " << i.lower_origin << std::endl;
                 mOrigins.add(vars.first, i.lower_origin, {});
             }
             if (!i.upper_origin.isNull()) {
+                Trace("nl-icp") << "\tAdding upper " << i.upper_origin << std::endl;
                 mOrigins.add(vars.first, i.upper_origin, {});
             }
         }
