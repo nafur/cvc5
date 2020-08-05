@@ -334,11 +334,17 @@ struct Candidate {
         auto res = poly::evaluate(rhs, ia) * poly::Interval(poly::Value(rhsmult));
         Trace("nl-icp") << "Prop: " << *this << " -> " << res << std::endl;
         switch (rel) {
-            case poly::SignCondition::LT: res.set_lower(poly::Value::minus_infty(), true); break;
+            case poly::SignCondition::LT:
+                res.set_lower(poly::Value::minus_infty(), true);
+                res.set_upper(get_upper(res), true);
+                break;
             case poly::SignCondition::LE: res.set_lower(poly::Value::minus_infty(), true); break;
             case poly::SignCondition::EQ: break;
             case poly::SignCondition::NE: Assert(false); break;
-            case poly::SignCondition::GT: res.set_upper(poly::Value::plus_infty(), true); break;
+            case poly::SignCondition::GT:
+                res.set_lower(get_lower(res), true);
+                res.set_upper(poly::Value::plus_infty(), true);
+                break;
             case poly::SignCondition::GE: res.set_upper(poly::Value::plus_infty(), true); break;
         }
         auto cur = ia.get(lhs);
