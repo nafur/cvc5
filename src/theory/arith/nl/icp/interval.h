@@ -215,19 +215,23 @@ PropagationResult intersect_interval_with(poly::Interval& cur, const poly::Inter
             cur = poly::Interval(
                 get_lower(cur), get_lower_open(cur) || get_lower_open(res), get_upper(res), get_upper_open(res)
             );
-            return PropagationResult::CONTRACTED;
+            if (get_lower_open(cur) && !get_lower_open(res)) {
+                return PropagationResult::CONTRACTED;
+            } else {
+                return PropagationResult::CONTRACTED_WITHOUT_CURRENT;
+            }
         }
         Assert(get_lower(res) > get_lower(cur)) << "Comparison operator does weird stuff.";
         // lower(res) at 3
         Trace("nl-icp") << "cur covers res" << std::endl;
         cur = res;
-        return PropagationResult::CONTRACTED;
+        return PropagationResult::CONTRACTED_WITHOUT_CURRENT;
     }
     if (get_upper(res) == get_upper(cur)) {
         // upper(res) at 4
         if (get_lower(res) < get_lower(cur)) {
             // lower(res) at 1
-            Trace("nl-icp") << "cur covers res but meet at upper" << std::endl;
+            Trace("nl-icp") << "res covers cur but meet at upper" << std::endl;
             if (get_upper_open(res) && !get_upper_open(cur)) {
                 cur.set_upper(get_upper(cur), true);
                 return PropagationResult::CONTRACTED;
@@ -247,17 +251,28 @@ PropagationResult intersect_interval_with(poly::Interval& cur, const poly::Inter
                 cur.set_upper(get_upper(cur), true);
             }
             if (changed) {
-                return PropagationResult::CONTRACTED;
+                if (
+                       (get_lower_open(res) || !get_upper_open(cur))
+                    && (get_upper_open(res) || !get_upper_open(cur))
+                ) {
+                    return PropagationResult::CONTRACTED_WITHOUT_CURRENT;
+                } else {
+                    return PropagationResult::CONTRACTED;
+                }
             }
             return PropagationResult::NOT_CHANGED;
         }
         Assert(get_lower(res) > get_lower(cur)) << "Comparison operator does weird stuff.";
         // lower(res) at 3
-        Trace("nl-icp") << "res covers cur but meet at upper" << std::endl;
+        Trace("nl-icp") << "cur covers res but meet at upper" << std::endl;
         cur = poly::Interval(
             get_lower(res), get_lower_open(res), get_upper(res), get_upper_open(cur) || get_upper_open(res)
         );
-        return PropagationResult::CONTRACTED;
+        if (get_upper_open(cur) && !get_upper_open(res)) {
+            return PropagationResult::CONTRACTED;
+        } else {
+            return PropagationResult::CONTRACTED_WITHOUT_CURRENT;
+        }
     }
 
     Assert(get_upper(res) > get_upper(cur)) << "Comparison operator does weird stuff.";
