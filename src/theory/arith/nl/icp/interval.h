@@ -7,6 +7,7 @@
 #include "theory/arith/normal_form.h"
 
 #include <poly/polyxx.h>
+#include "util/poly_util.h"
 #include "theory/arith/nl/poly_conversion.h"
 
 namespace CVC4 {
@@ -87,7 +88,9 @@ public:
                 res.emplace_back(vi.second.lower_origin);
             }
             if (!vi.second.upper_origin.isNull()) {
-                res.emplace_back(vi.second.upper_origin);
+                if (!res.empty() && vi.second.upper_origin != res.back()) {
+                    res.emplace_back(vi.second.upper_origin);
+                }
             }
         }
         return res;
@@ -102,13 +105,13 @@ public:
         }
         return res;
     }
-    bool add(const Node& n) {
+    Node add(const Node& n) {
         auto comp = Comparison::parseNormalForm(n);
         auto foo = comp.decompose(true);
         if (std::get<0>(foo).isVariable()) {
             Variable v = std::get<0>(foo).getVariable();
             Kind relation = std::get<1>(foo);
-            if (relation == Kind::DISTINCT) return false;
+            if (relation == Kind::DISTINCT) return Node();
             Constant bound = std::get<2>(foo);
 
             //std::cout << n << std::endl;
@@ -130,9 +133,9 @@ public:
                 default:
                     Assert(false);
             }
-            return true;
+            return v.getNode();
         }
-        return false;
+        return Node();
     }
 
     Maybe<std::pair<Node,Node>> hasConflict() const {
@@ -306,6 +309,7 @@ struct Candidate {
     poly::Polynomial rhs;
     poly::Rational rhsmult;
     Node origin;
+    std::vector<Node> rhsVariables;
 
     PropagationResult propagate(poly::IntervalAssignment& ia) const {
         auto res = poly::evaluate(rhs, ia) * poly::Interval(poly::Value(rhsmult));
@@ -355,12 +359,60 @@ inline std::ostream& operator<<(std::ostream& os, const IAWrapper& iaw) {
     return os << " }";
 }
 
+class ContractionOriginManager {
+    struct ContractionOrigin {
+        Node candidate;
+        std::vector<ContractionOrigin*> origins;
+    };
+
+    void getOrigins(ContractionOrigin const * const origin, std::set<Node>& res) const {
+        if (!origin->candidate.isNull()) {
+            res.insert(origin->candidate);
+        }
+        for (const auto& co: origin->origins) {
+            getOrigins(co, res);
+        }
+    }
+public:
+    void add(const Node& targetVariable,const Node& candidate, const std::vector<Node>& originVariables) {
+        std::vector<ContractionOrigin*> origins;
+        for (const auto& v: originVariables) {
+            auto it = d_currentOrigins.find(v);
+            if (it != d_currentOrigins.end()) {
+                origins.emplace_back(it->second);
+            }
+        }
+        d_allocations.emplace_back(new ContractionOrigin{candidate, std::move(origins)});
+        d_currentOrigins[targetVariable] = d_allocations.back().get();
+    }
+
+    std::vector<Node> getOrigins(const Node& variable) const {
+        std::set<Node> origins;
+        Assert(d_currentOrigins.find(v) != d_currentOrigins.end()) << "Using variable as origin that is unknown yet.";
+        getOrigins(d_currentOrigins.at(variable), origins);
+        return std::vector<Node>(origins.begin(), origins.end());
+    }
+private:
+    std::map<Node,ContractionOrigin*> d_currentOrigins;
+    std::vector<std::unique_ptr<ContractionOrigin>> d_allocations;
+};
+
 class Propagator {
     VariableMapper mMapper;
     VariableBounds mBounds;
     std::vector<Candidate> mCandidates;
-    std::vector<Node> mLastConflict;
-    std::set<Node> mUsedCandidates;
+    ContractionOriginManager mOrigins;
+    Node mLastConflict;
+
+    std::vector<Node> collectVariables(const Node& n) const {
+        std::unordered_set<TNode, TNodeHashFunction> tmp;
+        expr::getVariables(n, tmp);
+        std::vector<Node> res;
+        for (const auto& t: tmp) {
+            res.emplace_back(t);
+        }
+        return res;
+    }
 
     void addCandidate(const Node& n) {
         auto comp = Comparison::parseNormalForm(n).decompose(false);
@@ -402,8 +454,7 @@ class Propagator {
                 if (!veq_c.isNull()) {
                     rhsmult = poly_utils::toRational(veq_c.getConst<Rational>());
                 }
-                    
-                mCandidates.emplace_back(Candidate{lhs, rel, rhs, rhsmult, n});
+                mCandidates.emplace_back(Candidate{lhs, rel, rhs, rhsmult, n, collectVariables(val)});
                 Trace("nl-icp") << "\tAdded " << mCandidates.back() << " from " << n << std::endl;
             } else if (res == -1) {
                 poly::Variable lhs = mMapper(v);
@@ -423,7 +474,7 @@ class Propagator {
                 if (!veq_c.isNull()) {
                     rhsmult = poly_utils::toRational(veq_c.getConst<Rational>());
                 }
-                mCandidates.emplace_back(Candidate{lhs, rel, rhs, rhsmult, n});
+                mCandidates.emplace_back(Candidate{lhs, rel, rhs, rhsmult, n, collectVariables(val)});
                 Trace("nl-icp") << "\tAdded " << mCandidates.back() << " from " << n << std::endl;
             }
         }
@@ -435,7 +486,10 @@ public:
 
     void add(const Node& n) {
         Trace("nl-icp") << "Trying to add " << n << std::endl;
-        if (!mBounds.add(n)) {
+        Node var = mBounds.add(n);
+        if (!var.isNull()) {
+            mOrigins.add(var, n, {});
+        } else {
             addCandidate(n);
         }
     }
@@ -445,6 +499,7 @@ public:
     }
 
     PropagationResult doIt(poly::IntervalAssignment& ia) {
+        mLastConflict = Node();
         Trace("nl-icp") << "Starting propagation with " << IAWrapper{ia, mMapper} << std::endl;
         PropagationResult res = PropagationResult::NOT_CHANGED;
         for (const auto& c: mCandidates) {
@@ -453,11 +508,13 @@ public:
                 case PropagationResult::NOT_CHANGED:
                     break;
                 case PropagationResult::CONTRACTED:
-                    mUsedCandidates.insert(c.origin);
+                    mOrigins.add(mMapper(c.lhs), c.origin, c.rhsVariables);
                     res = PropagationResult::CONTRACTED;
                     break;
                 case PropagationResult::CONFLICT:
-                    mUsedCandidates.insert(c.origin);
+                    mOrigins.add(mMapper(c.lhs), c.origin, c.rhsVariables);
+                    auto nm = NodeManager::currentNM();
+                    mLastConflict = nm->mkNode(Kind::NOT, nm->mkNode(Kind::AND, mOrigins.getOrigins(mMapper(c.lhs))));
                     return PropagationResult::CONFLICT;
             }
         }
@@ -465,19 +522,12 @@ public:
     }
 
     Node getConflict() const {
-        auto nm = NodeManager::currentNM();
-        std::vector<Node> conflict = mBounds.getOrigins();
-        conflict.insert(conflict.end(), mUsedCandidates.begin(), mUsedCandidates.end());
-        return nm->mkNode(Kind::NOT, nm->mkNode(Kind::AND, conflict));
+        return mLastConflict;
     }
 
     std::vector<Node> asLemmas(const poly::IntervalAssignment& ia) const {
         auto nm = NodeManager::currentNM();
-        std::vector<Node> premises = mBounds.getOrigins();
-        premises.insert(premises.end(), mUsedCandidates.begin(), mUsedCandidates.end());
-        Node premise = nm->mkNode(Kind::AND, premises);
-        std::vector<Node> conclusions;
-
+        std::vector<Node> lemmas;
 
         for (const auto& vars: mMapper.mVarCVCpoly) {
             if (!ia.has(vars.second)) continue;
@@ -487,27 +537,28 @@ public:
             if (!is_minus_infinity(get_lower(i))) {
                 Kind rel = get_lower_open(i) ? Kind::GT : Kind::GEQ;
                 Node c = nm->mkNode(rel, v, value_to_node(get_lower(i), v));
-                conclusions.emplace_back(c);
+                Node premise = nm->mkNode(Kind::AND, mOrigins.getOrigins(v));
+                Node lemma = Rewriter::rewrite(nm->mkNode(Kind::IMPLIES, premise, c));
+                if (lemma.isConst()) {
+                    Assert(lemma == nm->mkConst<bool>(true));
+                } else {
+                    Trace("nl-icp") << "Adding lemma " << lemma << std::endl;
+                    lemmas.emplace_back(lemma);
+                }
             }
             if (!is_plus_infinity(get_upper(i))) {
                 Kind rel = get_upper_open(i) ? Kind::LT : Kind::LEQ;
                 Node c = nm->mkNode(rel, v, value_to_node(get_upper(i), v));
-                conclusions.emplace_back(c);
+                Node premise = nm->mkNode(Kind::AND, mOrigins.getOrigins(v));
+                Node lemma = Rewriter::rewrite(nm->mkNode(Kind::IMPLIES, premise, c));
+                if (lemma.isConst()) {
+                    Assert(lemma == nm->mkConst<bool>(true));
+                } else {
+                    Trace("nl-icp") << "Adding lemma " << lemma << std::endl;
+                    lemmas.emplace_back(lemma);
+                }
             }
         }
-
-        std::vector<Node> lemmas;
-        for (const auto& c: conclusions) {
-            Node lemma = nm->mkNode(Kind::IMPLIES, premise, c);
-            Node rewritten = Rewriter::rewrite(lemma);
-            if (rewritten.isConst()) {
-                Assert(rewritten == nm->mkConst<bool>(true));
-            } else {
-                Trace("nl-icp") << "Adding lemma " << lemma << std::endl;
-                lemmas.emplace_back(rewritten);
-            }
-        }
-        
         return lemmas;
     }
 

@@ -667,6 +667,10 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
     {
       Trace("nl-cad") << "nl-cad found SAT!" << std::endl;
     }
+    else
+    {
+      Trace("nl-cad") << "nl-cad found lemma: " << lemmas.front().d_lemma << std::endl;
+    }
     filterLemmas(lemmas, wlems);
   }
   // run the full refinement in the IAND solver
