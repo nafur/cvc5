@@ -352,7 +352,7 @@ struct Candidate {
         Trace("nl-icp") << "-> " << res << " used to update " << cur << std::endl;
 
         PropagationResult result = intersect_interval_with(cur, res);
-        if (result == PropagationResult::CONTRACTED) {
+        if (result == PropagationResult::CONTRACTED || result == PropagationResult::CONTRACTED_WITHOUT_CURRENT) {
             Trace("nl-icp") << *this << " contracted " << lhs << " -> " << cur << std::endl;
             ia.set(lhs, cur);
         }
