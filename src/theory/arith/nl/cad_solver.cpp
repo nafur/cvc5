@@ -35,9 +35,9 @@ CadSolver::CadSolver(TheoryArith& containing, NlModel& model)
     : d_foundSatisfiability(false), d_containing(containing), d_model(model)
 {
   d_ranVariable =
-        NodeManager::currentNM()->mkSkolem("__z",
-                                           NodeManager::currentNM()->realType(),
-                                           "",
+      NodeManager::currentNM()->mkSkolem("__z",
+                                         NodeManager::currentNM()->realType(),
+                                         "",
                                          NodeManager::SKOLEM_EXACT_NAME);
 }
 
@@ -115,6 +115,7 @@ std::vector<NlLemma> CadSolver::checkFull()
   return lems;
 #else
   Warning() << "Tried to use CadSolver but libpoly is not available. Compile with --poly." << std::endl;
+  return {};
 #endif
 }
 
@@ -144,6 +145,7 @@ std::vector<NlLemma> CadSolver::checkPartial()
   Warning() << "Tried to use CadSolver but libpoly is not available. Compile "
                "with --poly."
             << std::endl;
+  return {};
 #endif
 }
 
@@ -174,6 +176,7 @@ bool CadSolver::constructModelIfAvailable(std::vector<Node>& assertions)
   Warning() << "Tried to use CadSolver but libpoly is not available. Compile "
                "with --poly."
             << std::endl;
+  return false;
 #endif
 }
 
