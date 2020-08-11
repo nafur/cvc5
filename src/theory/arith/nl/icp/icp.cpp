@@ -171,6 +171,7 @@ PropagationResult ICPSolver::doIt(poly::IntervalAssignment& ia)
 {
   if (mBudget <= 0)
   {
+    Trace("nl-icp") << "ICP budget exceeded" << std::endl;
     return PropagationResult::NOT_CHANGED;
   }
   mState->mLastConflict = Node();

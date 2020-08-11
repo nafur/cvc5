@@ -430,27 +430,27 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
 
   if (options::nlICP())
   {
+    d_icpSlv.reset();
     std::vector<Node> sorted_assertions(assertions);
     std::sort(sorted_assertions.begin(), sorted_assertions.end());
     Trace("nl-ext") << "Doing ICP" << std::endl;
-    icp::Propagator prop;
     for (const auto& n : sorted_assertions)
     {
       Node tmp = Rewriter::rewrite(n);
       Trace("nl-ext") << "Adding " << tmp << std::endl;
       if (tmp.getKind() != Kind::CONST_BOOLEAN)
       {
-        prop.add(tmp);
+        d_icpSlv.add(tmp);
       }
     }
-    prop.init();
-    auto ia = prop.getInitial();
+    d_icpSlv.init();
+    auto ia = d_icpSlv.getInitial();
     Trace("nl-ext") << "Initial " << ia << std::endl;
     bool did_progress = false;
     bool progress = false;
     do
     {
-      switch (prop.doIt(ia)) {
+      switch (d_icpSlv.doIt(ia)) {
         case icp::PropagationResult::NOT_CHANGED:
           progress = false;
           break;
@@ -462,9 +462,9 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
           progress = true;
           break;
         case icp::PropagationResult::CONFLICT:
-          Trace("nl-icp") << "Found a conflict: " << prop.getConflict()
+          Trace("nl-icp") << "Found a conflict: " << d_icpSlv.getConflict()
                           << std::endl;
-          lemmas.emplace_back(prop.getConflict(), Inference::ICP_PROPAGATION);
+          lemmas.emplace_back(d_icpSlv.getConflict(), Inference::ICP_PROPAGATION);
           did_progress = true;
           progress = false;
           break;
@@ -473,7 +473,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
 
     if (did_progress)
     {
-      for (const auto& l : prop.asLemmas(ia))
+      for (const auto& l : d_icpSlv.asLemmas(ia))
       {
         lemmas.emplace_back(l, Inference::ICP_PROPAGATION);
       }
