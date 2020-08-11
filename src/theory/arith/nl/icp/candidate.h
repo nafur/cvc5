@@ -1,5 +1,5 @@
 /*********************                                                        */
-/*! \file interval.h
+/*! \file candidate.h
  ** \verbatim
  ** Top contributors (to current version):
  **   Gereon Kremer
@@ -12,13 +12,13 @@
  ** \brief
  **/
 
-#ifndef CVC4__THEORY__ARITH__ICP__INTERVAL_H
-#define CVC4__THEORY__ARITH__ICP__INTERVAL_H
+#ifndef CVC4__THEORY__ARITH__ICP__CANDIDATE_H
+#define CVC4__THEORY__ARITH__ICP__CANDIDATE_H
 
 #include <poly/polyxx.h>
 
 #include "expr/node.h"
-#include "util/poly_util.h"
+#include "intersection.h"
 
 namespace CVC4 {
 namespace theory {
@@ -26,21 +26,18 @@ namespace arith {
 namespace nl {
 namespace icp {
 
-struct Interval
-{
-  poly::Value lower = poly::Value::minus_infty();
-  bool lower_strict = true;
-  Node lower_origin;
-  poly::Value upper = poly::Value::plus_infty();
-  bool upper_strict = true;
-  Node upper_origin;
-};
 
-inline std::ostream& operator<<(std::ostream& os, const Interval& i)
-{
-  return os << (i.lower_strict ? '(' : '[') << i.lower << " .. " << i.upper
-            << (i.upper_strict ? ')' : ']');
-}
+struct Candidate {
+    poly::Variable lhs;
+    poly::SignCondition rel;
+    poly::Polynomial rhs;
+    poly::Rational rhsmult;
+    Node origin;
+    std::vector<Node> rhsVariables;
+
+    PropagationResult propagate(poly::IntervalAssignment& ia) const;
+};
+std::ostream& operator<<(std::ostream& os, const Candidate& c);
 
 }  // namespace icp
 }  // namespace nl

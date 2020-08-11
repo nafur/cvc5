@@ -17,7 +17,7 @@
 
 #include "theory/arith/nl/nonlinear_extension.h"
 
-#include "icp/interval.h"
+#include "icp/icp.h"
 #include "options/arith_options.h"
 #include "options/theory_options.h"
 #include "theory/arith/arith_utilities.h"
@@ -455,7 +455,9 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
           progress = false;
           break;
         case icp::PropagationResult::CONTRACTED:
+        case icp::PropagationResult::CONTRACTED_STRONGLY:
         case icp::PropagationResult::CONTRACTED_WITHOUT_CURRENT:
+        case icp::PropagationResult::CONTRACTED_STRONGLY_WITHOUT_CURRENT:
           did_progress = true;
           progress = true;
           break;

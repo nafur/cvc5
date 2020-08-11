@@ -1,5 +1,5 @@
 /*********************                                                        */
-/*! \file interval.h
+/*! \file intersection.h
  ** \verbatim
  ** Top contributors (to current version):
  **   Gereon Kremer
@@ -12,13 +12,10 @@
  ** \brief
  **/
 
-#ifndef CVC4__THEORY__ARITH__ICP__INTERVAL_H
-#define CVC4__THEORY__ARITH__ICP__INTERVAL_H
+#ifndef CVC4__THEORY__ARITH__ICP__INTERSECTION_H
+#define CVC4__THEORY__ARITH__ICP__INTERSECTION_H
 
 #include <poly/polyxx.h>
-
-#include "expr/node.h"
-#include "util/poly_util.h"
 
 namespace CVC4 {
 namespace theory {
@@ -26,21 +23,18 @@ namespace arith {
 namespace nl {
 namespace icp {
 
-struct Interval
+enum class PropagationResult
 {
-  poly::Value lower = poly::Value::minus_infty();
-  bool lower_strict = true;
-  Node lower_origin;
-  poly::Value upper = poly::Value::plus_infty();
-  bool upper_strict = true;
-  Node upper_origin;
+  NOT_CHANGED,
+  CONTRACTED,
+  CONTRACTED_STRONGLY,
+  CONTRACTED_WITHOUT_CURRENT,
+  CONTRACTED_STRONGLY_WITHOUT_CURRENT,
+  CONFLICT
 };
 
-inline std::ostream& operator<<(std::ostream& os, const Interval& i)
-{
-  return os << (i.lower_strict ? '(' : '[') << i.lower << " .. " << i.upper
-            << (i.upper_strict ? ')' : ']');
-}
+PropagationResult intersect_interval_with(poly::Interval& cur,
+                                          const poly::Interval& res);
 
 }  // namespace icp
 }  // namespace nl

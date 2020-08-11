@@ -1,5 +1,5 @@
 /*********************                                                        */
-/*! \file cad_solver.cpp
+/*! \file contraction_origins.cpp
  ** \verbatim
  ** Top contributors (to current version):
  **   Gereon Kremer
@@ -9,7 +9,7 @@
  ** All rights reserved.  See the file COPYING in the top-level source
  ** directory for licensing information.\endverbatim
  **
- ** \brief Implementation of new non-linear solver
+ ** \brief
  **/
 
 #include "theory/arith/nl/icp/contraction_origins.h"
