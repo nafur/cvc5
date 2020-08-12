@@ -239,6 +239,7 @@ public:
             switch (cres) {
                 case PropagationResult::CONTRACTED_STRONGLY:
                 case PropagationResult::CONTRACTED_STRONGLY_WITHOUT_CURRENT:
+                    Trace("nl-icp") << "Bumping budget because of a strong contraction" << std::endl;
                     mBudget += mBudgetMultiplier;
                     break;
                 default:

@@ -29,7 +29,7 @@ namespace icp {
 PropagationResult intersect_interval_with(poly::Interval& cur,
                                           const poly::Interval& res)
 {
-  Trace("nl-icp") << "Updating " << cur << " with " << res << std::endl;
+  Trace("nl-icp") << cur << " := " << cur << " intersected with " << res << std::endl;
 
   constexpr std::size_t size_threshold = 100;
   if (bitsize(get_lower(res)) > size_threshold

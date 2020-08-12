@@ -28,6 +28,9 @@ namespace icp {
 
 PropagationResult Candidate::propagate(poly::IntervalAssignment& ia) const {
         auto res = poly::evaluate(rhs, ia) * poly::Interval(poly::Value(rhsmult));
+        if (get_lower(res) == poly::Value::minus_infty() && get_upper(res) == poly::Value::plus_infty()) {
+            return PropagationResult::NOT_CHANGED;
+        }
         Trace("nl-icp") << "Prop: " << *this << " -> " << res << std::endl;
         switch (rel) {
             case poly::SignCondition::LT:
@@ -44,7 +47,6 @@ PropagationResult Candidate::propagate(poly::IntervalAssignment& ia) const {
             case poly::SignCondition::GE: res.set_upper(poly::Value::plus_infty(), true); break;
         }
         auto cur = ia.get(lhs);
-        Trace("nl-icp") << "-> " << res << " used to update " << cur << std::endl;
 
         PropagationResult result = intersect_interval_with(cur, res);
         switch (result) {

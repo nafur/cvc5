@@ -445,7 +445,6 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
     }
     d_icpSlv.init();
     auto ia = d_icpSlv.getInitial();
-    Trace("nl-ext") << "Initial " << ia << std::endl;
     bool did_progress = false;
     bool progress = false;
     do
