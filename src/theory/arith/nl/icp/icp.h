@@ -54,14 +54,14 @@ struct ICPState {
 
 class ICPSolver {
     VariableMapper mMapper;
-    std::map<Node, Candidate> mCandidateCache;
+    std::map<Node, std::vector<Candidate>> mCandidateCache;
     std::unique_ptr<ICPState> mState;
 
     std::int64_t mBudget = 0;
     static constexpr std::int64_t mBudgetIncrement = 10;
 
     std::vector<Node> collectVariables(const Node& n) const;
-    Maybe<Candidate> constructCandidate(const Node& n);
+    std::vector<Candidate> constructCandidates(const Node& n);
     void addCandidate(const Node& n);
 
 public:

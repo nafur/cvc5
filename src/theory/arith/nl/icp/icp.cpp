@@ -38,16 +38,17 @@ std::vector<Node> ICPSolver::collectVariables(const Node& n) const
   return res;
 }
 
-Maybe<Candidate> ICPSolver::constructCandidate(const Node& n)
+std::vector<Candidate> ICPSolver::constructCandidates(const Node& n)
 {
   auto comp = Comparison::parseNormalForm(n).decompose(false);
   Kind k = std::get<1>(comp);
   if (k == Kind::DISTINCT)
   {
-    return Maybe<Candidate>();
+    return {};
   }
   auto poly = std::get<0>(comp);
 
+  std::vector<Candidate> result;
   std::unordered_set<TNode, TNodeHashFunction> vars;
   expr::getVariables(n, vars);
   for (const auto& v : vars)
@@ -86,7 +87,7 @@ Maybe<Candidate> ICPSolver::constructCandidate(const Node& n)
       }
       Candidate res{lhs, rel, rhs, rhsmult, n, collectVariables(val)};
       Trace("nl-icp") << "\tAdded " << res << " from " << n << std::endl;
-      return res;
+      result.emplace_back(res);
     }
     else if (isolated == -1)
     {
@@ -111,10 +112,10 @@ Maybe<Candidate> ICPSolver::constructCandidate(const Node& n)
       }
       Candidate res{lhs, rel, rhs, rhsmult, n, collectVariables(val)};
       Trace("nl-icp") << "\tAdded " << res << " from " << n << std::endl;
-      return res;
+      result.emplace_back(res);
     }
   }
-  return Maybe<Candidate>();
+  return result;
 }
 
 void ICPSolver::addCandidate(const Node& n)
@@ -122,15 +123,19 @@ void ICPSolver::addCandidate(const Node& n)
   auto it = mCandidateCache.find(n);
   if (it != mCandidateCache.end())
   {
-    mState->mCandidates.emplace_back(it->second);
+    for (const auto& c: it->second)
+    {
+      mState->mCandidates.emplace_back(c);
+    }
   }
   else
   {
-    auto c = constructCandidate(n);
-    if (c)
+    auto cands = constructCandidates(n);
+    mCandidateCache.emplace(n, cands);
+    for (const auto& c: cands)
     {
-      mCandidateCache.emplace(n, c.value());
-      mState->mCandidates.emplace_back(c.value());
+      mState->mCandidates.emplace_back(c);
+      Trace("nl-icp") << "Bumping budget because of the new candidate" << std::endl;
       mBudget += mBudgetIncrement;
     }
   }
