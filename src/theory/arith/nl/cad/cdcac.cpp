@@ -209,6 +209,7 @@ std::vector<poly::Polynomial> CDCAC::constructCharacterization(
       for (const auto& q : i.d_lowerPolys)
       {
         if (p == q) continue;
+        if (filter_resultants_by_roots && !hasRootBelow(q, get_lower(i.d_interval))) continue;
         Trace("cdcac") << "Resultant of " << p << " and " << q << " -> "
                        << resultant(p, q) << std::endl;
         addPolynomial(res, resultant(p, q));
@@ -217,6 +218,7 @@ std::vector<poly::Polynomial> CDCAC::constructCharacterization(
       for (const auto& q : i.d_upperPolys)
       {
         if (p == q) continue;
+        if (filter_resultants_by_roots && !hasRootAbove(q, get_upper(i.d_interval))) continue;
         Trace("cdcac") << "Resultant of " << p << " and " << q << " -> "
                        << resultant(p, q) << std::endl;
         addPolynomial(res, resultant(p, q));
@@ -468,6 +470,28 @@ CACInterval CDCAC::buildIntegralityInterval(std::size_t cur_variable,
                      {var - below, var - above},
                      {},
                      {}};
+}
+
+bool CDCAC::hasRootAbove(const poly::Polynomial& p, const poly::Value& val) const
+{
+  auto roots = poly::isolate_real_roots(p, d_assignment);
+  for (const auto& r: roots) {
+    if (r >= val) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool CDCAC::hasRootBelow(const poly::Polynomial& p, const poly::Value& val) const
+{
+  auto roots = poly::isolate_real_roots(p, d_assignment);
+  for (const auto& r: roots) {
+    if (r <= val) {
+      return true;
+    }
+  }
+  return false;
 }
 
 }  // namespace cad

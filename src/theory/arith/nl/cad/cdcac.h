@@ -145,6 +145,9 @@ class CDCAC
   CACInterval buildIntegralityInterval(std::size_t cur_variable,
                                        const poly::Value& value);
 
+  bool hasRootAbove(const poly::Polynomial& p, const poly::Value& val) const;
+  bool hasRootBelow(const poly::Polynomial& p, const poly::Value& val) const;
+
   /**
    * The current assignment. When the method terminates with SAT, it contains a
    * model for the input constraints.
@@ -164,6 +167,8 @@ class CDCAC
   std::vector<poly::Value> d_initialAssignment;
 
   CDCACDebugger d_debugger;
+
+  static constexpr bool filter_resultants_by_roots = true;
 };
 
 }  // namespace cad
