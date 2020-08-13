@@ -236,7 +236,7 @@ std::vector<Node> ICPSolver::asLemmas(const poly::IntervalAssignment& ia) const
     {
       Kind rel = get_lower_open(i) ? Kind::GT : Kind::GEQ;
       Node c = nm->mkNode(rel, v, value_to_node(get_lower(i), v));
-      Node premise = nm->mkNode(Kind::AND, mState->mOrigins.getOrigins(v));
+      Node premise = mState->mOrigins.getOrigins(v);
       Trace("nl-icp") << premise << " => " << c << std::endl;
       Node lemma = Rewriter::rewrite(nm->mkNode(Kind::IMPLIES, premise, c));
       if (lemma.isConst())
@@ -253,7 +253,7 @@ std::vector<Node> ICPSolver::asLemmas(const poly::IntervalAssignment& ia) const
     {
       Kind rel = get_upper_open(i) ? Kind::LT : Kind::LEQ;
       Node c = nm->mkNode(rel, v, value_to_node(get_upper(i), v));
-      Node premise = nm->mkNode(Kind::AND, mState->mOrigins.getOrigins(v));
+      Node premise = mState->mOrigins.getOrigins(v);
       Trace("nl-icp") << premise << " => " << c << std::endl;
       Node lemma = Rewriter::rewrite(nm->mkNode(Kind::IMPLIES, premise, c));
       if (lemma.isConst())

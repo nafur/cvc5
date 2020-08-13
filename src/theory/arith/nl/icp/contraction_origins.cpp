@@ -67,7 +67,7 @@ void ContractionOriginManager::add(const Node& targetVariable,
   d_currentOrigins[targetVariable] = d_allocations.back().get();
 }
 
-std::vector<Node> ContractionOriginManager::getOrigins(
+Node ContractionOriginManager::getOrigins(
     const Node& variable) const
 {
   Trace("nl-icp") << "Obtaining origins for " << variable << std::endl;
@@ -75,7 +75,11 @@ std::vector<Node> ContractionOriginManager::getOrigins(
   Assert(d_currentOrigins.find(variable) != d_currentOrigins.end())
       << "Using variable as origin that is unknown yet.";
   getOrigins(d_currentOrigins.at(variable), origins);
-  return std::vector<Node>(origins.begin(), origins.end());
+  Assert(!origins.empty()) << "There should be at least one origin";
+  if (origins.size() == 1) {
+    return *origins.begin();
+  }
+  return NodeManager::currentNM()->mkNode(Kind::AND, std::vector<Node>(origins.begin(), origins.end()));
 }
 
 void print(std::ostream& os,

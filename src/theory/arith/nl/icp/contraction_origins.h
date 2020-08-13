@@ -80,7 +80,7 @@ class ContractionOriginManager
   /**
    * Collect all theory atoms from the origins of the given variable.
    */
-  std::vector<Node> getOrigins(const Node& variable) const;
+  Node getOrigins(const Node& variable) const;
 
  private:
   /** The current origins for every variable. */
