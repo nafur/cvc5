@@ -412,13 +412,13 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t cur_variable,
     auto new_interval =
         intervalFromCharacterization(characterization, cur_variable, sample);
     new_interval.d_origins = collectConstraints(cov);
+    intervals.emplace_back(new_interval);
+
 
     if (return_first_interval)
     {
-      return {new_interval};
+      return intervals;
     }
-
-    intervals.emplace_back(new_interval);
 
     Trace("cdcac") << "Added " << intervals.back().d_interval << std::endl;
     Trace("cdcac") << "\tlower:   " << intervals.back().d_lowerPolys

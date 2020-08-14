@@ -114,7 +114,9 @@ std::vector<NlLemma> CadSolver::checkFull()
   }
   return lems;
 #else
-  Warning() << "Tried to use CadSolver but libpoly is not available. Compile with --poly." << std::endl;
+  Warning() << "Tried to use CadSolver but libpoly is not available. Compile "
+               "with --poly."
+            << std::endl;
   return {};
 #endif
 }
