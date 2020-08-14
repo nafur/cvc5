@@ -179,6 +179,9 @@ set(PROGRAM_PREFIX    "" CACHE STRING "Program prefix on make install")
 option(BUILD_BINDINGS_PYTHON "Build Python bindings based on new C++ API ")
 option(BUILD_BINDINGS_JAVA "Build Java bindings based on new C++ API ")
 
+# Build limitations
+option(BUILD_LIB_ONLY         "Only build the library")
+
 #-----------------------------------------------------------------------------#
 # Internal cmake variables
 
@@ -720,6 +723,8 @@ print_config("Kissat                    :" USE_KISSAT)
 print_config("LFSC                      :" USE_LFSC)
 print_config("LibPoly                   :" USE_POLY)
 print_config("dlib                      :" USE_DLIB)
+message("")
+print_config("BUILD_LIB_ONLY            :" BUILD_LIB_ONLY)
 
 if(CVC4_USE_CLN_IMP)
   message("MP library                : cln")

@@ -82,6 +82,10 @@ Optional Path to Optional Packages:
   --dlib-dir=PATH          path to top level of dlib source tree
   --symfpu-dir=PATH        path to top level of SymFPU source tree
 
+Build limitations:
+  --lib-only               only build the library, but not the executable or
+                           the parser (default: off)
+
 EOF
   exit 0
 }
@@ -163,6 +167,8 @@ kissat_dir=default
 lfsc_dir=default
 poly_dir=default
 symfpu_dir=default
+
+lib_only=default
 
 #--------------------------------------------------------------------------#
 
@@ -343,6 +349,8 @@ do
     --symfpu-dir) die "missing argument to $1 (try -h)" ;;
     --symfpu-dir=*) symfpu_dir=${1##*=} ;;
 
+    --lib-only) lib_only=ON ;;
+
     -*) die "invalid option '$1' (try -h)";;
 
     *) case $1 in
@@ -468,6 +476,8 @@ cmake_opts=""
   && cmake_opts="$cmake_opts -DDLIB_DIR=$dlib_dir"
 [ "$symfpu_dir" != default ] \
   && cmake_opts="$cmake_opts -DSYMFPU_DIR=$symfpu_dir"
+[ "$lib_only" != default ] \
+    && cmake_opts="$cmake_opts -DBUILD_LIB_ONLY=$lib_only"
 [ "$install_prefix" != default ] \
   && cmake_opts="$cmake_opts -DCMAKE_INSTALL_PREFIX=$install_prefix"
 [ -n "$program_prefix" ] \

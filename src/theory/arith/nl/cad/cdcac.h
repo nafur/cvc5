@@ -175,6 +175,12 @@ class CDCAC
   std::vector<poly::Value> d_initialAssignment;
 
   CDCACDebugger d_debugger;
+
+  /**
+   * Decides whether we use the model from the linear solver as an initial
+   * assignment to guide the sampling process.
+   */
+  static constexpr bool use_initial_assignment = true;
 };
 
 }  // namespace cad
