@@ -137,7 +137,7 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
     poly::Polynomial q = (x + 1) * y - 3;
 
     std::cout << "Executing McCallum" << std::endl;
-    auto res = cad::projection_mccallum({p, q});
+    auto res = cad::projectionMcCallum({p, q});
     for (const auto& r : res)
     {
       std::cout << "-> " << r << std::endl;
@@ -147,54 +147,54 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
   void test_cdcac_1()
   {
     cad::CDCAC cac;
-    poly::Variable x = cac.get_constraints().var_mapper()(make_real_variable("x"));
-    poly::Variable y = cac.get_constraints().var_mapper()(make_real_variable("y"));
+    poly::Variable x = cac.getConstraints().varMapper()(make_real_variable("x"));
+    poly::Variable y = cac.getConstraints().varMapper()(make_real_variable("y"));
 
-    cac.get_constraints().add_constraint(
+    cac.getConstraints().addConstraint(
         4 * y - x * x + 4, poly::SignCondition::LT, dummy(1));
-    cac.get_constraints().add_constraint(
+    cac.getConstraints().addConstraint(
         4 * y - 4 + (x - 1) * (x - 1), poly::SignCondition::GT, dummy(2));
-    cac.get_constraints().add_constraint(
+    cac.getConstraints().addConstraint(
         4 * y - x - 2, poly::SignCondition::GT, dummy(3));
     
-    cac.compute_variable_ordering();
+    cac.computeVariableOrdering();
 
-    auto cover = cac.get_unsat_cover();
+    auto cover = cac.getUnsatCover();
     TS_ASSERT(cover.empty());
-    std::cout << "SAT: " << cac.get_model() << std::endl;
+    std::cout << "SAT: " << cac.getModel() << std::endl;
   }
 
   void test_cdcac_2()
   {
     cad::CDCAC cac;
-    poly::Variable x = cac.get_constraints().var_mapper()(make_real_variable("x"));
-    poly::Variable y = cac.get_constraints().var_mapper()(make_real_variable("y"));
+    poly::Variable x = cac.getConstraints().varMapper()(make_real_variable("x"));
+    poly::Variable y = cac.getConstraints().varMapper()(make_real_variable("y"));
     
-    cac.get_constraints().add_constraint(
+    cac.getConstraints().addConstraint(
         y - pow(-x - 3, 11) + pow(-x - 3, 10) + 1,
         poly::SignCondition::GT,
         dummy(1));
-    cac.get_constraints().add_constraint(
+    cac.getConstraints().addConstraint(
         2 * y - x + 2, poly::SignCondition::LT, dummy(2));
-    cac.get_constraints().add_constraint(
+    cac.getConstraints().addConstraint(
         2 * y - 1 + x * x, poly::SignCondition::GT, dummy(3));
-    cac.get_constraints().add_constraint(
+    cac.getConstraints().addConstraint(
         3 * y + x + 2, poly::SignCondition::LT, dummy(4));
-    cac.get_constraints().add_constraint(
+    cac.getConstraints().addConstraint(
         y * y * y - pow(x - 2, 11) + pow(x - 2, 10) + 1,
         poly::SignCondition::GT,
         dummy(5));
     
-    cac.compute_variable_ordering();
+    cac.computeVariableOrdering();
 
-    auto cover = cac.get_unsat_cover();
+    auto cover = cac.getUnsatCover();
     TS_ASSERT(!cover.empty());
     std::cout << "UNSAT:" << std::endl;
     for (const auto& c : cover)
     {
-      std::cout << "-> " << c.mInterval << std::endl;
+      std::cout << "-> " << c.d_interval << std::endl;
     }
-    auto nodes = cad::collect_constraints(cover);
+    auto nodes = cad::collectConstraints(cover);
     std::cout << "MIS:" << std::endl;
     for (const auto& c : nodes)
     {
@@ -205,45 +205,45 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
   void test_cdcac_3()
   {
     cad::CDCAC cac;
-    poly::Variable x = cac.get_constraints().var_mapper()(make_real_variable("x"));
-    poly::Variable y = cac.get_constraints().var_mapper()(make_real_variable("y"));
-    poly::Variable z = cac.get_constraints().var_mapper()(make_real_variable("z"));
+    poly::Variable x = cac.getConstraints().varMapper()(make_real_variable("x"));
+    poly::Variable y = cac.getConstraints().varMapper()(make_real_variable("y"));
+    poly::Variable z = cac.getConstraints().varMapper()(make_real_variable("z"));
 
-    cac.get_constraints().add_constraint(
+    cac.getConstraints().addConstraint(
         x * x + y * y + z * z - 1, poly::SignCondition::LT, dummy(1));
-    cac.get_constraints().add_constraint(
+    cac.getConstraints().addConstraint(
         4 * x * x + (2 * y - 3) * (2 * y - 3) + 4 * z * z - 4,
         poly::SignCondition::LT,
         dummy(2));
 
-    cac.compute_variable_ordering();
+    cac.computeVariableOrdering();
 
-    auto cover = cac.get_unsat_cover();
+    auto cover = cac.getUnsatCover();
     TS_ASSERT(cover.empty());
-    std::cout << "SAT: " << cac.get_model() << std::endl;
+    std::cout << "SAT: " << cac.getModel() << std::endl;
   }
 
   void test_cdcac_4()
   {
     cad::CDCAC cac;
-    poly::Variable x = cac.get_constraints().var_mapper()(make_real_variable("x"));
-    poly::Variable y = cac.get_constraints().var_mapper()(make_real_variable("y"));
-    poly::Variable z = cac.get_constraints().var_mapper()(make_real_variable("z"));
+    poly::Variable x = cac.getConstraints().varMapper()(make_real_variable("x"));
+    poly::Variable y = cac.getConstraints().varMapper()(make_real_variable("y"));
+    poly::Variable z = cac.getConstraints().varMapper()(make_real_variable("z"));
 
-    cac.get_constraints().add_constraint(
+    cac.getConstraints().addConstraint(
         -z * z + y * y + x * x - 25, poly::SignCondition::GT, dummy(1));
-    cac.get_constraints().add_constraint(
+    cac.getConstraints().addConstraint(
         (y - x - 6) * z * z - 9 * y * y + x * x - 1,
         poly::SignCondition::GT,
         dummy(2));
-    cac.get_constraints().add_constraint(
+    cac.getConstraints().addConstraint(
         y * y - 100, poly::SignCondition::LT, dummy(3));
     
-    cac.compute_variable_ordering();
+    cac.computeVariableOrdering();
 
-    auto cover = cac.get_unsat_cover();
+    auto cover = cac.getUnsatCover();
     TS_ASSERT(cover.empty());
-    std::cout << "SAT: " << cac.get_model() << std::endl;
+    std::cout << "SAT: " << cac.getModel() << std::endl;
   }
 
   void test_delta(const std::vector<Node>& a)
@@ -254,18 +254,18 @@ class TheoryArithNLCADWhite : public CxxTest::TestSuite
     for (const Node& n : a)
     {
       //std::cout << " " << n << std::endl;
-      cac.get_constraints().add_constraint(n);
+      cac.getConstraints().addConstraint(n);
     }
-    cac.compute_variable_ordering();
+    cac.computeVariableOrdering();
 
     std::vector<NlLemma> lems;
     // Do full theory check here
 
-    auto covering = cac.get_unsat_cover();
+    auto covering = cac.getUnsatCover();
     if (covering.empty()) {
-      std::cout << "SAT: " << cac.get_model() << std::endl;
+      std::cout << "SAT: " << cac.getModel() << std::endl;
     } else {
-      auto mis = cad::collect_constraints(covering);
+      auto mis = cad::collectConstraints(covering);
       std::cout << "Collected MIS: " << mis << std::endl;
       for (auto& n: mis) {
         n = n.negate();

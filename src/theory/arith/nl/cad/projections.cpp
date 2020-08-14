@@ -92,7 +92,7 @@ void makeFinestSquareFreeBasis(std::vector<poly::Polynomial>& lhs,
   reduceProjectionPolynomials(rhs);
 }
 
-std::vector<Polynomial> projection_mccallum(
+std::vector<Polynomial> projectionMcCallum(
     const std::vector<Polynomial>& polys)
 {
   std::vector<Polynomial> res;
