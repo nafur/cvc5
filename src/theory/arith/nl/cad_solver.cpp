@@ -133,11 +133,18 @@ std::vector<NlLemma> CadSolver::checkPartial()
   }
   else
   {
+    auto* nm = NodeManager::currentNM();
+    std::vector<Node> premises;
+    for (const auto& c: d_CAC.getConstraints().getConstraints()) {
+      premises.emplace_back(std::get<2>(c));
+    }
+    Node premise = nm->mkNode(Kind::AND, premises);
     for (const auto& interval : covering)
     {
       Node first_var =
           d_CAC.getConstraints().varMapper()(d_CAC.getVariableOrdering()[0]);
       Node lemma = excluding_interval_to_lemma(first_var, interval.d_interval);
+      lemma = nm->mkNode(Kind::IMPLIES, premise, lemma);
       Trace("nl-cad") << "Excluding " << first_var << " -> " << interval.d_interval << " using " << lemma << std::endl;
       lems.emplace_back(lemma, Inference::CAD_EXCLUDED_INTERVAL);
     }
