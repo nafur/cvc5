@@ -29,7 +29,8 @@ namespace theory {
 namespace arith {
 namespace nl {
 
-poly::SignCondition to_sign_condition(CVC4::Kind kind) {
+poly::SignCondition to_sign_condition(CVC4::Kind kind)
+{
   switch (kind)
   {
     case Kind::LT: return poly::SignCondition::LT;
@@ -207,8 +208,7 @@ poly::Polynomial as_poly_polynomial_impl(const CVC4::Node& n,
       }
       return res;
     }
-    default: 
-      return poly::Polynomial(vm(n));
+    default: return poly::Polynomial(vm(n));
   }
   return poly::Polynomial();
 }
@@ -217,7 +217,10 @@ poly::Polynomial as_poly_polynomial(const CVC4::Node& n, VariableMapper& vm)
   poly::Integer denom;
   return as_poly_polynomial_impl(n, denom, vm);
 }
-poly::Polynomial as_poly_polynomial(const CVC4::Node& n, VariableMapper& vm, poly::Rational& denominator) {
+poly::Polynomial as_poly_polynomial(const CVC4::Node& n,
+                                    VariableMapper& vm,
+                                    poly::Rational& denominator)
+{
   poly::Integer denom;
   auto res = as_poly_polynomial_impl(n, denom, vm);
   denominator = poly::Rational(denom);
@@ -382,17 +385,18 @@ Node excluding_interval_to_lemma(const Node& variable,
     if (is_algebraic_number(lv))
     {
       return nm->mkNode(
-          Kind::AND,
+          Kind::OR,
           nm->mkNode(
-              Kind::GT, variable, nm->mkConst(poly_utils::toRationalBelow(lv))),
-          nm->mkNode(Kind::LT,
+              Kind::LT, variable, nm->mkConst(poly_utils::toRationalBelow(lv))),
+          nm->mkNode(Kind::GT,
                      variable,
                      nm->mkConst(poly_utils::toRationalAbove(lv))));
     }
     else
     {
-      return nm->mkNode(
-          Kind::EQUAL, variable, nm->mkConst(poly_utils::toRationalBelow(lv)));
+      return nm->mkNode(Kind::DISTINCT,
+                        variable,
+                        nm->mkConst(poly_utils::toRationalBelow(lv)));
     }
   }
   if (li)
@@ -406,7 +410,7 @@ Node excluding_interval_to_lemma(const Node& variable,
         Kind::LT, variable, nm->mkConst(poly_utils::toRationalBelow(lv)));
   }
   return nm->mkNode(
-      Kind::AND,
+      Kind::OR,
       nm->mkNode(
           Kind::GT, variable, nm->mkConst(poly_utils::toRationalAbove(uv))),
       nm->mkNode(
