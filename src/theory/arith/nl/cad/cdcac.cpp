@@ -348,7 +348,7 @@ CACInterval CDCAC::intervalFromCharacterization(
 std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t curVariable,
                                               bool returnFirstInterval)
 {
-  if (cur_variable == 0)
+  if (curVariable == 0)
   {
     Trace("cdcac") << "******************** CDCAC Check" << std::endl;
     for (const auto& c : d_constraints.getConstraints())
@@ -415,12 +415,6 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t curVariable,
     intervals.emplace_back(newInterval);
 
     if (returnFirstInterval)
-    {
-      return intervals;
-    }
-
-
-    if (return_first_interval)
     {
       return intervals;
     }
