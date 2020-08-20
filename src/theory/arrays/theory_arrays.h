@@ -148,9 +148,18 @@ class TheoryArrays : public Theory {
                std::string name = "");
   ~TheoryArrays();
 
-  TheoryRewriter* getTheoryRewriter() override { return &d_rewriter; }
-
-  void setMasterEqualityEngine(eq::EqualityEngine* eq) override;
+  //--------------------------------- initialization
+  /** get the official theory rewriter of this theory */
+  TheoryRewriter* getTheoryRewriter() override;
+  /**
+   * Returns true if we need an equality engine. If so, we initialize the
+   * information regarding how it should be setup. For details, see the
+   * documentation in Theory::needsEqualityEngine.
+   */
+  bool needsEqualityEngine(EeSetupInfo& esi) override;
+  /** finish initialization */
+  void finishInit() override;
+  //--------------------------------- end initialization
 
   std::string identify() const override { return std::string("TheoryArrays"); }
 
@@ -287,26 +296,17 @@ class TheoryArrays : public Theory {
   public:
     NotifyClass(TheoryArrays& arrays): d_arrays(arrays) {}
 
-    bool eqNotifyTriggerEquality(TNode equality, bool value) override
-    {
-      Debug("arrays::propagate") << spaces(d_arrays.getSatContext()->getLevel()) << "NotifyClass::eqNotifyTriggerEquality(" << equality << ", " << (value ? "true" : "false") << ")" << std::endl;
-      // Just forward to arrays
-      if (value) {
-        return d_arrays.propagate(equality);
-      } else {
-        return d_arrays.propagate(equality.notNode());
-      }
-    }
-
     bool eqNotifyTriggerPredicate(TNode predicate, bool value) override
     {
-      Debug("arrays::propagate") << spaces(d_arrays.getSatContext()->getLevel()) << "NotifyClass::eqNotifyTriggerEquality(" << predicate << ", " << (value ? "true" : "false") << ")" << std::endl;
+      Debug("arrays::propagate")
+          << spaces(d_arrays.getSatContext()->getLevel())
+          << "NotifyClass::eqNotifyTriggerPredicate(" << predicate << ", "
+          << (value ? "true" : "false") << ")" << std::endl;
       // Just forward to arrays
       if (value) {
         return d_arrays.propagate(predicate);
-      } else {
-        return d_arrays.propagate(predicate.notNode());
       }
+      return d_arrays.propagate(predicate.notNode());
     }
 
     bool eqNotifyTriggerTermEquality(TheoryId tag,
@@ -341,8 +341,7 @@ class TheoryArrays : public Theory {
     }
 
     void eqNotifyNewClass(TNode t) override {}
-    void eqNotifyPreMerge(TNode t1, TNode t2) override {}
-    void eqNotifyPostMerge(TNode t1, TNode t2) override
+    void eqNotifyMerge(TNode t1, TNode t2) override
     {
       if (t1.getType().isArray()) {
         d_arrays.mergeArrays(t1, t2);
@@ -353,9 +352,6 @@ class TheoryArrays : public Theory {
 
   /** The notify class for d_equalityEngine */
   NotifyClass d_notify;
-
-  /** Equaltity engine */
-  eq::EqualityEngine d_equalityEngine;
 
   /** Are we in conflict? */
   context::CDO<bool> d_conflict;
@@ -461,7 +457,7 @@ class TheoryArrays : public Theory {
   int d_topLevel;
 
   /** An equality-engine callback for proof reconstruction */
-  ArrayProofReconstruction d_proofReconstruction;
+  std::unique_ptr<ArrayProofReconstruction> d_proofReconstruction;
 
   /**
    * The decision strategy for the theory of arrays, which calls the
@@ -494,9 +490,12 @@ class TheoryArrays : public Theory {
    */
   Node getNextDecisionRequest();
 
- public:
-  eq::EqualityEngine* getEqualityEngine() override { return &d_equalityEngine; }
-
+  /**
+   * Compute relevant terms. This includes additional select nodes for the
+   * RIntro1 and RIntro2 rules.
+   */
+  void computeRelevantTerms(std::set<Node>& termSet,
+                            bool includeShared = true) override;
 };/* class TheoryArrays */
 
 }/* CVC4::theory::arrays namespace */

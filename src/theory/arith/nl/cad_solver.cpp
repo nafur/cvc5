@@ -140,12 +140,16 @@ std::vector<NlLemma> CadSolver::checkPartial()
     {
       Node premise;
       Assert(!interval.d_origins.empty());
-      if (interval.d_origins.size() == 1) {
+      if (interval.d_origins.size() == 1)
+      {
         premise = interval.d_origins[0];
-      } else {
+      }
+      else
+      {
         premise = nm->mkNode(Kind::AND, interval.d_origins);
       }
-      Node conclusion = excluding_interval_to_lemma(first_var, interval.d_interval);
+      Node conclusion =
+          excluding_interval_to_lemma(first_var, interval.d_interval);
       Node lemma = nm->mkNode(Kind::IMPLIES, premise, conclusion);
       Trace("nl-cad") << "Excluding " << first_var << " -> " << interval.d_interval << " using " << lemma << std::endl;
       lems.emplace_back(lemma, Inference::CAD_EXCLUDED_INTERVAL);

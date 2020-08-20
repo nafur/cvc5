@@ -42,6 +42,7 @@
 #include "theory/bv/theory_bv_utils.h"
 #include "theory/care_graph.h"
 #include "theory/decision_manager.h"
+#include "theory/ee_manager_distributed.h"
 #include "theory/quantifiers/first_order_model.h"
 #include "theory/quantifiers/fmf/model_engine.h"
 #include "theory/quantifiers/theory_quantifiers.h"
@@ -129,20 +130,21 @@ std::string getTheoryString(theory::TheoryId id)
 }
 
 void TheoryEngine::finishInit() {
-  //initialize the quantifiers engine, master equality engine, model, model builder
-  if( d_logicInfo.isQuantified() ) {
+  // initialize the quantifiers engine
+  if (d_logicInfo.isQuantified())
+  {
     // initialize the quantifiers engine
     d_quantEngine = new QuantifiersEngine(d_context, d_userContext, this);
-    Assert(d_masterEqualityEngine == 0);
-    d_masterEqualityEngine = new eq::EqualityEngine(d_masterEENotify,getSatContext(), "theory::master", false);
+  }
 
-    for(TheoryId theoryId = theory::THEORY_FIRST; theoryId != theory::THEORY_LAST; ++ theoryId) {
-      if (d_theoryTable[theoryId]) {
-        d_theoryTable[theoryId]->setQuantifiersEngine(d_quantEngine);
-        d_theoryTable[theoryId]->setMasterEqualityEngine(d_masterEqualityEngine);
-      }
-    }
+  // Initialize the equality engine architecture for all theories, which
+  // includes the master equality engine.
+  d_eeDistributed.reset(new EqEngineManagerDistributed(*this));
+  d_eeDistributed->finishInit();
 
+  // Initialize the model and model builder.
+  if (d_logicInfo.isQuantified())
+  {
     d_curr_model_builder = d_quantEngine->getModelBuilder();
     d_curr_model = d_quantEngine->getModel();
   } else {
@@ -150,25 +152,39 @@ void TheoryEngine::finishInit() {
         d_userContext, "DefaultModel", options::assignFunctionValues());
     d_aloc_curr_model = true;
   }
+
   //make the default builder, e.g. in the case that the quantifiers engine does not have a model builder
   if( d_curr_model_builder==NULL ){
     d_curr_model_builder = new theory::TheoryEngineModelBuilder(this);
     d_aloc_curr_model_builder = true;
   }
 
-  for(TheoryId theoryId = theory::THEORY_FIRST; theoryId != theory::THEORY_LAST; ++ theoryId) {
-    if (d_theoryTable[theoryId]) {
-      // set the decision manager for the theory
-      d_theoryTable[theoryId]->setDecisionManager(d_decManager.get());
-      // finish initializing the theory
-      d_theoryTable[theoryId]->finishInit();
-    }
+  // set the core equality engine on quantifiers engine
+  if (d_logicInfo.isQuantified())
+  {
+    d_quantEngine->setMasterEqualityEngine(
+        d_eeDistributed->getMasterEqualityEngine());
   }
-}
 
-void TheoryEngine::eqNotifyNewClass(TNode t){
-  if (d_logicInfo.isQuantified()) {
-    d_quantEngine->eqNotifyNewClass( t );
+  // finish initializing the theories
+  for(TheoryId theoryId = theory::THEORY_FIRST; theoryId != theory::THEORY_LAST; ++ theoryId) {
+    Theory* t = d_theoryTable[theoryId];
+    if (t == nullptr)
+    {
+      continue;
+    }
+    // setup the pointers to the utilities
+    const EeTheoryInfo* eeti = d_eeDistributed->getEeTheoryInfo(theoryId);
+    Assert(eeti != nullptr);
+    // the theory's official equality engine is the one specified by the
+    // equality engine manager
+    t->setEqualityEngine(eeti->d_usedEe);
+    // set the quantifiers engine
+    t->setQuantifiersEngine(d_quantEngine);
+    // set the decision manager for the theory
+    t->setDecisionManager(d_decManager.get());
+    // finish initializing the theory
+    t->finishInit();
   }
 }
 
@@ -182,8 +198,7 @@ TheoryEngine::TheoryEngine(context::Context* context,
       d_userContext(userContext),
       d_logicInfo(logicInfo),
       d_sharedTerms(this, context),
-      d_masterEqualityEngine(nullptr),
-      d_masterEENotify(*this),
+      d_eeDistributed(nullptr),
       d_quantEngine(nullptr),
       d_decManager(new DecisionManager(userContext)),
       d_curr_model(nullptr),
@@ -251,8 +266,6 @@ TheoryEngine::~TheoryEngine() {
   }
 
   delete d_quantEngine;
-
-  delete d_masterEqualityEngine;
 
   smtStatisticsRegistry()->unregisterStat(&d_combineTheoriesTime);
   smtStatisticsRegistry()->unregisterStat(&d_arithSubstitutionsAdded);
@@ -537,9 +550,12 @@ void TheoryEngine::check(Theory::Effort effort) {
     Debug("theory") << ", need check = " << (needCheck() ? "YES" : "NO") << endl;
 
     if( Theory::fullEffort(effort) && !d_inConflict && !needCheck()) {
-      // case where we are about to answer SAT
-      if( d_masterEqualityEngine != NULL ){
-        AlwaysAssert(d_masterEqualityEngine->consistent());
+      // case where we are about to answer SAT, the master equality engine,
+      // if it exists, must be consistent.
+      eq::EqualityEngine* mee = d_eeDistributed->getMasterEqualityEngine();
+      if (mee != NULL)
+      {
+        AlwaysAssert(mee->consistent());
       }
       if (d_curr_model->isBuilt())
       {
@@ -964,7 +980,13 @@ theory::Theory::PPAssertStatus TheoryEngine::solve(TNode literal, SubstitutionMa
 void TheoryEngine::preprocessStart() { d_tpp.clearCache(); }
 
 Node TheoryEngine::preprocess(TNode assertion) {
-  return d_tpp.theoryPreprocess(assertion);
+  TrustNode trn = d_tpp.theoryPreprocess(assertion);
+  if (trn.isNull())
+  {
+    // no change
+    return assertion;
+  }
+  return trn.getNode();
 }
 
 void TheoryEngine::notifyPreprocessedAssertions(
@@ -1617,6 +1639,12 @@ theory::LemmaStatus TheoryEngine::lemma(TNode node,
   std::vector<Node> newSkolems;
   TrustNode tlemma = d_tpp.preprocess(node, newLemmas, newSkolems, preprocess);
 
+  // !!!!!!! temporary, until this method is fully updated from proof-new
+  if (tlemma.isNull())
+  {
+    tlemma = TrustNode::mkTrustLemma(node);
+  }
+
   // must use an assertion pipeline due to decision engine below
   AssertionPipeline lemmas;
   // make the assertion pipeline
@@ -1791,6 +1819,11 @@ void TheoryEngine::staticInitializeBVOptions(
     bv::TheoryBV* bv_theory = (bv::TheoryBV*)d_theoryTable[THEORY_BV];
     bv_theory->enableCoreTheorySlicer();
   }
+}
+
+SharedTermsDatabase* TheoryEngine::getSharedTermsDatabase()
+{
+  return &d_sharedTerms;
 }
 
 void TheoryEngine::getExplanation(std::vector<NodeTheoryPair>& explanationVector, LemmaProofRecipe* proofRecipe) {
