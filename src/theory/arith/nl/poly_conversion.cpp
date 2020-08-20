@@ -401,20 +401,24 @@ Node excluding_interval_to_lemma(const Node& variable,
   }
   if (li)
   {
-    return nm->mkNode(
-        Kind::GT, variable, nm->mkConst(poly_utils::toRationalAbove(uv)));
+    return nm->mkNode(poly::get_upper_open(interval) ? Kind::GEQ : Kind::GT,
+                      variable,
+                      nm->mkConst(poly_utils::toRationalAbove(uv)));
   }
   if (ui)
   {
-    return nm->mkNode(
-        Kind::LT, variable, nm->mkConst(poly_utils::toRationalBelow(lv)));
+    return nm->mkNode(poly::get_lower_open(interval) ? Kind::LEQ : Kind::LT,
+                      variable,
+                      nm->mkConst(poly_utils::toRationalBelow(lv)));
   }
   return nm->mkNode(
       Kind::OR,
-      nm->mkNode(
-          Kind::GT, variable, nm->mkConst(poly_utils::toRationalAbove(uv))),
-      nm->mkNode(
-          Kind::LT, variable, nm->mkConst(poly_utils::toRationalBelow(lv))));
+      nm->mkNode(poly::get_upper_open(interval) ? Kind::GEQ : Kind::GT,
+                 variable,
+                 nm->mkConst(poly_utils::toRationalAbove(uv))),
+      nm->mkNode(poly::get_lower_open(interval) ? Kind::LEQ : Kind::LT,
+                 variable,
+                 nm->mkConst(poly_utils::toRationalBelow(lv))));
 }
 
 Maybe<Rational> get_lower_bound(const Node& n)
