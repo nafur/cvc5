@@ -665,16 +665,32 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
   }
   if (options::nlCad())
   {
-    lemmas = d_cadSlv.checkFull();
-    if (lemmas.empty())
+    lemmas = d_cadSlv.checkPartial();
+    if (Trace.isOn("nl-cad"))
     {
-      Trace("nl-cad") << "nl-cad found SAT!" << std::endl;
-    }
-    else
-    {
-      Trace("nl-cad") << "nl-cad found lemma: " << lemmas.front().d_lemma << std::endl;
+      for (const auto& lemma : lemmas)
+      {
+        Trace("nl-cad") << "nl-cad found lemma: " << lemma.d_lemma << std::endl;
+      }
     }
     filterLemmas(lemmas, wlems);
+    if (wlems.empty())
+    {
+      lemmas = d_cadSlv.checkFull();
+      if (lemmas.empty())
+      {
+        Trace("nl-cad") << "nl-cad found SAT!" << std::endl;
+      }
+      else
+      {
+        for (const auto& lemma : lemmas)
+        {
+          Trace("nl-cad") << "nl-cad found lemma: " << lemma.d_lemma
+                          << std::endl;
+        }
+      }
+      filterLemmas(lemmas, wlems);
+    }
   }
   // run the full refinement in the IAND solver
   lemmas = d_iandSlv.checkFullRefine();
