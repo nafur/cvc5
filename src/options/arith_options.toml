@@ -551,6 +551,14 @@ header = "options/arith_options.h"
   help       = "whether to use the cylindrical algebraic decomposition solver for non-linear arithmetic"
 
 [[option]]
+  name       = "nlCadPartial"
+  category   = "regular"
+  long       = "nl-cad-partial"
+  type       = "bool"
+  default    = "false"
+  help       = "whether to use partial checks of the cylindrical algebraic decomposition solver for non-linear arithmetic"
+
+[[option]]
   name       = "nlICP"
   category   = "regular"
   long       = "nl-icp"

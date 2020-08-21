@@ -663,34 +663,40 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
       filterLemmas(lemmas, wlems);
     }
   }
-  if (options::nlCad())
+  if (options::nlCadPartial())
   {
     lemmas = d_cadSlv.checkPartial();
-    if (Trace.isOn("nl-cad"))
+    filterLemmas(lemmas, lems);
+    if (!lems.empty())
+    {
+      if (Trace.isOn("nl-cad"))
+      {
+        for (const auto& lemma : lems)
+        {
+          Trace("nl-cad") << "nl-cad found lemma: " << lemma.d_lemma << std::endl;
+        }
+      }
+      Trace("nl-ext") << "  ...finished with " << lems.size() << " new lemmas."
+                      << std::endl;
+      return lems.size();
+    }
+  }
+  if (options::nlCad())
+  {
+    lemmas = d_cadSlv.checkFull();
+    if (lemmas.empty())
+    {
+      Trace("nl-cad") << "nl-cad found SAT!" << std::endl;
+    }
+    else
     {
       for (const auto& lemma : lemmas)
       {
-        Trace("nl-cad") << "nl-cad found lemma: " << lemma.d_lemma << std::endl;
+        Trace("nl-cad") << "nl-cad found lemma: " << lemma.d_lemma
+                        << std::endl;
       }
     }
     filterLemmas(lemmas, wlems);
-    if (wlems.empty())
-    {
-      lemmas = d_cadSlv.checkFull();
-      if (lemmas.empty())
-      {
-        Trace("nl-cad") << "nl-cad found SAT!" << std::endl;
-      }
-      else
-      {
-        for (const auto& lemma : lemmas)
-        {
-          Trace("nl-cad") << "nl-cad found lemma: " << lemma.d_lemma
-                          << std::endl;
-        }
-      }
-      filterLemmas(lemmas, wlems);
-    }
   }
   // run the full refinement in the IAND solver
   lemmas = d_iandSlv.checkFullRefine();
