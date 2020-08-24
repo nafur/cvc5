@@ -203,10 +203,8 @@ PropagationResult ICPSolver::doIt(poly::IntervalAssignment& ia)
         break;
       case PropagationResult::CONFLICT:
         mState->mOrigins.add(mMapper(c.lhs), c.origin, c.rhsVariables);
-        auto nm = NodeManager::currentNM();
-        mState->mLastConflict = nm->mkNode(
-            Kind::NOT,
-            nm->mkNode(Kind::AND, mState->mOrigins.getOrigins(mMapper(c.lhs))));
+        auto origins = mState->mOrigins.getOrigins(mMapper(c.lhs));
+        mState->mLastConflict = NodeManager::currentNM()->mkNode(Kind::NOT, origins);
         return PropagationResult::CONFLICT;
     }
     switch (cres)
