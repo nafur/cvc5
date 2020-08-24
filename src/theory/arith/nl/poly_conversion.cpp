@@ -371,9 +371,108 @@ Node value_to_node(const poly::Value& v, const Node& ran_variable)
   return nm->mkConst(Rational(0));
 }
 
+Node lower_bound_as_node(const Node& var,
+                         const poly::Value& lower,
+                         bool open,
+                         bool use_nonlinear_encoding)
+{
+  auto* nm = NodeManager::currentNM();
+  if (!poly::is_algebraic_number(lower))
+  {
+    return nm->mkNode(open ? Kind::LEQ : Kind::LT,
+                      var,
+                      nm->mkConst(poly_utils::toRationalAbove(lower)));
+  }
+  if (!use_nonlinear_encoding)
+  {
+    return nm->mkConst(false);
+  }
+
+  const poly::AlgebraicNumber& alg = as_algebraic_number(lower);
+
+  Node poly = as_cvc_upolynomial(get_defining_polynomial(alg), var);
+  Rational l = poly_utils::toRational(
+      poly::get_lower(poly::get_isolating_interval(alg)));
+  Rational u = poly_utils::toRational(
+      poly::get_upper(poly::get_isolating_interval(alg)));
+  int sl = poly::sign_at(get_defining_polynomial(alg),
+                         poly::get_lower(poly::get_isolating_interval(alg)));
+  int su = poly::sign_at(get_defining_polynomial(alg),
+                         poly::get_upper(poly::get_isolating_interval(alg)));
+  Assert(sl != 0 && su != 0 && sl != su);
+
+  // open:  var <= l  or  (var < u  and  sgn(poly(var)) == sl)
+  // !open: var <= l  or  (var < u  and  sgn(poly(var)) == sl/0)
+  Kind relation;
+  if (open)
+  {
+    relation = (sl < 0) ? Kind::LT : Kind::GT;
+  }
+  else
+  {
+    relation = (sl < 0) ? Kind::LEQ : Kind::GEQ;
+  }
+  return nm->mkNode(
+      Kind::OR,
+      nm->mkNode(Kind::LEQ, var, nm->mkConst(l)),
+      nm->mkNode(Kind::AND,
+                 nm->mkNode(Kind::LT, var, nm->mkConst(u)),
+                 nm->mkNode(relation, poly, nm->mkConst(Rational(0)))));
+}
+
+Node upper_bound_as_node(const Node& var,
+                         const poly::Value& upper,
+                         bool open,
+                         bool use_nonlinear_encoding)
+{
+  auto* nm = NodeManager::currentNM();
+  if (!poly::is_algebraic_number(upper))
+  {
+    return nm->mkNode(open ? Kind::GEQ : Kind::GT,
+                      var,
+                      nm->mkConst(poly_utils::toRationalAbove(upper)));
+  }
+  if (!use_nonlinear_encoding)
+  {
+    return nm->mkConst(false);
+  }
+
+  const poly::AlgebraicNumber& alg = as_algebraic_number(upper);
+
+  Node poly = as_cvc_upolynomial(get_defining_polynomial(alg), var);
+  Rational l = poly_utils::toRational(
+      poly::get_lower(poly::get_isolating_interval(alg)));
+  Rational u = poly_utils::toRational(
+      poly::get_upper(poly::get_isolating_interval(alg)));
+  int sl = poly::sign_at(get_defining_polynomial(alg),
+                         poly::get_lower(poly::get_isolating_interval(alg)));
+  int su = poly::sign_at(get_defining_polynomial(alg),
+                         poly::get_upper(poly::get_isolating_interval(alg)));
+  Assert(sl != 0 && su != 0 && sl != su);
+
+  // open:  var >= u  or  (var > l  and  sgn(poly(var)) == su)
+  // !open: var >= u  or  (var > l  and  sgn(poly(var)) == su/0)
+  Kind relation;
+  if (open)
+  {
+    relation = (su < 0) ? Kind::LT : Kind::GT;
+  }
+  else
+  {
+    relation = (su < 0) ? Kind::LEQ : Kind::GEQ;
+  }
+  return nm->mkNode(
+      Kind::OR,
+      nm->mkNode(Kind::GEQ, var, nm->mkConst(u)),
+      nm->mkNode(Kind::AND,
+                 nm->mkNode(Kind::GT, var, nm->mkConst(l)),
+                 nm->mkNode(relation, poly, nm->mkConst(Rational(0)))));
+}
+
 Node excluding_interval_to_lemma(const Node& variable,
                                  const poly::Interval& interval)
 {
+  constexpr bool use_nonlinear_encoding = true;
   auto* nm = NodeManager::currentNM();
   const auto& lv = poly::get_lower(interval);
   const auto& uv = poly::get_upper(interval);
@@ -384,14 +483,22 @@ Node excluding_interval_to_lemma(const Node& variable,
   {
     if (is_algebraic_number(lv))
     {
+      // p(x) != 0 or x <= lb or ub <= x
+      if (use_nonlinear_encoding)
+      {
+        Node poly = as_cvc_upolynomial(
+            get_defining_polynomial(as_algebraic_number(lv)), variable);
+        return nm->mkNode(
+            Kind::OR,
+            nm->mkNode(Kind::DISTINCT, poly, nm->mkConst(Rational(0))),
+            nm->mkNode(Kind::LT,
+                       variable,
+                       nm->mkConst(poly_utils::toRationalBelow(lv))),
+            nm->mkNode(Kind::GT,
+                       variable,
+                       nm->mkConst(poly_utils::toRationalAbove(lv))));
+      }
       return Node();
-      return nm->mkNode(
-          Kind::OR,
-          nm->mkNode(
-              Kind::LT, variable, nm->mkConst(poly_utils::toRationalBelow(lv))),
-          nm->mkNode(Kind::GT,
-                     variable,
-                     nm->mkConst(poly_utils::toRationalAbove(lv))));
     }
     else
     {
@@ -402,24 +509,22 @@ Node excluding_interval_to_lemma(const Node& variable,
   }
   if (li)
   {
-    return nm->mkNode(poly::get_upper_open(interval) ? Kind::GEQ : Kind::GT,
-                      variable,
-                      nm->mkConst(poly_utils::toRationalBelow(uv)));
+    return upper_bound_as_node(
+        variable, uv, poly::get_upper_open(interval), use_nonlinear_encoding);
   }
   if (ui)
   {
-    return nm->mkNode(poly::get_lower_open(interval) ? Kind::LEQ : Kind::LT,
-                      variable,
-                      nm->mkConst(poly_utils::toRationalAbove(lv)));
+    return lower_bound_as_node(
+        variable, lv, poly::get_lower_open(interval), use_nonlinear_encoding);
   }
   return nm->mkNode(
       Kind::OR,
-      nm->mkNode(poly::get_upper_open(interval) ? Kind::GEQ : Kind::GT,
-                 variable,
-                 nm->mkConst(poly_utils::toRationalBelow(uv))),
-      nm->mkNode(poly::get_lower_open(interval) ? Kind::LEQ : Kind::LT,
-                 variable,
-                 nm->mkConst(poly_utils::toRationalAbove(lv))));
+      upper_bound_as_node(
+          variable, uv, poly::get_upper_open(interval), use_nonlinear_encoding),
+      lower_bound_as_node(variable,
+                          lv,
+                          poly::get_lower_open(interval),
+                          use_nonlinear_encoding));
 }
 
 Maybe<Rational> get_lower_bound(const Node& n)
