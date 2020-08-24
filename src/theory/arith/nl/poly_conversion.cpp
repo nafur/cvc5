@@ -20,6 +20,7 @@
 
 #include "expr/node.h"
 #include "expr/node_manager_attributes.h"
+#include "options/arith_options.h"
 #include "util/integer.h"
 #include "util/poly_util.h"
 #include "util/rational.h"
@@ -371,10 +372,7 @@ Node value_to_node(const poly::Value& v, const Node& ran_variable)
   return nm->mkConst(Rational(0));
 }
 
-Node lower_bound_as_node(const Node& var,
-                         const poly::Value& lower,
-                         bool open,
-                         bool use_nonlinear_encoding)
+Node lower_bound_as_node(const Node& var, const poly::Value& lower, bool open)
 {
   auto* nm = NodeManager::currentNM();
   if (!poly::is_algebraic_number(lower))
@@ -383,7 +381,7 @@ Node lower_bound_as_node(const Node& var,
                       var,
                       nm->mkConst(poly_utils::toRationalAbove(lower)));
   }
-  if (!use_nonlinear_encoding)
+  if (!options::nlCadNlLemmas())
   {
     return nm->mkConst(false);
   }
@@ -420,10 +418,7 @@ Node lower_bound_as_node(const Node& var,
                  nm->mkNode(relation, poly, nm->mkConst(Rational(0)))));
 }
 
-Node upper_bound_as_node(const Node& var,
-                         const poly::Value& upper,
-                         bool open,
-                         bool use_nonlinear_encoding)
+Node upper_bound_as_node(const Node& var, const poly::Value& upper, bool open)
 {
   auto* nm = NodeManager::currentNM();
   if (!poly::is_algebraic_number(upper))
@@ -432,7 +427,7 @@ Node upper_bound_as_node(const Node& var,
                       var,
                       nm->mkConst(poly_utils::toRationalAbove(upper)));
   }
-  if (!use_nonlinear_encoding)
+  if (!options::nlCadNlLemmas())
   {
     return nm->mkConst(false);
   }
@@ -472,7 +467,6 @@ Node upper_bound_as_node(const Node& var,
 Node excluding_interval_to_lemma(const Node& variable,
                                  const poly::Interval& interval)
 {
-  constexpr bool use_nonlinear_encoding = true;
   auto* nm = NodeManager::currentNM();
   const auto& lv = poly::get_lower(interval);
   const auto& uv = poly::get_upper(interval);
@@ -484,7 +478,7 @@ Node excluding_interval_to_lemma(const Node& variable,
     if (is_algebraic_number(lv))
     {
       // p(x) != 0 or x <= lb or ub <= x
-      if (use_nonlinear_encoding)
+      if (options::nlCadNlLemmas())
       {
         Node poly = as_cvc_upolynomial(
             get_defining_polynomial(as_algebraic_number(lv)), variable);
@@ -509,22 +503,16 @@ Node excluding_interval_to_lemma(const Node& variable,
   }
   if (li)
   {
-    return upper_bound_as_node(
-        variable, uv, poly::get_upper_open(interval), use_nonlinear_encoding);
+    return upper_bound_as_node(variable, uv, poly::get_upper_open(interval));
   }
   if (ui)
   {
-    return lower_bound_as_node(
-        variable, lv, poly::get_lower_open(interval), use_nonlinear_encoding);
+    return lower_bound_as_node(variable, lv, poly::get_lower_open(interval));
   }
   return nm->mkNode(
       Kind::OR,
-      upper_bound_as_node(
-          variable, uv, poly::get_upper_open(interval), use_nonlinear_encoding),
-      lower_bound_as_node(variable,
-                          lv,
-                          poly::get_lower_open(interval),
-                          use_nonlinear_encoding));
+      upper_bound_as_node(variable, uv, poly::get_upper_open(interval)),
+      lower_bound_as_node(variable, lv, poly::get_lower_open(interval)));
 }
 
 Maybe<Rational> get_lower_bound(const Node& n)
