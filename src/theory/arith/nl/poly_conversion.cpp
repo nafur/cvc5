@@ -482,6 +482,7 @@ Node excluding_interval_to_lemma(const Node& variable,
   auto* nm = NodeManager::currentNM();
   const auto& lv = poly::get_lower(interval);
   const auto& uv = poly::get_upper(interval);
+  if (bitsize(lv) > 100 || bitsize(uv) > 100) return Node();
   bool li = poly::is_minus_infinity(lv);
   bool ui = poly::is_plus_infinity(uv);
   if (li && ui) return nm->mkConst(true);
