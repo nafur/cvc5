@@ -381,9 +381,15 @@ Node lower_bound_as_node(const Node& var, const poly::Value& lower, bool open)
                       var,
                       nm->mkConst(poly_utils::toRationalAbove(lower)));
   }
+  if (poly::represents_rational(lower)) {
+    return nm->mkNode(open ? Kind::LEQ : Kind::LT,
+                      var,
+                      nm->mkConst(poly_utils::toRationalAbove(poly::get_rational(lower))));
+
+  }
   if (!options::nlCadNlLemmas())
   {
-    return nm->mkConst(false);
+    return Node();
   }
 
   const poly::AlgebraicNumber& alg = as_algebraic_number(lower);
@@ -404,11 +410,11 @@ Node lower_bound_as_node(const Node& var, const poly::Value& lower, bool open)
   Kind relation;
   if (open)
   {
-    relation = (sl < 0) ? Kind::LT : Kind::GT;
+    relation = (sl < 0) ? Kind::LEQ : Kind::GEQ;
   }
   else
   {
-    relation = (sl < 0) ? Kind::LEQ : Kind::GEQ;
+    relation = (sl < 0) ? Kind::LT : Kind::GT;
   }
   return nm->mkNode(
       Kind::OR,
@@ -427,9 +433,15 @@ Node upper_bound_as_node(const Node& var, const poly::Value& upper, bool open)
                       var,
                       nm->mkConst(poly_utils::toRationalAbove(upper)));
   }
+  if (poly::represents_rational(upper)) {
+    return nm->mkNode(open ? Kind::GEQ : Kind::GT,
+                      var,
+                      nm->mkConst(poly_utils::toRationalAbove(poly::get_rational(upper))));
+
+  }
   if (!options::nlCadNlLemmas())
   {
-    return nm->mkConst(false);
+    return Node();
   }
 
   const poly::AlgebraicNumber& alg = as_algebraic_number(upper);
@@ -450,11 +462,11 @@ Node upper_bound_as_node(const Node& var, const poly::Value& upper, bool open)
   Kind relation;
   if (open)
   {
-    relation = (su < 0) ? Kind::LT : Kind::GT;
+    relation = (su < 0) ? Kind::LEQ : Kind::GEQ;
   }
   else
   {
-    relation = (su < 0) ? Kind::LEQ : Kind::GEQ;
+    relation = (su < 0) ? Kind::LT : Kind::GT;
   }
   return nm->mkNode(
       Kind::OR,
@@ -477,6 +489,7 @@ Node excluding_interval_to_lemma(const Node& variable,
   {
     if (is_algebraic_number(lv))
     {
+      Trace("nl-cad") << "Algebraic point interval: " << interval << std::endl;
       // p(x) != 0 or x <= lb or ub <= x
       if (options::nlCadNlLemmas())
       {
@@ -496,6 +509,7 @@ Node excluding_interval_to_lemma(const Node& variable,
     }
     else
     {
+      Trace("nl-cad") << "Rational point interval: " << interval << std::endl;
       return nm->mkNode(Kind::DISTINCT,
                         variable,
                         nm->mkConst(poly_utils::toRationalBelow(lv)));
@@ -503,16 +517,20 @@ Node excluding_interval_to_lemma(const Node& variable,
   }
   if (li)
   {
+    Trace("nl-cad") << "Only upper bound: " << interval << std::endl;
     return upper_bound_as_node(variable, uv, poly::get_upper_open(interval));
   }
   if (ui)
   {
+    Trace("nl-cad") << "Only lower bound: " << interval << std::endl;
     return lower_bound_as_node(variable, lv, poly::get_lower_open(interval));
   }
-  return nm->mkNode(
-      Kind::OR,
-      upper_bound_as_node(variable, uv, poly::get_upper_open(interval)),
-      lower_bound_as_node(variable, lv, poly::get_lower_open(interval)));
+  Trace("nl-cad") << "Proper interval: " << interval << std::endl;
+  Node lb = lower_bound_as_node(variable, lv, poly::get_lower_open(interval));
+  Node ub = upper_bound_as_node(variable, uv, poly::get_upper_open(interval));
+  if (ub.isNull()) return lb;
+  if (lb.isNull()) return ub;
+  return nm->mkNode(Kind::OR, lb, ub);
 }
 
 Maybe<Rational> get_lower_bound(const Node& n)
