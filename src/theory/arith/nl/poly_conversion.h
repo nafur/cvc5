@@ -139,6 +139,9 @@ inline std::size_t bitsize(const poly::UPolynomial& v) {
   return sum;
 }
 inline std::size_t bitsize(const poly::AlgebraicNumber& v) {
+  if (is_rational(v)) {
+    return bitsize(to_rational_approximation(v));
+  }
   return bitsize(get_lower_bound(v)) + bitsize(get_upper_bound(v)) + bitsize(get_defining_polynomial(v));
 }
 inline std::size_t bitsize(const poly::Value& v) {
