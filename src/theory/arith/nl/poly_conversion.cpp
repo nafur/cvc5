@@ -528,8 +528,7 @@ Node excluding_interval_to_lemma(const Node& variable,
   Trace("nl-cad") << "Proper interval: " << interval << std::endl;
   Node lb = lower_bound_as_node(variable, lv, poly::get_lower_open(interval));
   Node ub = upper_bound_as_node(variable, uv, poly::get_upper_open(interval));
-  if (ub.isNull()) return lb;
-  if (lb.isNull()) return ub;
+  if (lb.isNull() || ub.isNull()) return Node();
   return nm->mkNode(Kind::OR, lb, ub);
 }
 
