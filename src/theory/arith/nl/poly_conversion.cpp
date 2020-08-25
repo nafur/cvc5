@@ -381,11 +381,12 @@ Node lower_bound_as_node(const Node& var, const poly::Value& lower, bool open)
                       var,
                       nm->mkConst(poly_utils::toRationalAbove(lower)));
   }
-  if (poly::represents_rational(lower)) {
-    return nm->mkNode(open ? Kind::LEQ : Kind::LT,
-                      var,
-                      nm->mkConst(poly_utils::toRationalAbove(poly::get_rational(lower))));
-
+  if (poly::represents_rational(lower))
+  {
+    return nm->mkNode(
+        open ? Kind::LEQ : Kind::LT,
+        var,
+        nm->mkConst(poly_utils::toRationalAbove(poly::get_rational(lower))));
   }
   if (!options::nlCadNlLemmas())
   {
@@ -433,11 +434,12 @@ Node upper_bound_as_node(const Node& var, const poly::Value& upper, bool open)
                       var,
                       nm->mkConst(poly_utils::toRationalAbove(upper)));
   }
-  if (poly::represents_rational(upper)) {
-    return nm->mkNode(open ? Kind::GEQ : Kind::GT,
-                      var,
-                      nm->mkConst(poly_utils::toRationalAbove(poly::get_rational(upper))));
-
+  if (poly::represents_rational(upper))
+  {
+    return nm->mkNode(
+        open ? Kind::GEQ : Kind::GT,
+        var,
+        nm->mkConst(poly_utils::toRationalAbove(poly::get_rational(upper))));
   }
   if (!options::nlCadNlLemmas())
   {
@@ -490,12 +492,20 @@ Node excluding_interval_to_lemma(const Node& variable,
   {
     if (is_algebraic_number(lv))
     {
+      const poly::AlgebraicNumber& alg = as_algebraic_number(lv);
+      if (poly::is_rational(alg))
+      {
+        Trace("nl-cad") << "Rational point interval: " << interval << std::endl;
+        return nm->mkNode(Kind::DISTINCT,
+                          variable,
+                          nm->mkConst(poly_utils::toRational(
+                              poly::to_rational_approximation(alg))));
+      }
       Trace("nl-cad") << "Algebraic point interval: " << interval << std::endl;
       // p(x) != 0 or x <= lb or ub <= x
       if (options::nlCadNlLemmas())
       {
-        Node poly = as_cvc_upolynomial(
-            get_defining_polynomial(as_algebraic_number(lv)), variable);
+        Node poly = as_cvc_upolynomial(get_defining_polynomial(alg), variable);
         return nm->mkNode(
             Kind::OR,
             nm->mkNode(Kind::DISTINCT, poly, nm->mkConst(Rational(0))),
