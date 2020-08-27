@@ -24,7 +24,6 @@
 
 #include "context/cdlist.h"
 #include "expr/attribute.h"
-#include "expr/datatype.h"
 #include "expr/node_trie.h"
 #include "theory/datatypes/datatypes_rewriter.h"
 #include "theory/datatypes/sygus_extension.h"
@@ -290,7 +289,7 @@ private:
   void preRegisterTerm(TNode n) override;
   TrustNode expandDefinition(Node n) override;
   TrustNode ppRewrite(TNode n) override;
-  void addSharedTerm(TNode t) override;
+  void notifySharedTerm(TNode t) override;
   EqualityStatus getEqualityStatus(TNode a, TNode b) override;
   bool collectModelInfo(TheoryModel* m) override;
   void shutdown() override {}

@@ -428,6 +428,10 @@ bool NonlinearExtension::checkModel(const std::vector<Node>& assertions,
 
   // get the presubstitution
   Trace("nl-ext-cm-debug") << "  apply pre-substitution..." << std::endl;
+  // Notice that we do not consider relevance here, since assertions were
+  // already filtered based on relevance. It is incorrect to filter based on
+  // relevance here, since we may have discarded literals that are relevant
+  // that are entailed based on the techniques in getAssertions.
   std::vector<Node> passertions = assertions;
   if (options::nlExt())
   {

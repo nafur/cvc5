@@ -483,6 +483,10 @@ libcvc4_add_sources(
   theory/bv/theory_bv_utils.h
   theory/bv/type_enumerator.h
   theory/care_graph.h
+  theory/combination_care_graph.cpp
+  theory/combination_care_graph.h
+  theory/combination_engine.cpp
+  theory/combination_engine.h
   theory/datatypes/datatypes_rewriter.cpp
   theory/datatypes/datatypes_rewriter.h
   theory/datatypes/sygus_datatype_utils.cpp
@@ -526,6 +530,10 @@ libcvc4_add_sources(
   theory/interrupted.h
   theory/logic_info.cpp
   theory/logic_info.h
+  theory/model_manager.cpp
+  theory/model_manager.h
+  theory/model_manager_distributed.cpp
+  theory/model_manager_distributed.h
   theory/output_channel.cpp
   theory/output_channel.h
   theory/quantifiers/alpha_equivalence.cpp
@@ -833,6 +841,8 @@ libcvc4_add_sources(
   theory/theory_engine_proof_generator.h
   theory/theory_id.cpp
   theory/theory_id.h
+  theory/theory_inference_manager.cpp
+  theory/theory_inference_manager.h
   theory/theory_model.cpp
   theory/theory_model.h
   theory/theory_model_builder.cpp
@@ -1042,7 +1052,6 @@ install(FILES
           expr/array.h
           expr/array_store_all.h
           expr/ascription_type.h
-          expr/datatype.h
           expr/emptyset.h
           expr/expr_iomanip.h
           expr/record.h

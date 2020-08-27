@@ -108,6 +108,8 @@ void TheoryDatatypes::finishInit()
     // do congruence on evaluation functions
     d_equalityEngine->addFunctionKind(kind::DT_SYGUS_EVAL);
   }
+  // testers are not relevant for model building
+  d_valuation.setIrrelevantKind(APPLY_TESTER);
 }
 
 TheoryDatatypes::EqcInfo* TheoryDatatypes::getOrMakeEqcInfo( TNode n, bool doMake ){
@@ -727,11 +729,13 @@ TrustNode TheoryDatatypes::ppRewrite(TNode in)
   return TrustNode::null();
 }
 
-void TheoryDatatypes::addSharedTerm(TNode t) {
-  Debug("datatypes") << "TheoryDatatypes::addSharedTerm(): "
-                     << t << " " << t.getType().isBoolean() << endl;
+void TheoryDatatypes::notifySharedTerm(TNode t)
+{
+  Debug("datatypes") << "TheoryDatatypes::notifySharedTerm(): " << t << " "
+                     << t.getType().isBoolean() << endl;
   d_equalityEngine->addTriggerTerm(t, THEORY_DATATYPES);
-  Debug("datatypes") << "TheoryDatatypes::addSharedTerm() finished" << std::endl;
+  Debug("datatypes") << "TheoryDatatypes::notifySharedTerm() finished"
+                     << std::endl;
 }
 
 bool TheoryDatatypes::propagateLit(TNode literal)
