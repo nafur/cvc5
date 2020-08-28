@@ -104,11 +104,11 @@ void CadSolver::checkFull()
     Trace("nl-cad") << "UNSAT with MIS: " << mis << std::endl;
     if (mis.size() == 1)
     {
-      d_im.addConflict(mis.front(), Inference::CAD_CONFLICT);
+      d_im.addLemma(mis.front(), Inference::CAD_CONFLICT);
     }
     else
     {
-      d_im.addConflict(nm->mkNode(Kind::OR, mis), Inference::CAD_CONFLICT);
+      d_im.addLemma(nm->mkNode(Kind::OR, mis), Inference::CAD_CONFLICT);
     }
   }
 #else

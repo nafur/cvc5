@@ -87,7 +87,7 @@ void InferenceManager::flushWaitingLemmas()
 
 void InferenceManager::addConflict(const Node& conf, nl::Inference inftype)
 {
-  conflict(conf);
+  conflict(Rewriter::rewrite(conf));
 }
 
 std::size_t InferenceManager::countWaitingLemmas() const
