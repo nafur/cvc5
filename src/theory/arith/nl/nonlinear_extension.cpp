@@ -819,8 +819,9 @@ bool NonlinearExtension::modelBasedRefinement(std::vector<ArithLemma>& mlems)
     {
       complete_status = num_shared_wrong_value > 0 ? -1 : 0;
       checkLastCall(assertions, false_asserts, xts, mlems, wlems);
-      if (!mlems.empty())
-      {
+      if (d_im.hasProcessed()) {
+        d_im.doPendingLemmas();
+        d_im.doPendingPhaseRequirements();
         return true;
       }
     }
