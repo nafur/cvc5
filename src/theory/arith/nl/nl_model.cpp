@@ -214,7 +214,7 @@ int NlModel::compareValue(Node i, Node j, bool isAbsolute) const
 
 bool NlModel::checkModel(const std::vector<Node>& assertions,
                          unsigned d,
-                         std::vector<NlLemma>& lemmas,
+                         std::vector<ArithLemma>& lemmas,
                          std::vector<Node>& gs)
 {
   Trace("nl-ext-cm-debug") << "  solve for equalities..." << std::endl;
@@ -325,7 +325,7 @@ bool NlModel::checkModel(const std::vector<Node>& assertions,
       Node v = cb.first;
       Node pred = nm->mkNode(AND, nm->mkNode(GEQ, v, l), nm->mkNode(GEQ, u, v));
       pred = nm->mkNode(OR, mg.negate(), pred);
-      lemmas.push_back(pred);
+      lemmas.emplace_back(pred, LemmaProperty::NONE, nullptr);
     }
   }
   return true;
@@ -453,7 +453,7 @@ bool NlModel::usedApproximate() const { return d_used_approx; }
 
 bool NlModel::solveEqualitySimple(Node eq,
                                   unsigned d,
-                                  std::vector<NlLemma>& lemmas)
+                                  std::vector<ArithLemma>& lemmas)
 {
   Node seq = eq;
   if (!d_check_model_vars.empty())
@@ -647,7 +647,7 @@ bool NlModel::solveEqualitySimple(Node eq,
     Node conf = seq.negate();
     Trace("nl-ext-lemma") << "NlModel::Lemma : quadratic no root : " << conf
                           << std::endl;
-    lemmas.push_back(conf);
+    lemmas.emplace_back(conf, LemmaProperty::NONE, nullptr);
     Trace("nl-ext-cms") << "...fail due to negative discriminant." << std::endl;
     return false;
   }

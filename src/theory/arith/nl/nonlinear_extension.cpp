@@ -45,10 +45,11 @@ NonlinearExtension::NonlinearExtension(TheoryArith& containing,
       d_checkCounter(0),
       d_extTheory(&containing),
       d_model(containing.getSatContext()),
-      d_trSlv(d_model),
-      d_nlSlv(containing, d_model),
-      d_cadSlv(containing, d_model),
-      d_iandSlv(containing, d_model),
+      d_trSlv(d_im, d_model),
+      d_nlSlv(d_im, state, d_model),
+      d_cadSlv(d_im, d_model),
+      d_icpSlv(d_im),
+      d_iandSlv(d_im, state, d_model),
       d_builtModel(containing.getSatContext(), false)
 {
   d_extTheory.addFunctionKind(kind::NONLINEAR_MULT);
@@ -58,8 +59,6 @@ NonlinearExtension::NonlinearExtension(TheoryArith& containing,
   d_extTheory.addFunctionKind(kind::IAND);
   d_true = NodeManager::currentNM()->mkConst(true);
   d_zero = NodeManager::currentNM()->mkConst(Rational(0));
-  d_one = NodeManager::currentNM()->mkConst(Rational(1));
-  d_neg_one = NodeManager::currentNM()->mkConst(Rational(-1));
 }
 
 NonlinearExtension::~NonlinearExtension() {}
@@ -166,17 +165,17 @@ std::pair<bool, Node> NonlinearExtension::isExtfReduced(
   return std::make_pair(true, Node::null());
 }
 
-void NonlinearExtension::sendLemmas(const std::vector<NlLemma>& out)
+void NonlinearExtension::sendLemmas(const std::vector<ArithLemma>& out)
 {
-  for (const NlLemma& nlem : out)
+  for (const ArithLemma& alem : out)
   {
-    Node lem = nlem.d_lemma;
-    LemmaProperty p = nlem.getLemmaProperty();
-    Trace("nl-ext-lemma") << "NonlinearExtension::Lemma : " << nlem.d_id
+    Node lem = alem.d_node;
+    LemmaProperty p = alem.d_property;
+    Trace("nl-ext-lemma") << "NonlinearExtension::Lemma : " << alem.d_inference
                           << " : " << lem << std::endl;
-    d_containing.getOutputChannel().lemma(lem, p);
+    d_containing.getInferenceManager().addLemma(alem);
     // process the side effect
-    processSideEffect(nlem);
+    processSideEffect(alem);
     // add to cache based on preprocess
     if (isLemmaPropertyPreprocess(p))
     {
@@ -186,11 +185,11 @@ void NonlinearExtension::sendLemmas(const std::vector<NlLemma>& out)
     {
       d_lemmas.insert(lem);
     }
-    d_stats.d_inferences << nlem.d_id;
+    d_stats.d_inferences << alem.d_inference;
   }
 }
 
-void NonlinearExtension::processSideEffect(const NlLemma& se)
+void NonlinearExtension::processSideEffect(const ArithLemma& se)
 {
   d_trSlv.processSideEffect(se);
 }
@@ -207,36 +206,36 @@ void NonlinearExtension::computeRelevantAssertions(
       keep.push_back(a);
     }
   }
-  Trace("nl-ext-rlv") << "...keep " << keep.size() << "/" << assertions.size()
-                      << " assertions" << std::endl;
+  Trace("nl-ext-rlv") << "rlv: ...keep " << keep.size() << "/"
+                      << assertions.size() << " assertions" << std::endl;
 }
 
-unsigned NonlinearExtension::filterLemma(NlLemma lem, std::vector<NlLemma>& out)
+unsigned NonlinearExtension::filterLemma(ArithLemma lem, std::vector<ArithLemma>& out)
 {
   Trace("nl-ext-lemma-debug")
-      << "NonlinearExtension::Lemma pre-rewrite : " << lem.d_lemma << std::endl;
-  lem.d_lemma = Rewriter::rewrite(lem.d_lemma);
+      << "NonlinearExtension::Lemma pre-rewrite : " << lem.d_node << std::endl;
+  lem.d_node = Rewriter::rewrite(lem.d_node);
   // get the proper cache
-  NodeSet& lcache = lem.d_preprocess ? d_lemmasPp : d_lemmas;
-  if (lcache.find(lem.d_lemma) != lcache.end())
+  NodeSet& lcache = isLemmaPropertyPreprocess(lem.d_property) ? d_lemmasPp : d_lemmas;
+  if (lcache.find(lem.d_node) != lcache.end())
   {
     Trace("nl-ext-lemma-debug")
-        << "NonlinearExtension::Lemma duplicate : " << lem.d_lemma << std::endl;
+        << "NonlinearExtension::Lemma duplicate : " << lem.d_node << std::endl;
     return 0;
   }
   out.emplace_back(lem);
   return 1;
 }
 
-unsigned NonlinearExtension::filterLemmas(std::vector<NlLemma>& lemmas,
-                                          std::vector<NlLemma>& out)
+unsigned NonlinearExtension::filterLemmas(std::vector<ArithLemma>& lemmas,
+                                          std::vector<ArithLemma>& out)
 {
   if (options::nlExtEntailConflicts())
   {
     // check if any are entailed to be false
-    for (const NlLemma& lem : lemmas)
+    for (const ArithLemma& lem : lemmas)
     {
-      Node ch_lemma = lem.d_lemma.negate();
+      Node ch_lemma = lem.d_node.negate();
       ch_lemma = Rewriter::rewrite(ch_lemma);
       Trace("nl-ext-et-debug")
           << "Check entailment of " << ch_lemma << "..." << std::endl;
@@ -247,7 +246,7 @@ unsigned NonlinearExtension::filterLemmas(std::vector<NlLemma>& lemmas,
       if (et.first)
       {
         Trace("nl-ext-et") << "*** Lemma entailed to be in conflict : "
-                           << lem.d_lemma << std::endl;
+                           << lem.d_node << std::endl;
         // return just this lemma
         if (filterLemma(lem, out) > 0)
         {
@@ -259,7 +258,7 @@ unsigned NonlinearExtension::filterLemmas(std::vector<NlLemma>& lemmas,
   }
 
   unsigned sum = 0;
-  for (const NlLemma& lem : lemmas)
+  for (const ArithLemma& lem : lemmas)
   {
     sum += filterLemma(lem, out);
   }
@@ -424,7 +423,7 @@ std::vector<Node> NonlinearExtension::checkModelEval(
 }
 
 bool NonlinearExtension::checkModel(const std::vector<Node>& assertions,
-                                    std::vector<NlLemma>& lemmas,
+                                    std::vector<ArithLemma>& lemmas,
                                     std::vector<Node>& gs)
 {
   Trace("nl-ext-cm") << "--- check-model ---" << std::endl;
@@ -451,111 +450,63 @@ bool NonlinearExtension::checkModel(const std::vector<Node>& assertions,
 
   Trace("nl-ext-cm") << "-----" << std::endl;
   unsigned tdegree = d_trSlv.getTaylorDegree();
-  bool ret =
-      d_model.checkModel(passertions, tdegree, lemmas, gs);
+  bool ret = d_model.checkModel(passertions, tdegree, lemmas, gs);
   return ret;
 }
 
 int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
                                       const std::vector<Node>& false_asserts,
                                       const std::vector<Node>& xts,
-                                      std::vector<NlLemma>& lems,
-                                      std::vector<NlLemma>& wlems)
+                                      std::vector<ArithLemma>& lems,
+                                      std::vector<ArithLemma>& wlems)
 {
-  std::vector<NlLemma> lemmas;
+  ++(d_stats.d_checkRuns);
+
+  std::vector<ArithLemma> lemmas;
 
   if (options::nlICP())
   {
-    d_icpSlv.reset();
-    std::vector<Node> sorted_assertions(assertions);
-    std::sort(sorted_assertions.begin(), sorted_assertions.end());
-    Trace("nl-ext") << "Doing ICP" << std::endl;
-    for (const auto& n : sorted_assertions)
-    {
-      Node tmp = Rewriter::rewrite(n);
-      Trace("nl-ext") << "Adding " << tmp << std::endl;
-      if (tmp.getKind() != Kind::CONST_BOOLEAN)
-      {
-        d_icpSlv.add(tmp);
-      }
-    }
-    d_icpSlv.init();
-    auto ia = d_icpSlv.getInitial();
-    bool did_progress = false;
-    bool progress = false;
-    do
-    {
-      switch (d_icpSlv.doIt(ia)) {
-        case icp::PropagationResult::NOT_CHANGED:
-          progress = false;
-          break;
-        case icp::PropagationResult::CONTRACTED:
-        case icp::PropagationResult::CONTRACTED_STRONGLY:
-        case icp::PropagationResult::CONTRACTED_WITHOUT_CURRENT:
-        case icp::PropagationResult::CONTRACTED_STRONGLY_WITHOUT_CURRENT:
-          did_progress = true;
-          progress = true;
-          break;
-        case icp::PropagationResult::CONFLICT:
-          Trace("nl-icp") << "Found a conflict: " << d_icpSlv.getConflict()
-                          << std::endl;
-          lemmas.emplace_back(d_icpSlv.getConflict(), Inference::ICP_PROPAGATION);
-          did_progress = true;
-          progress = false;
-          break;
-      }
-    } while (progress);
+    d_icpSlv.reset(assertions);
+    // TODO(Gereon): This currently pushes lemmas to the outputChannel directly.
+    d_icpSlv.execute();
 
-    if (did_progress)
+    if (d_im.hasProcessed())
     {
-      for (const auto& l : d_icpSlv.asLemmas(ia))
-      {
-        lemmas.emplace_back(l, Inference::ICP_PROPAGATION);
-      }
-      filterLemmas(lemmas, lems);
-    }
-    if (!lems.empty())
-    {
-      Trace("nl-ext") << "  ...finished with " << lems.size()
+      Trace("nl-ext") << "  ...finished with " << d_im.countPendingLemmas()
                       << " new lemmas during registration." << std::endl;
-      return lems.size();
+      return d_im.countPendingLemmas();
     }
     Trace("nl-ext") << "Done with ICP" << std::endl;
   }
-
-  ++(d_stats.d_checkRuns);
 
   if (options::nlExt())
   {
     // initialize the non-linear solver
     d_nlSlv.initLastCall(assertions, false_asserts, xts);
     // initialize the trancendental function solver
-    d_trSlv.initLastCall(assertions, false_asserts, xts, lemmas);
-    // process lemmas that may have been generated by the transcendental solver
-    filterLemmas(lemmas, lems);
+    d_trSlv.initLastCall(assertions, false_asserts, xts);
   }
 
   // init last call with IAND
   d_iandSlv.initLastCall(assertions, false_asserts, xts);
 
-  if (!lems.empty())
+  if (d_im.hasProcessed())
   {
-    Trace("nl-ext") << "  ...finished with " << lems.size()
+    Trace("nl-ext") << "  ...finished with " << d_im.countPendingLemmas()
                     << " new lemmas during registration." << std::endl;
-    return lems.size();
+    return d_im.countPendingLemmas();
   }
 
   //----------------------------------- possibly split on zero
   if (options::nlExt() && options::nlExtSplitZero())
   {
     Trace("nl-ext") << "Get zero split lemmas..." << std::endl;
-    lemmas = d_nlSlv.checkSplitZero();
-    filterLemmas(lemmas, lems);
-    if (!lems.empty())
+    d_nlSlv.checkSplitZero();
+    if (d_im.hasProcessed())
     {
-      Trace("nl-ext") << "  ...finished with " << lems.size() << " new lemmas."
+      Trace("nl-ext") << "  ...finished with " << d_im.countPendingLemmas() << " new lemmas."
                       << std::endl;
-      return lems.size();
+      return d_im.countPendingLemmas();
     }
   }
 
@@ -563,108 +514,95 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
   if (options::nlExt())
   {
     // functions
-    lemmas = d_trSlv.checkTranscendentalInitialRefine();
-    filterLemmas(lemmas, lems);
-    if (!lems.empty())
+    d_trSlv.checkTranscendentalInitialRefine();
+    if (d_im.hasProcessed())
     {
-      Trace("nl-ext") << "  ...finished with " << lems.size() << " new lemmas."
+      Trace("nl-ext") << "  ...finished with " << d_im.countPendingLemmas() << " new lemmas."
                       << std::endl;
-      return lems.size();
+      return d_im.countPendingLemmas();
     }
   }
   //-----------------------------------initial lemmas for iand
-  lemmas = d_iandSlv.checkInitialRefine();
-  filterLemmas(lemmas, lems);
-  if (!lems.empty())
+  d_iandSlv.checkInitialRefine();
+  if (d_im.hasProcessed())
   {
-    Trace("nl-ext") << "  ...finished with " << lems.size() << " new lemmas."
+    Trace("nl-ext") << "  ...finished with " << d_im.countPendingLemmas() << " new lemmas."
                     << std::endl;
-    return lems.size();
+    return d_im.countPendingLemmas();
   }
 
   // main calls to nlExt
   if (options::nlExt())
   {
     //---------------------------------lemmas based on sign (comparison to zero)
-    lemmas = d_nlSlv.checkMonomialSign();
-    filterLemmas(lemmas, lems);
-    if (!lems.empty())
+    d_nlSlv.checkMonomialSign();
+    if (d_im.hasProcessed())
     {
-      Trace("nl-ext") << "  ...finished with " << lems.size() << " new lemmas."
+      Trace("nl-ext") << "  ...finished with " << d_im.countPendingLemmas() << " new lemmas."
                       << std::endl;
-      return lems.size();
+      return d_im.countPendingLemmas();
     }
 
     //-----------------------------------monotonicity of transdental functions
-    lemmas = d_trSlv.checkTranscendentalMonotonic();
-    filterLemmas(lemmas, lems);
-    if (!lems.empty())
+    d_trSlv.checkTranscendentalMonotonic();
+    if (d_im.hasProcessed())
     {
-      Trace("nl-ext") << "  ...finished with " << lems.size() << " new lemmas."
+      Trace("nl-ext") << "  ...finished with " << d_im.countPendingLemmas() << " new lemmas."
                       << std::endl;
-      return lems.size();
+      return d_im.countPendingLemmas();
     }
 
     //------------------------lemmas based on magnitude of non-zero monomials
     for (unsigned c = 0; c < 3; c++)
     {
       // c is effort level
-      lemmas = d_nlSlv.checkMonomialMagnitude(c);
-      unsigned nlem = lemmas.size();
-      filterLemmas(lemmas, lems);
-      if (!lems.empty())
+      d_nlSlv.checkMonomialMagnitude(c);
+      if (d_im.hasProcessed())
       {
-        Trace("nl-ext") << "  ...finished with " << lems.size()
-                        << " new lemmas (out of possible " << nlem << ")."
-                        << std::endl;
-        return lems.size();
+        Trace("nl-ext") << "  ...finished with " << d_im.countPendingLemmas()
+                        << " new lemmas." << std::endl;
+        return d_im.countPendingLemmas();
       }
     }
 
     //-----------------------------------inferred bounds lemmas
     //  e.g. x >= t => y*x >= y*t
-    std::vector<NlLemma> nt_lemmas;
-    lemmas =
-        d_nlSlv.checkMonomialInferBounds(nt_lemmas, assertions, false_asserts);
-    // Trace("nl-ext") << "Bound lemmas : " << lemmas.size() << ", " <<
-    // nt_lemmas.size() << std::endl;  prioritize lemmas that do not
-    // introduce new monomials
-    filterLemmas(lemmas, lems);
-
+    d_nlSlv.checkMonomialInferBounds(assertions, false_asserts);
+    Trace("nl-ext") << "Bound lemmas : " << lemmas.size() << ", " << d_im.countWaitingLemmas() << std::endl;
+    // prioritize lemmas that do not introduce new monomials
+    
     if (options::nlExtTangentPlanes()
         && options::nlExtTangentPlanesInterleave())
     {
-      lemmas = d_nlSlv.checkTangentPlanes();
-      filterLemmas(lemmas, lems);
+      d_nlSlv.checkTangentPlanes(false);
     }
 
-    if (!lems.empty())
+    if (d_im.hasProcessed())
     {
-      Trace("nl-ext") << "  ...finished with " << lems.size() << " new lemmas."
+      Trace("nl-ext") << "  ...finished with " << d_im.countPendingLemmas() << " new lemmas."
                       << std::endl;
-      return lems.size();
+      return d_im.countPendingLemmas();
     }
 
     // from inferred bound inferences : now do ones that introduce new terms
-    filterLemmas(nt_lemmas, lems);
-    if (!lems.empty())
+    d_im.flushWaitingLemmas();
+    if (d_im.hasProcessed())
     {
-      Trace("nl-ext") << "  ...finished with " << lems.size()
+      Trace("nl-ext") << "  ...finished with " << d_im.countPendingLemmas()
                       << " new (monomial-introducing) lemmas." << std::endl;
-      return lems.size();
+      return d_im.countPendingLemmas();
     }
 
     //------------------------------------factoring lemmas
     //   x*y + x*z >= t => exists k. k = y + z ^ x*k >= t
     if (options::nlExtFactor())
     {
-      lemmas = d_nlSlv.checkFactoring(assertions, false_asserts);
-      filterLemmas(lemmas, lems);
-      if (!lems.empty())
+      d_nlSlv.checkFactoring(assertions, false_asserts);
+      if (d_im.hasProcessed())
       {
-        Trace("nl-ext") << "  ...finished with " << lems.size()
+        Trace("nl-ext") << "  ...finished with " << d_im.countPendingLemmas()
                         << " new lemmas." << std::endl;
-        return lems.size();
+        return d_im.countPendingLemmas();
       }
     }
 
@@ -672,13 +610,12 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
     //  e.g. ( y>=0 ^ s <= x*z ^ x*y <= t ) => y*s <= z*t
     if (options::nlExtResBound())
     {
-      lemmas = d_nlSlv.checkMonomialInferResBounds();
-      filterLemmas(lemmas, lems);
-      if (!lems.empty())
+      d_nlSlv.checkMonomialInferResBounds();
+      if (d_im.hasProcessed())
       {
-        Trace("nl-ext") << "  ...finished with " << lems.size()
+        Trace("nl-ext") << "  ...finished with " << d_im.countPendingLemmas()
                         << " new lemmas." << std::endl;
-        return lems.size();
+        return d_im.countPendingLemmas();
       }
     }
 
@@ -686,13 +623,11 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
     if (options::nlExtTangentPlanes()
         && !options::nlExtTangentPlanesInterleave())
     {
-      lemmas = d_nlSlv.checkTangentPlanes();
-      filterLemmas(lemmas, wlems);
+      d_nlSlv.checkTangentPlanes(true);
     }
     if (options::nlExtTfTangentPlanes())
     {
-      lemmas = d_trSlv.checkTranscendentalTangentPlanes();
-      filterLemmas(lemmas, wlems);
+      d_trSlv.checkTranscendentalTangentPlanes();
     }
   }
   if (options::nlCad() || options::nlCadPartial())
@@ -701,48 +636,38 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
   }
   if (options::nlCadPartial())
   {
-    lemmas = d_cadSlv.checkPartial();
-    filterLemmas(lemmas, lems);
-    if (lems.empty())
-    {
-      Trace("nl-cad") << "nl-cad found SAT!" << std::endl;
-    } else {
-      if (Trace.isOn("nl-cad"))
-      {
-        for (const auto& lemma : lems)
-        {
-          Trace("nl-cad") << "nl-cad found lemma: " << lemma.d_lemma << std::endl;
-        }
-      }
-      Trace("nl-ext") << "  ...finished with " << lems.size() << " new lemmas."
-                      << std::endl;
-      return lems.size();
-    }
-  }
-  if (options::nlCad())
-  {
-    lemmas = d_cadSlv.checkFull();
-    if (lemmas.empty())
+    d_cadSlv.checkPartial();
+    if (!d_im.hasProcessed())
     {
       Trace("nl-cad") << "nl-cad found SAT!" << std::endl;
     }
     else
     {
-      for (const auto& lemma : lemmas)
-      {
-        Trace("nl-cad") << "nl-cad found lemma: " << lemma.d_lemma
-                        << std::endl;
-      }
+      Trace("nl-ext") << "  ...finished with " << d_im.countPendingLemmas() << " new lemmas."
+                      << std::endl;
+      return d_im.countPendingLemmas();
     }
-    filterLemmas(lemmas, wlems);
+  }
+  if (options::nlCad())
+  {
+    d_cadSlv.checkFull();
+    if (!d_im.hasProcessed())
+    {
+      Trace("nl-cad") << "nl-cad found SAT!" << std::endl;
+    }
+    else
+    {
+      Trace("nl-ext") << "  ...finished with " << d_im.countPendingLemmas() << " new lemmas."
+                      << std::endl;
+      return d_im.countPendingLemmas();
+    }
   }
   // run the full refinement in the IAND solver
-  lemmas = d_iandSlv.checkFullRefine();
-  filterLemmas(lemmas, wlems);
+  d_iandSlv.checkFullRefine();
 
-  Trace("nl-ext") << "  ...finished with " << wlems.size() << " waiting lemmas."
+  Trace("nl-ext") << "  ...finished with " << d_im.countWaitingLemmas() << " waiting lemmas."
                   << std::endl;
-  Trace("nl-ext") << "  ...finished with " << lems.size() << " lemmas."
+  Trace("nl-ext") << "  ...finished with " << d_im.countPendingLemmas() << " lemmas."
                   << std::endl;
   return 0;
 }
@@ -803,7 +728,7 @@ void NonlinearExtension::check(Theory::Effort e)
   }
 }
 
-bool NonlinearExtension::modelBasedRefinement(std::vector<NlLemma>& mlems)
+bool NonlinearExtension::modelBasedRefinement(std::vector<ArithLemma>& mlems)
 {
   ++(d_stats.d_mbrRuns);
   d_checkCounter++;
@@ -887,7 +812,7 @@ bool NonlinearExtension::modelBasedRefinement(std::vector<NlLemma>& mlems)
     //   1 : we may answer SAT, -1 : we may not answer SAT, 0 : unknown
     int complete_status = 1;
     // lemmas that should be sent later
-    std::vector<NlLemma> wlems;
+    std::vector<ArithLemma> wlems;
     // We require a check either if an assertion is false or a shared term has
     // a wrong value
     if (!false_asserts.empty() || num_shared_wrong_value > 0)
@@ -910,7 +835,7 @@ bool NonlinearExtension::modelBasedRefinement(std::vector<NlLemma>& mlems)
           << std::endl;
       // check the model based on simple solving of equalities and using
       // error bounds on the Taylor approximation of transcendental functions.
-      std::vector<NlLemma> lemmas;
+      std::vector<ArithLemma> lemmas;
       std::vector<Node> gs;
       if (checkModel(assertions, lemmas, gs))
       {
@@ -948,7 +873,7 @@ bool NonlinearExtension::modelBasedRefinement(std::vector<NlLemma>& mlems)
         complete_status = -1;
         if (!shared_term_value_splits.empty())
         {
-          std::vector<NlLemma> stvLemmas;
+          std::vector<ArithLemma> stvLemmas;
           for (const Node& eq : shared_term_value_splits)
           {
             Node req = Rewriter::rewrite(eq);
@@ -956,7 +881,7 @@ bool NonlinearExtension::modelBasedRefinement(std::vector<NlLemma>& mlems)
             d_containing.getOutputChannel().requirePhase(literal, true);
             Trace("nl-ext-debug") << "Split on : " << literal << std::endl;
             Node split = literal.orNode(literal.negate());
-            NlLemma nsplit(split, Inference::SHARED_TERM_VALUE_SPLIT);
+            ArithLemma nsplit(split, LemmaProperty::NONE, nullptr, Inference::SHARED_TERM_VALUE_SPLIT);
             filterLemma(nsplit, stvLemmas);
           }
           if (!stvLemmas.empty())

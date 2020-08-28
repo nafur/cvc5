@@ -30,7 +30,6 @@
 #include "theory/arith/nl/cad_solver.h"
 #include "theory/arith/nl/iand_solver.h"
 #include "theory/arith/nl/icp/icp.h"
-#include "theory/arith/nl/nl_lemma_utils.h"
 #include "theory/arith/nl/nl_model.h"
 #include "theory/arith/nl/nl_solver.h"
 #include "theory/arith/nl/stats.h"
@@ -190,7 +189,7 @@ class NonlinearExtension
    * may have information regarding how to construct a model, in the case that
    * we determined the problem is satisfiable.
    */
-  bool modelBasedRefinement(std::vector<NlLemma>& mlems);
+  bool modelBasedRefinement(std::vector<ArithLemma>& mlems);
 
   /** check last call
    *
@@ -215,8 +214,8 @@ class NonlinearExtension
   int checkLastCall(const std::vector<Node>& assertions,
                     const std::vector<Node>& false_asserts,
                     const std::vector<Node>& xts,
-                    std::vector<NlLemma>& lems,
-                    std::vector<NlLemma>& wlems);
+                    std::vector<ArithLemma>& lems,
+                    std::vector<ArithLemma>& wlems);
 
   /** get assertions
    *
@@ -257,7 +256,7 @@ class NonlinearExtension
    * ensureLiteral respectively.
    */
   bool checkModel(const std::vector<Node>& assertions,
-                  std::vector<NlLemma>& lemmas,
+                  std::vector<ArithLemma>& lemmas,
                   std::vector<Node>& gs);
   //---------------------------end check model
   /** compute relevant assertions */
@@ -268,17 +267,17 @@ class NonlinearExtension
    * the number of lemmas added to out. We do not add lemmas that have already
    * been sent on the output channel of TheoryArith.
    */
-  unsigned filterLemmas(std::vector<NlLemma>& lemmas,
-                        std::vector<NlLemma>& out);
+  unsigned filterLemmas(std::vector<ArithLemma>& lemmas,
+                        std::vector<ArithLemma>& out);
   /** singleton version of above */
-  unsigned filterLemma(NlLemma lem, std::vector<NlLemma>& out);
+  unsigned filterLemma(ArithLemma lem, std::vector<ArithLemma>& out);
 
   /**
    * Send lemmas in out on the output channel of theory of arithmetic.
    */
-  void sendLemmas(const std::vector<NlLemma>& out);
+  void sendLemmas(const std::vector<ArithLemma>& out);
   /** Process side effect se */
-  void processSideEffect(const NlLemma& se);
+  void processSideEffect(const ArithLemma& se);
 
   /** cache of all lemmas sent on the output channel (user-context-dependent) */
   NodeSet d_lemmas;
@@ -286,8 +285,6 @@ class NonlinearExtension
   NodeSet d_lemmasPp;
   /** commonly used terms */
   Node d_zero;
-  Node d_one;
-  Node d_neg_one;
   Node d_true;
   // The theory of arithmetic containing this extension.
   TheoryArith& d_containing;
@@ -333,11 +330,14 @@ class NonlinearExtension
    * constraints involving integer and.
    */
   IAndSolver d_iandSlv;
+
+  Strategy d_strategy;
+
   /**
    * The lemmas we computed during collectModelInfo, to be sent out on the
    * output channel of TheoryArith.
    */
-  std::vector<NlLemma> d_cmiLemmas;
+  std::vector<ArithLemma> d_cmiLemmas;
   /**
    * The approximations computed during collectModelInfo. For details, see
    * NlModel::getModelValueRepair.

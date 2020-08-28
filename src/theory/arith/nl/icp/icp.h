@@ -10,7 +10,9 @@
 
 #include <poly/polyxx.h>
 #include "util/poly_util.h"
+#include "theory/arith/theory_arith.h"
 #include "theory/arith/nl/poly_conversion.h"
+#include "theory/arith/nl/nl_lemma_utils.h"
 
 #include "theory/arith/nl/icp/candidate.h"
 #include "theory/arith/nl/icp/contraction_origins.h"
@@ -53,6 +55,7 @@ struct ICPState {
 };
 
 class ICPSolver {
+    InferenceManager& d_im;
     VariableMapper mMapper;
     std::map<Node, std::vector<Candidate>> mCandidateCache;
     std::unique_ptr<ICPState> mState;
@@ -65,7 +68,8 @@ class ICPSolver {
     void addCandidate(const Node& n);
 
 public:
-    void reset();
+    ICPSolver(InferenceManager& im): d_im(im) {}
+    void reset(std::vector<Node> assertions);
     void add(const Node& n);
     void init();
 
@@ -79,6 +83,44 @@ public:
 
     PropagationResult doIt(poly::IntervalAssignment& ia);
     std::vector<Node> asLemmas(const poly::IntervalAssignment& ia) const;
+
+    /** Returns true if a conflict has been found. */
+    bool execute() {
+        init();
+        auto ia = getInitial();
+        bool did_progress = false;
+        bool progress = false;
+        do
+        {
+            switch (doIt(ia)) {
+                case icp::PropagationResult::NOT_CHANGED:
+                    progress = false;
+                    break;
+                case icp::PropagationResult::CONTRACTED:
+                case icp::PropagationResult::CONTRACTED_STRONGLY:
+                case icp::PropagationResult::CONTRACTED_WITHOUT_CURRENT:
+                case icp::PropagationResult::CONTRACTED_STRONGLY_WITHOUT_CURRENT:
+                    did_progress = true;
+                    progress = true;
+                    break;
+                case icp::PropagationResult::CONFLICT:
+                    Trace("nl-icp") << "Found a conflict: " << getConflict()
+                                    << std::endl;
+                    
+                    d_im.addConflict(getConflict(), Inference::ICP_PROPAGATION);
+                    did_progress = true;
+                    progress = false;
+                    return true;
+            }
+        } while (progress);
+        if (did_progress) {
+            for (const auto& l : asLemmas(ia))
+            {
+                d_im.addLemma(l, Inference::ICP_PROPAGATION);
+            }
+        }
+        return false;
+    }
 
     void print() {
         std::cout << mState->mBounds << std::endl;

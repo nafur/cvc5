@@ -23,7 +23,7 @@
 #include "context/context.h"
 #include "expr/kind.h"
 #include "expr/node.h"
-#include "theory/arith/nl/nl_lemma_utils.h"
+#include "theory/arith/arith_lemma.h"
 #include "theory/theory_model.h"
 
 namespace CVC4 {
@@ -154,7 +154,7 @@ class NlModel
    */
   bool checkModel(const std::vector<Node>& assertions,
                   unsigned d,
-                  std::vector<NlLemma>& lemmas,
+                  std::vector<ArithLemma>& lemmas,
                   std::vector<Node>& gs);
   /**
    * Set that we have used an approximation during this check. This flag is
@@ -218,7 +218,7 @@ class NlModel
    * For instance, if eq reduces to a univariate quadratic equation with no
    * root, we send a conflict clause of the form a*x^2 + b*x + c != 0.
    */
-  bool solveEqualitySimple(Node eq, unsigned d, std::vector<NlLemma>& lemmas);
+  bool solveEqualitySimple(Node eq, unsigned d, std::vector<ArithLemma>& lemmas);
 
   /**
    * simple check model for transcendental functions for literal

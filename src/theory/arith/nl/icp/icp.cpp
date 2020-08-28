@@ -141,7 +141,19 @@ void ICPSolver::addCandidate(const Node& n)
   }
 }
 
-void ICPSolver::reset() { mState.reset(new ICPState(mMapper)); }
+void ICPSolver::reset(std::vector<Node> assertions) {
+  mState.reset(new ICPState(mMapper));
+  std::sort(assertions.begin(), assertions.end());
+  for (const auto& n : assertions)
+  {
+    Node tmp = Rewriter::rewrite(n);
+    Trace("nl-icp") << "Adding " << tmp << std::endl;
+    if (tmp.getKind() != Kind::CONST_BOOLEAN)
+    {
+      add(tmp);
+    }
+  }
+}
 
 void ICPSolver::add(const Node& n)
 {
