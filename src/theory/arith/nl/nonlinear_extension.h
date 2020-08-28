@@ -26,6 +26,7 @@
 #include "context/cdlist.h"
 #include "expr/kind.h"
 #include "expr/node.h"
+#include "theory/arith/inference_manager.h"
 #include "theory/arith/nl/cad_solver.h"
 #include "theory/arith/nl/iand_solver.h"
 #include "theory/arith/nl/icp/icp.h"
@@ -35,6 +36,7 @@
 #include "theory/arith/nl/stats.h"
 #include "theory/arith/nl/transcendental_solver.h"
 #include "theory/arith/theory_arith.h"
+#include "theory/arith/inference_manager.h"
 #include "theory/ext_theory.h"
 #include "theory/uf/equality_engine.h"
 
@@ -72,7 +74,7 @@ class NonlinearExtension
   typedef context::CDHashSet<Node, NodeHashFunction> NodeSet;
 
  public:
-  NonlinearExtension(TheoryArith& containing, eq::EqualityEngine* ee);
+  NonlinearExtension(TheoryArith& containing, ArithState& state, eq::EqualityEngine* ee);
   ~NonlinearExtension();
   /**
    * Does non-context dependent setup for a node connected to a theory.
@@ -289,6 +291,7 @@ class NonlinearExtension
   Node d_true;
   // The theory of arithmetic containing this extension.
   TheoryArith& d_containing;
+  InferenceManager& d_im;
   // pointer to used equality engine
   eq::EqualityEngine* d_ee;
   /** The statistics class */

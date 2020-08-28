@@ -181,7 +181,7 @@ void TheoryArithPrivate::finishInit()
   // only need to create nonlinear extension if non-linear logic
   if (logicInfo.isTheoryEnabled(THEORY_ARITH) && !logicInfo.isLinear())
   {
-    d_nonlinearExtension = new nl::NonlinearExtension(d_containing, ee);
+    d_nonlinearExtension = new nl::NonlinearExtension(d_containing, d_containing.d_astate, ee);
   }
 }
 

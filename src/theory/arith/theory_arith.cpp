@@ -42,7 +42,8 @@ TheoryArith::TheoryArith(context::Context* c,
           new TheoryArithPrivate(*this, c, u, out, valuation, logicInfo, pnm)),
       d_ppRewriteTimer("theory::arith::ppRewriteTimer"),
       d_proofRecorder(nullptr),
-      d_astate(*d_internal, c, u, valuation)
+      d_astate(*d_internal, c, u, valuation),
+      d_inferenceManager(*this, d_astate, pnm)
 {
   smtStatisticsRegistry()->registerStat(&d_ppRewriteTimer);
 

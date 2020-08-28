@@ -20,6 +20,7 @@
 #include "icp/icp.h"
 #include "options/arith_options.h"
 #include "options/theory_options.h"
+#include "theory/arith/arith_state.h"
 #include "theory/arith/arith_utilities.h"
 #include "theory/arith/theory_arith.h"
 #include "theory/ext_theory.h"
@@ -33,10 +34,12 @@ namespace arith {
 namespace nl {
 
 NonlinearExtension::NonlinearExtension(TheoryArith& containing,
+                                       ArithState& state,
                                        eq::EqualityEngine* ee)
     : d_lemmas(containing.getUserContext()),
       d_lemmasPp(containing.getUserContext()),
       d_containing(containing),
+      d_im(containing.getInferenceManager()),
       d_ee(ee),
       d_needsLastCall(false),
       d_checkCounter(0),
