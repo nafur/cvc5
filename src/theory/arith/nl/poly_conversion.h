@@ -67,7 +67,9 @@ poly::UPolynomial as_poly_upolynomial(const CVC4::Node& n,
  * denominator (except for its sign, which is always positive, though).
  */
 poly::Polynomial as_poly_polynomial(const CVC4::Node& n, VariableMapper& vm);
-poly::Polynomial as_poly_polynomial(const CVC4::Node& n, VariableMapper& vm, poly::Rational& denominator);
+poly::Polynomial as_poly_polynomial(const CVC4::Node& n,
+                                    VariableMapper& vm,
+                                    poly::Rational& denominator);
 
 /**
  * Constructs a constraints (a polynomial and a sign condition) from the given
@@ -101,7 +103,8 @@ Node value_to_node(const poly::Value& v, const Node& ran_variable);
  * )
  */
 Node excluding_interval_to_lemma(const Node& variable,
-                                 const poly::Interval& interval);
+                                 const poly::Interval& interval,
+                                 bool allowNonlinearLemma);
 
 /**
  * Transforms a node to a poly::AlgebraicNumber.
@@ -122,47 +125,12 @@ RealAlgebraicNumber node_to_ran(const Node& n, const Node& ran_variable);
  */
 poly::Value node_to_value(const Node& n, const Node& ran_variable);
 
-inline std::size_t bitsize(const poly::DyadicRational& v) {
-  return bit_size(numerator(v)) + bit_size(denominator(v));
-}
-inline std::size_t bitsize(const poly::Integer& v) {
-  return bit_size(v);
-}
-inline std::size_t bitsize(const poly::Rational& v) {
-  return bit_size(numerator(v)) + bit_size(denominator(v));
-}
-inline std::size_t bitsize(const poly::UPolynomial& v) {
-  std::size_t sum = 0;
-  for (const auto& c: coefficients(v)) {
-    sum += bitsize(c);
-  }
-  return sum;
-}
-inline std::size_t bitsize(const poly::AlgebraicNumber& v) {
-  if (is_rational(v)) {
-    return bitsize(to_rational_approximation(v));
-  }
-  return bitsize(get_lower_bound(v)) + bitsize(get_upper_bound(v)) + bitsize(get_defining_polynomial(v));
-}
-inline std::size_t bitsize(const poly::Value& v) {
-  if (is_algebraic_number(v)) {
-    return bitsize(as_algebraic_number(v));
-  } else if (is_dyadic_rational(v)) {
-    return bitsize(as_dyadic_rational(v));
-  } else if (is_integer(v)) {
-    return bitsize(as_integer(v));
-  } else if (is_minus_infinity(v)) {
-    return 1;
-  } else if (is_none(v)) {
-    return 0;
-  } else if (is_plus_infinity(v)) {
-    return 1;
-  } else if (is_rational(v)) {
-    return bitsize(as_rational(v));
-  }
-  Assert(false);
-  return 0;
-}
+/**
+ * Give a rough estimate of the bitsize of the representation of `v`.
+ * It can be used as a rough measure of the size of complexity of a value, for
+ * example to avoid divergence or disallow huge lemmas.
+ */
+std::size_t bitsize(const poly::Value& v);
 
 }  // namespace nl
 }  // namespace arith
