@@ -28,13 +28,13 @@ namespace theory {
 namespace arith {
 
 /**
- * The data structure for a single lemma to process by the non-linear solver,
- * including the lemma itself and whether it should be preprocessed (see
- * OutputChannel::lemma).
+ * The data structure for a single lemma to process by the arithmetic theory,
+ * derived from theory::Lemma.
  *
- * This also includes data structures that encapsulate the side effect of adding
- * this lemma in the non-linear solver. This is used to specify how the state of
- * the non-linear solver should update. This includes:
+ * This also includes the inference type that produced this lemma and data
+ * structures that encapsulate the side effect of adding this lemma in the
+ * non-linear solver. This is used to specify how the state of the non-linear
+ * solver should update. This includes:
  * - A set of secant points to record (for transcendental secant plane
  * inferences).
  */
@@ -49,6 +49,10 @@ class ArithLemma : public Lemma
   {
   }
   ~ArithLemma() {}
+
+  /** The inference id for the lemma */
+  nl::Inference d_inference;
+
   /** secant points to add
    *
    * A member (tf, d, c) in this vector indicates that point c should be added
@@ -59,13 +63,11 @@ class ArithLemma : public Lemma
    * Cimatti et al., CADE 2017.
    */
   std::vector<std::tuple<Node, unsigned, Node> > d_secantPoint;
-  /** The inference id for the lemma */
-  nl::Inference d_inference;
 };
 /**
- * Writes a non-linear lemma to a stream.
+ * Writes an arithmetic lemma to a stream.
  */
-std::ostream& operator<<(std::ostream& out, ArithLemma& n);
+std::ostream& operator<<(std::ostream& out, const ArithLemma& al);
 
 }  // namespace arith
 }  // namespace theory

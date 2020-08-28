@@ -67,7 +67,7 @@ class InferenceManagerBuffered : public TheoryInferenceManager
   InferenceManagerBuffered(Theory& t,
                            TheoryState& state,
                            ProofNodeManager* pnm);
-  ~InferenceManagerBuffered() {}
+  virtual ~InferenceManagerBuffered() {}
   /**
    * Have we processed an inference during this call to check? In particular,
    * this returns true if we have a pending fact or lemma, or have encountered
@@ -145,6 +145,11 @@ class InferenceManagerBuffered : public TheoryInferenceManager
    * phase requirements and clears d_pendingReqPhase.
    */
   void doPendingPhaseRequirements();
+
+  /** Returns the number of pending lemmas. */
+  std::size_t countPendingLemmas() const;
+  /** Returns the number of pending facts. */
+  std::size_t countPendingFacts() const;
 
  protected:
   /** A set of pending lemmas */

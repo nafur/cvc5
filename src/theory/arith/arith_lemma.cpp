@@ -18,6 +18,11 @@ namespace CVC4 {
 namespace theory {
 namespace arith {
 
+std::ostream& operator<<(std::ostream& out, const ArithLemma& al)
+{
+  return out << al.d_node;
+}
+
 }  // namespace arith
 }  // namespace theory
 }  // namespace CVC4
