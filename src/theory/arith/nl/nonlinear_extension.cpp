@@ -173,7 +173,7 @@ void NonlinearExtension::sendLemmas(const std::vector<ArithLemma>& out)
     LemmaProperty p = alem.d_property;
     Trace("nl-ext-lemma") << "NonlinearExtension::Lemma : " << alem.d_inference
                           << " : " << lem << std::endl;
-    d_containing.getInferenceManager().addLemma(alem);
+    d_im.addLemma(alem);
     // process the side effect
     processSideEffect(alem);
     // add to cache based on preprocess
@@ -464,10 +464,13 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
 
   std::vector<ArithLemma> lemmas;
 
+  for (const auto& a: assertions) {
+    Trace("nl-ext") << "Input assertion: " << a << std::endl;
+  }
+
   if (options::nlICP())
   {
     d_icpSlv.reset(assertions);
-    // TODO(Gereon): This currently pushes lemmas to the outputChannel directly.
     d_icpSlv.execute();
 
     if (d_im.hasProcessed())

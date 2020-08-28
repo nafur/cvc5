@@ -39,8 +39,8 @@ void InferenceManager::addLemma(std::shared_ptr<ArithLemma> lemma)
   }
   if (isEntailedFalse(*lemma))
   {
-    addConflict(lemma->d_node, lemma->d_inference);
-    return;
+    d_pendingLem.clear();
+    d_theoryState.notifyInConflict();
   }
   addPendingLemma(std::move(lemma));
 }

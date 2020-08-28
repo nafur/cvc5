@@ -644,6 +644,18 @@ bool NlModel::solveEqualitySimple(Node eq,
   // if it is negative, then we are in conflict
   if (sqrt_val.getConst<Rational>().sgn() == -1)
   {
+    if (b == d_zero)
+    {  // special case: v*v = -c/a
+      Assert(b.isConst() && c.isConst());
+      Assert(-c.getConst<Rational>() / a.getConst<Rational>() < 0);
+      Node conf = nm->mkNode(
+          Kind::GEQ, nm->mkNode(Kind::NONLINEAR_MULT, var, var), d_zero);
+      Trace("nl-ext-lemma")
+          << "NlModel::Lemma : quadratic no root : " << conf << std::endl;
+      lemmas.emplace_back(conf, LemmaProperty::NONE, nullptr);
+      return false;
+    }
+
     Node conf = seq.negate();
     Trace("nl-ext-lemma") << "NlModel::Lemma : quadratic no root : " << conf
                           << std::endl;
@@ -1075,8 +1087,8 @@ bool NlModel::simpleCheckModelMsum(const std::map<Node, Node>& msum, bool pol)
           // via substitution
           Assert(false);
           return false;
-          }
         }
+      }
       // whether we will try to minimize/maximize (-1/1) the absolute value
       int setAbs = (set_lower == has_neg_factor) ? 1 : -1;
       Trace("nl-ext-cms-debug")

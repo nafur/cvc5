@@ -107,7 +107,7 @@ public:
                     Trace("nl-icp") << "Found a conflict: " << getConflict()
                                     << std::endl;
                     
-                    d_im.addConflict(getConflict(), Inference::ICP_PROPAGATION);
+                    d_im.addLemma(getConflict(), Inference::ICP_PROPAGATION);
                     did_progress = true;
                     progress = false;
                     return true;
