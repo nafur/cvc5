@@ -224,7 +224,7 @@ unsigned NonlinearExtension::filterLemma(ArithLemma lem, std::vector<ArithLemma>
         << "NonlinearExtension::Lemma duplicate : " << lem.d_node << std::endl;
     return 0;
   }
-  std::cout << "Actually taking " << lem.d_lemma << std::endl;
+  std::cout << "Actually taking " << lem.d_node << std::endl;
   out.emplace_back(lem);
   return 1;
 }
