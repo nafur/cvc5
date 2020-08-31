@@ -331,8 +331,6 @@ class NonlinearExtension
    */
   IAndSolver d_iandSlv;
 
-  Strategy d_strategy;
-
   /**
    * The lemmas we computed during collectModelInfo, to be sent out on the
    * output channel of TheoryArith.
