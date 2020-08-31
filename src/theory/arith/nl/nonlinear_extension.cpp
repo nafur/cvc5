@@ -224,6 +224,7 @@ unsigned NonlinearExtension::filterLemma(ArithLemma lem, std::vector<ArithLemma>
         << "NonlinearExtension::Lemma duplicate : " << lem.d_node << std::endl;
     return 0;
   }
+  std::cout << "Actually taking " << lem.d_lemma << std::endl;
   out.emplace_back(lem);
   return 1;
 }
@@ -292,6 +293,7 @@ void NonlinearExtension::getAssertions(std::vector<Node>& assertions)
   {
     nassertions++;
     const Assertion& assertion = *it;
+    Trace("nl-ext") << "Loaded " << assertion.d_assertion << " from theory" << std::endl;
     Node lit = assertion.d_assertion;
     if (useRelevance && !v.isRelevant(lit))
     {
@@ -392,9 +394,14 @@ void NonlinearExtension::getAssertions(std::vector<Node>& assertions)
     }
   }
 
-  for (const Node& a : init_assertions)
+  for (Theory::assertions_iterator it = d_containing.facts_begin();
+       it != d_containing.facts_end();
+       ++it)
   {
-    assertions.push_back(a);
+    Node lit = (*it).d_assertion;
+    if (init_assertions.find(lit) != init_assertions.end()) {
+      assertions.push_back(lit);
+    }
   }
   Trace("nl-ext") << "...keep " << assertions.size() << " / " << nassertions
                   << " assertions." << std::endl;
