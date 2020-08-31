@@ -513,15 +513,15 @@ Node excluding_interval_to_lemma(const Node& variable,
       if (allowNonlinearLemma)
       {
         Node poly = as_cvc_upolynomial(get_defining_polynomial(alg), variable);
-        return nm->mkNode(
-            Kind::OR,
+      return nm->mkNode(
+          Kind::OR,
             nm->mkNode(Kind::DISTINCT, poly, nm->mkConst(Rational(0))),
             nm->mkNode(Kind::LT,
                        variable,
                        nm->mkConst(poly_utils::toRationalBelow(lv))),
-            nm->mkNode(Kind::GT,
-                       variable,
-                       nm->mkConst(poly_utils::toRationalAbove(lv))));
+          nm->mkNode(Kind::GT,
+                     variable,
+                     nm->mkConst(poly_utils::toRationalAbove(lv))));
       }
       return Node();
     }
