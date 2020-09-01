@@ -189,7 +189,7 @@ class NonlinearExtension
    * may have information regarding how to construct a model, in the case that
    * we determined the problem is satisfiable.
    */
-  bool modelBasedRefinement(std::vector<ArithLemma>& mlems);
+  bool modelBasedRefinement();
 
   /** check last call
    *
@@ -213,9 +213,7 @@ class NonlinearExtension
    */
   int checkLastCall(const std::vector<Node>& assertions,
                     const std::vector<Node>& false_asserts,
-                    const std::vector<Node>& xts,
-                    std::vector<ArithLemma>& lems,
-                    std::vector<ArithLemma>& wlems);
+                    const std::vector<Node>& xts);
 
   /** get assertions
    *
@@ -256,7 +254,6 @@ class NonlinearExtension
    * ensureLiteral respectively.
    */
   bool checkModel(const std::vector<Node>& assertions,
-                  std::vector<ArithLemma>& lemmas,
                   std::vector<Node>& gs);
   //---------------------------end check model
   /** compute relevant assertions */
