@@ -75,7 +75,7 @@ theory::LemmaStatus EngineOutputChannel::lemma(TNode lemma,
                                                ProofRule rule,
                                                LemmaProperty p)
 {
-  std::cout << "EOC::lemma " << lemma << std::endl;
+  //std::cout << "EOC::lemma " << lemma << std::endl;
   Debug("theory::lemma") << "EngineOutputChannel<" << d_theory << ">::lemma("
                          << lemma << ")"
                          << ", properties = " << p << std::endl;
@@ -102,7 +102,7 @@ void EngineOutputChannel::registerLemmaRecipe(Node lemma,
                                               bool preprocess,
                                               theory::TheoryId theoryId)
 {
-  std::cout << "EOC::registerLemmaRecipe " << lemma << std::endl;
+  //std::cout << "EOC::registerLemmaRecipe " << lemma << std::endl;
   // During CNF conversion, conjunctions will be broken down into
   // multiple lemmas. In order for the recipes to match, we have to do
   // the same here.
@@ -230,7 +230,7 @@ void EngineOutputChannel::registerLemmaRecipe(Node lemma,
 
 theory::LemmaStatus EngineOutputChannel::splitLemma(TNode lemma, bool removable)
 {
-  std::cout << "EOC::splitLemma " << lemma << std::endl;
+  //std::cout << "EOC::splitLemma " << lemma << std::endl;
   Debug("theory::lemma") << "EngineOutputChannel<" << d_theory << ">::lemma("
                          << lemma << ")" << std::endl;
   ++d_statistics.lemmas;
@@ -257,7 +257,7 @@ bool EngineOutputChannel::propagate(TNode literal)
 void EngineOutputChannel::conflict(TNode conflictNode,
                                    std::unique_ptr<Proof> proof)
 {
-  std::cout << "EOC::conflict " << conflictNode << std::endl;
+  //std::cout << "EOC::conflict " << conflictNode << std::endl;
   Trace("theory::conflict")
       << "EngineOutputChannel<" << d_theory << ">::conflict(" << conflictNode
       << ")" << std::endl;
@@ -308,7 +308,7 @@ void EngineOutputChannel::handleUserAttribute(const char* attr,
 
 void EngineOutputChannel::trustedConflict(TrustNode pconf)
 {
-  std::cout << "EOC::trustedConflict " << pconf << std::endl;
+  //std::cout << "EOC::trustedConflict " << pconf << std::endl;
   Assert(pconf.getKind() == TrustNodeKind::CONFLICT);
   Trace("theory::conflict")
       << "EngineOutputChannel<" << d_theory << ">::conflict(" << pconf.getNode()
@@ -324,7 +324,7 @@ void EngineOutputChannel::trustedConflict(TrustNode pconf)
 
 LemmaStatus EngineOutputChannel::trustedLemma(TrustNode plem, LemmaProperty p)
 {
-  std::cout << "EOC::trustedLemma " << plem << std::endl;
+  //std::cout << "EOC::trustedLemma " << plem << std::endl;
   Assert(plem.getKind() == TrustNodeKind::LEMMA);
   if (plem.getGenerator() != nullptr)
   {

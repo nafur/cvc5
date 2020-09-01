@@ -431,7 +431,6 @@ std::vector<Node> NonlinearExtension::checkModelEval(
 }
 
 bool NonlinearExtension::checkModel(const std::vector<Node>& assertions,
-                                    std::vector<ArithLemma>& lemmas,
                                     std::vector<Node>& gs)
 {
   Trace("nl-ext-cm") << "--- check-model ---" << std::endl;
@@ -458,19 +457,19 @@ bool NonlinearExtension::checkModel(const std::vector<Node>& assertions,
 
   Trace("nl-ext-cm") << "-----" << std::endl;
   unsigned tdegree = d_trSlv.getTaylorDegree();
+  std::vector<ArithLemma> lemmas;
   bool ret = d_model.checkModel(passertions, tdegree, lemmas, gs);
+  for (const auto& al: lemmas) {
+    d_im.addLemma(al);
+  }
   return ret;
 }
 
 int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
                                       const std::vector<Node>& false_asserts,
-                                      const std::vector<Node>& xts,
-                                      std::vector<ArithLemma>& lems,
-                                      std::vector<ArithLemma>& wlems)
+                                      const std::vector<Node>& xts)
 {
   ++(d_stats.d_checkRuns);
-
-  std::vector<ArithLemma> lemmas;
 
   for (const auto& a: assertions) {
     Trace("nl-ext") << "Input assertion: " << a << std::endl;
@@ -484,7 +483,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
     if (d_im.hasProcessed())
     {
       Trace("nl-ext") << "  ...finished with " << d_im.numPendingLemmas()
-                      << " new lemmas during registration." << std::endl;
+                      << " new lemmas from ICP." << std::endl;
       return d_im.numPendingLemmas();
     }
     Trace("nl-ext") << "Done with ICP" << std::endl;
@@ -579,7 +578,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
     //-----------------------------------inferred bounds lemmas
     //  e.g. x >= t => y*x >= y*t
     d_nlSlv.checkMonomialInferBounds(assertions, false_asserts);
-    Trace("nl-ext") << "Bound lemmas : " << lemmas.size() << ", " << d_im.numWaitingLemmas() << std::endl;
+    Trace("nl-ext") << "Bound lemmas : " << d_im.numPendingLemmas() << ", " << d_im.numWaitingLemmas() << std::endl;
     // prioritize lemmas that do not introduce new monomials
     
     if (options::nlExtTangentPlanes()
@@ -713,9 +712,10 @@ void NonlinearExtension::check(Theory::Effort e)
   else
   {
     // If we computed lemmas during collectModelInfo, send them now.
-    if (!d_cmiLemmas.empty())
+    if (d_im.hasPendingLemma())
     {
-      sendLemmas(d_cmiLemmas);
+      d_im.doPendingLemmas();
+      d_im.doPendingPhaseRequirements();
       return;
     }
     // Otherwise, we will answer SAT. The values that we approximated are
@@ -739,7 +739,7 @@ void NonlinearExtension::check(Theory::Effort e)
   }
 }
 
-bool NonlinearExtension::modelBasedRefinement(std::vector<ArithLemma>& mlems)
+bool NonlinearExtension::modelBasedRefinement()
 {
   ++(d_stats.d_mbrRuns);
   d_checkCounter++;
@@ -822,17 +822,13 @@ bool NonlinearExtension::modelBasedRefinement(std::vector<ArithLemma>& mlems)
     // complete_status:
     //   1 : we may answer SAT, -1 : we may not answer SAT, 0 : unknown
     int complete_status = 1;
-    // lemmas that should be sent later
-    std::vector<ArithLemma> wlems;
     // We require a check either if an assertion is false or a shared term has
     // a wrong value
     if (!false_asserts.empty() || num_shared_wrong_value > 0)
     {
       complete_status = num_shared_wrong_value > 0 ? -1 : 0;
-      checkLastCall(assertions, false_asserts, xts, mlems, wlems);
+      checkLastCall(assertions, false_asserts, xts);
       if (d_im.hasProcessed()) {
-        d_im.doPendingLemmas();
-        d_im.doPendingPhaseRequirements();
         return true;
       }
     }
@@ -847,9 +843,8 @@ bool NonlinearExtension::modelBasedRefinement(std::vector<ArithLemma>& mlems)
           << std::endl;
       // check the model based on simple solving of equalities and using
       // error bounds on the Taylor approximation of transcendental functions.
-      std::vector<ArithLemma> lemmas;
       std::vector<Node> gs;
-      if (checkModel(assertions, lemmas, gs))
+      if (checkModel(assertions, gs))
       {
         complete_status = 1;
       }
@@ -860,8 +855,7 @@ bool NonlinearExtension::modelBasedRefinement(std::vector<ArithLemma>& mlems)
         d_containing.getOutputChannel().requirePhase(mgr, true);
         d_builtModel = true;
       }
-      filterLemmas(lemmas, mlems);
-      if (!mlems.empty())
+      if (d_im.hasProcessed())
       {
         return true;
       }
@@ -871,10 +865,10 @@ bool NonlinearExtension::modelBasedRefinement(std::vector<ArithLemma>& mlems)
     if (complete_status != 1)
     {
       // flush the waiting lemmas
-      if (!wlems.empty())
+      if (d_im.numWaitingLemmas() > 0)
       {
-        mlems.insert(mlems.end(), wlems.begin(), wlems.end());
-        Trace("nl-ext") << "...added " << wlems.size() << " waiting lemmas."
+        d_im.flushWaitingLemmas();
+        Trace("nl-ext") << "...added " << d_im.numPendingLemmas() << " waiting lemmas."
                         << std::endl;
         return true;
       }
@@ -885,7 +879,6 @@ bool NonlinearExtension::modelBasedRefinement(std::vector<ArithLemma>& mlems)
         complete_status = -1;
         if (!shared_term_value_splits.empty())
         {
-          std::vector<ArithLemma> stvLemmas;
           for (const Node& eq : shared_term_value_splits)
           {
             Node req = Rewriter::rewrite(eq);
@@ -894,12 +887,12 @@ bool NonlinearExtension::modelBasedRefinement(std::vector<ArithLemma>& mlems)
             Trace("nl-ext-debug") << "Split on : " << literal << std::endl;
             Node split = literal.orNode(literal.negate());
             ArithLemma nsplit(split, LemmaProperty::NONE, nullptr, Inference::SHARED_TERM_VALUE_SPLIT);
-            filterLemma(nsplit, stvLemmas);
+            d_im.addWaitingLemma(nsplit);
           }
-          if (!stvLemmas.empty())
+          if (d_im.numWaitingLemmas() > 0)
           {
-            mlems.insert(mlems.end(), stvLemmas.begin(), stvLemmas.end());
-            Trace("nl-ext") << "...added " << stvLemmas.size()
+            d_im.flushWaitingLemmas();
+            Trace("nl-ext") << "...added " << d_im.numPendingLemmas()
                             << " shared term value split lemmas." << std::endl;
             return true;
           }
@@ -951,7 +944,7 @@ void NonlinearExtension::interceptModel(std::map<Node, Node>& arithModel)
   if (!d_builtModel.get())
   {
     Trace("nl-ext") << "interceptModel: do model-based refinement" << std::endl;
-    modelBasedRefinement(d_cmiLemmas);
+    modelBasedRefinement();
   }
   if (d_builtModel.get())
   {

@@ -110,7 +110,7 @@ public:
                     d_im.addLemma(getConflict(), Inference::ICP_PROPAGATION);
                     did_progress = true;
                     progress = false;
-                    return true;
+                    break;
             }
         } while (progress);
         if (did_progress) {
@@ -118,6 +118,7 @@ public:
             {
                 d_im.addLemma(l, Inference::ICP_PROPAGATION);
             }
+            return true;
         }
         return false;
     }
