@@ -30,13 +30,30 @@ TheoryInferenceManager::TheoryInferenceManager(Theory& t,
       d_out(t.getOutputChannel()),
       d_ee(nullptr),
       d_pnm(pnm),
-      d_keep(t.getSatContext())
+      d_keep(t.getSatContext()),
+      d_lemmasSent(t.getUserContext()),
+      d_numCurrentLemmas(0),
+      d_numCurrentFacts(0)
 {
 }
 
 void TheoryInferenceManager::setEqualityEngine(eq::EqualityEngine* ee)
 {
   d_ee = ee;
+  // if proofs are enabled, also make a proof equality engine to wrap ee
+  if (d_pnm != nullptr)
+  {
+    d_pfee.reset(new eq::ProofEqEngine(d_theoryState.getSatContext(),
+                                       d_theoryState.getUserContext(),
+                                       *d_ee,
+                                       d_pnm));
+  }
+}
+
+void TheoryInferenceManager::reset()
+{
+  d_numCurrentLemmas = 0;
+  d_numCurrentFacts = 0;
 }
 
 void TheoryInferenceManager::conflictEqConstantMerge(TNode a, TNode b)
@@ -85,7 +102,10 @@ bool TheoryInferenceManager::propagateLit(TNode lit)
 
 TrustNode TheoryInferenceManager::explainLit(TNode lit)
 {
-  // TODO (project #37): use proof equality engine if it exists
+  if (d_pfee != nullptr)
+  {
+    return d_pfee->explain(lit);
+  }
   if (d_ee != nullptr)
   {
     Node exp = d_ee->mkExplainLit(lit);
@@ -100,10 +120,13 @@ TrustNode TheoryInferenceManager::explainLit(TNode lit)
 TrustNode TheoryInferenceManager::explainConflictEqConstantMerge(TNode a,
                                                                  TNode b)
 {
-  // TODO (project #37): use proof equality engine if it exists
+  Node lit = a.eqNode(b);
+  if (d_pfee != nullptr)
+  {
+    return d_pfee->explain(lit);
+  }
   if (d_ee != nullptr)
   {
-    Node lit = a.eqNode(b);
     Node conf = d_ee->mkExplainLit(lit);
     return TrustNode::mkTrustConflict(conf, nullptr);
   }
@@ -111,47 +134,170 @@ TrustNode TheoryInferenceManager::explainConflictEqConstantMerge(TNode a,
                   << " mkTrustedConflictEqConstantMerge";
 }
 
-LemmaStatus TheoryInferenceManager::lemma(TNode lem, LemmaProperty p)
+bool TheoryInferenceManager::lemma(TNode lem, LemmaProperty p, bool doCache)
 {
-  return d_out.lemma(lem, p);
+  TrustNode tlem = TrustNode::mkTrustLemma(lem, nullptr);
+  return trustedLemma(tlem, p, doCache);
 }
 
-LemmaStatus TheoryInferenceManager::trustedLemma(const TrustNode& tlem,
-                                                 LemmaProperty p)
+bool TheoryInferenceManager::trustedLemma(const TrustNode& tlem,
+                                          LemmaProperty p,
+                                          bool doCache)
 {
-  return d_out.trustedLemma(tlem, p);
+  if (doCache)
+  {
+    if (!cacheLemma(tlem.getNode(), p))
+    {
+      return false;
+    }
+  }
+  d_numCurrentLemmas++;
+  d_out.trustedLemma(tlem, p);
+  return true;
+}
+
+bool TheoryInferenceManager::hasCachedLemma(TNode lem, LemmaProperty p)
+{
+  return d_lemmasSent.find(lem) != d_lemmasSent.end();
+}
+
+uint32_t TheoryInferenceManager::numAddedLemmas() const
+{
+  return d_numCurrentLemmas;
+}
+
+bool TheoryInferenceManager::hasAddedLemma() const
+{
+  return d_numCurrentLemmas != 0;
+}
+
+void TheoryInferenceManager::assertInternalFact(TNode atom, bool pol, TNode exp)
+{
+  processInternalFact(atom, pol, PfRule::UNKNOWN, {exp}, {}, nullptr);
 }
 
 void TheoryInferenceManager::assertInternalFact(TNode atom,
                                                 bool pol,
-                                                TNode fact)
+                                                PfRule id,
+                                                const std::vector<Node>& exp,
+                                                const std::vector<Node>& args)
 {
+  Assert(id != PfRule::UNKNOWN);
+  processInternalFact(atom, pol, id, exp, args, nullptr);
+}
+
+void TheoryInferenceManager::assertInternalFact(TNode atom,
+                                                bool pol,
+                                                const std::vector<Node>& exp,
+                                                ProofGenerator* pg)
+{
+  Assert(pg != nullptr);
+  processInternalFact(atom, pol, PfRule::ASSUME, exp, {}, pg);
+}
+
+void TheoryInferenceManager::processInternalFact(TNode atom,
+                                                 bool pol,
+                                                 PfRule id,
+                                                 const std::vector<Node>& exp,
+                                                 const std::vector<Node>& args,
+                                                 ProofGenerator* pg)
+{
+  // make the node corresponding to the explanation
+  Node expn = NodeManager::currentNM()->mkAnd(exp);
   // call the pre-notify fact method with preReg = false, isInternal = true
-  if (d_theory.preNotifyFact(atom, pol, fact, false, true))
+  if (d_theory.preNotifyFact(atom, pol, expn, false, true))
   {
     // handled in a theory-specific way that doesn't require equality engine
     return;
   }
   Assert(d_ee != nullptr);
   Trace("infer-manager") << "TheoryInferenceManager::assertInternalFact: "
-                         << fact << std::endl;
-  if (atom.getKind() == kind::EQUAL)
+                         << expn << std::endl;
+  d_numCurrentFacts++;
+  // Now, assert the fact. How to do so depends on whether proofs are enabled.
+  // If no proof production, or no proof rule was given
+  if (d_pfee == nullptr || id == PfRule::UNKNOWN)
   {
-    d_ee->assertEquality(atom, pol, fact);
+    if (atom.getKind() == kind::EQUAL)
+    {
+      d_ee->assertEquality(atom, pol, expn);
+    }
+    else
+    {
+      d_ee->assertPredicate(atom, pol, expn);
+    }
+    // Must reference count the equality and its explanation, which is not done
+    // by the equality engine. Notice that we do *not* need to do this for
+    // external assertions, which enter as facts in theory check. This is also
+    // not done if we are asserting to the proof equality engine, which does
+    // this caching itself within ProofEqEngine::assertFact.
+    d_keep.insert(atom);
+    d_keep.insert(expn);
   }
   else
   {
-    d_ee->assertPredicate(atom, pol, fact);
+    // Note that we reconstruct the original literal lit here, since both the
+    // original literal is needed for bookkeeping proofs. It is possible to
+    // optimize this so that a few less nodes are created, but at the cost
+    // of a more verbose interface to proof equality engine.
+    Node lit = pol ? Node(atom) : atom.notNode();
+    if (pg != nullptr)
+    {
+      // use the proof generator interface
+      d_pfee->assertFact(lit, expn, pg);
+    }
+    else
+    {
+      // use the explict proof step interface
+      d_pfee->assertFact(lit, id, expn, args);
+    }
   }
   // call the notify fact method with isInternal = true
-  d_theory.notifyFact(atom, pol, fact, true);
+  d_theory.notifyFact(atom, pol, expn, true);
   Trace("infer-manager")
       << "TheoryInferenceManager::finished assertInternalFact" << std::endl;
-  // Must reference count the equality and its explanation, which is not done
-  // by the equality engine. Notice that we do *not* need to do this for
-  // external assertions, which enter as facts in theory check.
-  d_keep.insert(atom);
-  d_keep.insert(fact);
+}
+
+void TheoryInferenceManager::explain(TNode n, std::vector<TNode>& assumptions)
+{
+  if (n.getKind() == kind::AND)
+  {
+    for (const Node& nc : n)
+    {
+      d_ee->explainLit(nc, assumptions);
+    }
+  }
+  else
+  {
+    d_ee->explainLit(n, assumptions);
+  }
+}
+
+Node TheoryInferenceManager::mkExplain(TNode n)
+{
+  std::vector<TNode> assumptions;
+  explain(n, assumptions);
+  return NodeManager::currentNM()->mkAnd(assumptions);
+}
+
+uint32_t TheoryInferenceManager::numAddedFacts() const
+{
+  return d_numCurrentFacts;
+}
+
+bool TheoryInferenceManager::hasAddedFact() const
+{
+  return d_numCurrentFacts != 0;
+}
+
+bool TheoryInferenceManager::cacheLemma(TNode lem, LemmaProperty p)
+{
+  if (d_lemmasSent.find(lem) != d_lemmasSent.end())
+  {
+    return false;
+  }
+  d_lemmasSent.insert(lem);
+  return true;
 }
 
 }  // namespace theory
