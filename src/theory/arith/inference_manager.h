@@ -39,6 +39,9 @@ class TheoryArith;
  * It adds some convenience methods to send ArithLemma and adds a mechanism for
  * waiting lemmas that can be flushed into the pending lemmas of the this
  * buffered inference manager.
+ * It also extends the caching mechanism of TheoryInferenceManager to cache
+ * preprocessing lemmas and non-preprocessing lemmas separately. For the former,
+ * it uses the cache provided by the TheoryInferenceManager base class.
  */
 class InferenceManager : public InferenceManagerBuffered
 {
@@ -47,22 +50,32 @@ class InferenceManager : public InferenceManagerBuffered
  public:
   InferenceManager(TheoryArith& ta, ArithState& astate, ProofNodeManager* pnm);
 
-  /** Add a lemma (as pending lemma) to the this inference manager. */
-  void addLemma(std::shared_ptr<ArithLemma> lemma);
-  /** Add a lemma (as pending lemma) to the this inference manager. */
-  void addLemma(const ArithLemma& lemma);
-  /** Add a lemma (as pending lemma) to the this inference manager. */
-  void addLemma(const Node& lemma, nl::Inference inftype);
+  /**
+   * Add a lemma as pending lemma to the this inference manager.
+   * If isWaiting is true, the lemma is first stored as waiting lemma and only
+   * added as pending lemma when calling flushWaitingLemmas.
+   */
+  void addPendingArithLemma(std::shared_ptr<ArithLemma> lemma,
+                            bool isWaiting = false);
+  /**
+   * Add a lemma as pending lemma to the this inference manager.
+   * If isWaiting is true, the lemma is first stored as waiting lemma and only
+   * added as pending lemma when calling flushWaitingLemmas.
+   */
+  void addPendingArithLemma(const ArithLemma& lemma, bool isWaiting = false);
+  /**
+   * Add a lemma as pending lemma to the this inference manager.
+   * If isWaiting is true, the lemma is first stored as waiting lemma and only
+   * added as pending lemma when calling flushWaitingLemmas.
+   */
+  void addPendingArithLemma(const Node& lemma,
+                            nl::Inference inftype,
+                            bool isWaiting = false);
 
-  /** Add a lemma (as waiting lemma). */
-  void addWaitingLemma(std::shared_ptr<ArithLemma> lemma);
-  /** Add a lemma (as waiting lemma). */
-  void addWaitingLemma(const ArithLemma& lemma);
-  /** Add a lemma (as waiting lemma). */
-  void addWaitingLemma(const Node& lemma, nl::Inference inftype);
-
-  /** Flush all waiting lemmas to the this inference manager (as pending
-   * lemmas). */
+  /**
+   * Flush all waiting lemmas to the this inference manager (as pending
+   * lemmas). To actually send them, call doPendingLemmas() afterwards.
+   */
   void flushWaitingLemmas();
 
   /** Add a conflict to the this inference manager. */
@@ -71,27 +84,15 @@ class InferenceManager : public InferenceManagerBuffered
   /** Returns the number of pending lemmas. */
   std::size_t numWaitingLemmas() const;
 
-  virtual bool hasCachedLemma(TNode lem, LemmaProperty p) override {
-    if (isLemmaPropertyPreprocess(p)) {
-      return d_lemmasPp.find(lem) != d_lemmasPp.end();
-    }
-    return TheoryInferenceManager::hasCachedLemma(lem, p);
-  }
+  /** Checks whether the given lemma is already present in the cache. */
+  virtual bool hasCachedLemma(TNode lem, LemmaProperty p) override;
 
  protected:
-  virtual bool cacheLemma(TNode lem, LemmaProperty p) override
-  {
-    if (isLemmaPropertyPreprocess(p))
-    {
-      if (d_lemmasPp.find(lem) != d_lemmasPp.end())
-      {
-        return false;
-      }
-      d_lemmasPp.insert(lem);
-      return true;
-    }
-    return TheoryInferenceManager::cacheLemma(lem, p);
-  }
+  /**
+   * Adds the given lemma to the cache. Returns true if it has not been in the
+   * cache yet.
+   */
+  virtual bool cacheLemma(TNode lem, LemmaProperty p) override;
 
  private:
   /**
@@ -103,7 +104,8 @@ class InferenceManager : public InferenceManagerBuffered
   /** The waiting lemmas. */
   std::vector<std::shared_ptr<ArithLemma>> d_waitingLem;
 
-  /** cache of all preprocessed lemmas sent on the output channel (user-context-dependent) */
+  /** cache of all preprocessed lemmas sent on the output channel
+   * (user-context-dependent) */
   NodeSet d_lemmasPp;
 };
 

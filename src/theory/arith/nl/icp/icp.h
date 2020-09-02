@@ -107,7 +107,7 @@ public:
                     Trace("nl-icp") << "Found a conflict: " << getConflict()
                                     << std::endl;
                     
-                    d_im.addLemma(getConflict(), Inference::ICP_PROPAGATION);
+                    d_im.addPendingArithLemma(getConflict(), Inference::ICP_PROPAGATION);
                     did_progress = true;
                     progress = false;
                     break;
@@ -116,7 +116,7 @@ public:
         if (did_progress) {
             for (const auto& l : asLemmas(ia))
             {
-                d_im.addLemma(l, Inference::ICP_PROPAGATION);
+                d_im.addPendingArithLemma(l, Inference::ICP_PROPAGATION);
             }
             return true;
         }

@@ -76,7 +76,7 @@ class TranscendentalSolver
    */
   bool preprocessAssertionsCheckModel(std::vector<Node>& assertions);
   /** Process side effects in lemma se */
-  void processSideEffect(const ArithLemma& se);
+  void processSideEffect(const NlLemma& se);
   //-------------------------------------------- lemma schemas
   /** check transcendental initial refine
    *

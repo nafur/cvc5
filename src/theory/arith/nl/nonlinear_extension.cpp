@@ -165,32 +165,7 @@ std::pair<bool, Node> NonlinearExtension::isExtfReduced(
   return std::make_pair(true, Node::null());
 }
 
-void NonlinearExtension::sendLemmas(const std::vector<ArithLemma>& out)
-{
-  for (const ArithLemma& alem : out)
-  {
-    Node lem = alem.d_node;
-    LemmaProperty p = alem.d_property;
-    Trace("nl-ext-lemma") << "NonlinearExtension::Lemma : " << alem.d_inference
-                          << " : " << lem << std::endl;
-    d_im.addLemma(alem);
-    // process the side effect
-    processSideEffect(alem);
-    // add to cache based on preprocess
-    if (isLemmaPropertyPreprocess(p))
-    {
-      d_lemmasPp.insert(lem);
-    }
-    else
-    {
-      d_lemmas.insert(lem);
-    }
-    d_stats.d_inferences << alem.d_inference;
-  }
-  d_containing.getInferenceManager().doPendingLemmas();
-}
-
-void NonlinearExtension::processSideEffect(const ArithLemma& se)
+void NonlinearExtension::processSideEffect(const NlLemma& se)
 {
   d_trSlv.processSideEffect(se);
 }
@@ -209,63 +184,6 @@ void NonlinearExtension::computeRelevantAssertions(
   }
   Trace("nl-ext-rlv") << "rlv: ...keep " << keep.size() << "/"
                       << assertions.size() << " assertions" << std::endl;
-}
-
-unsigned NonlinearExtension::filterLemma(ArithLemma lem, std::vector<ArithLemma>& out)
-{
-  Trace("nl-ext-lemma-debug")
-      << "NonlinearExtension::Lemma pre-rewrite : " << lem.d_node << std::endl;
-  lem.d_node = Rewriter::rewrite(lem.d_node);
-  // get the proper cache
-  NodeSet& lcache = isLemmaPropertyPreprocess(lem.d_property) ? d_lemmasPp : d_lemmas;
-  if (lcache.find(lem.d_node) != lcache.end())
-  {
-    Trace("nl-ext-lemma-debug")
-        << "NonlinearExtension::Lemma duplicate : " << lem.d_node << std::endl;
-    return 0;
-  }
-  std::cout << "Actually taking " << lem.d_node << std::endl;
-  out.emplace_back(lem);
-  return 1;
-}
-
-unsigned NonlinearExtension::filterLemmas(std::vector<ArithLemma>& lemmas,
-                                          std::vector<ArithLemma>& out)
-{
-  if (options::nlExtEntailConflicts())
-  {
-    // check if any are entailed to be false
-    for (const ArithLemma& lem : lemmas)
-    {
-      Node ch_lemma = lem.d_node.negate();
-      ch_lemma = Rewriter::rewrite(ch_lemma);
-      Trace("nl-ext-et-debug")
-          << "Check entailment of " << ch_lemma << "..." << std::endl;
-      std::pair<bool, Node> et = d_containing.getValuation().entailmentCheck(
-          options::TheoryOfMode::THEORY_OF_TYPE_BASED, ch_lemma);
-      Trace("nl-ext-et-debug") << "entailment test result : " << et.first << " "
-                               << et.second << std::endl;
-      if (et.first)
-      {
-        Trace("nl-ext-et") << "*** Lemma entailed to be in conflict : "
-                           << lem.d_node << std::endl;
-        // return just this lemma
-        if (filterLemma(lem, out) > 0)
-        {
-          lemmas.clear();
-          return 1;
-        }
-      }
-    }
-  }
-
-  unsigned sum = 0;
-  for (const ArithLemma& lem : lemmas)
-  {
-    sum += filterLemma(lem, out);
-  }
-  lemmas.clear();
-  return sum;
 }
 
 void NonlinearExtension::getAssertions(std::vector<Node>& assertions)
@@ -460,7 +378,7 @@ bool NonlinearExtension::checkModel(const std::vector<Node>& assertions,
   std::vector<ArithLemma> lemmas;
   bool ret = d_model.checkModel(passertions, tdegree, lemmas, gs);
   for (const auto& al: lemmas) {
-    d_im.addLemma(al);
+    d_im.addPendingArithLemma(al);
   }
   return ret;
 }
@@ -887,7 +805,7 @@ bool NonlinearExtension::modelBasedRefinement()
             Trace("nl-ext-debug") << "Split on : " << literal << std::endl;
             Node split = literal.orNode(literal.negate());
             ArithLemma nsplit(split, LemmaProperty::NONE, nullptr, Inference::SHARED_TERM_VALUE_SPLIT);
-            d_im.addWaitingLemma(nsplit);
+            d_im.addPendingArithLemma(nsplit);
           }
           if (d_im.numWaitingLemmas() > 0)
           {

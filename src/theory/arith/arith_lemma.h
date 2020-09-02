@@ -22,6 +22,7 @@
 #include "theory/arith/nl/inference.h"
 #include "theory/inference_manager_buffered.h"
 #include "theory/output_channel.h"
+#include "theory/theory_inference.h"
 
 namespace CVC4 {
 namespace theory {
@@ -29,40 +30,24 @@ namespace arith {
 
 /**
  * The data structure for a single lemma to process by the arithmetic theory,
- * derived from theory::Lemma.
+ * derived from theory::SimpleTheoryLemma.
  *
- * This also includes the inference type that produced this lemma and data
- * structures that encapsulate the side effect of adding this lemma in the
- * non-linear solver. This is used to specify how the state of the non-linear
- * solver should update. This includes:
- * - A set of secant points to record (for transcendental secant plane
- * inferences).
+ * This also includes the inference type that produced this lemma.
  */
-class ArithLemma : public Lemma
+class ArithLemma : public SimpleTheoryLemma
 {
  public:
   ArithLemma(Node n,
              LemmaProperty p,
              ProofGenerator* pg,
              nl::Inference inf = nl::Inference::UNKNOWN)
-      : Lemma(n, p, pg), d_inference(inf)
+      : SimpleTheoryLemma(n, p, pg), d_inference(inf)
   {
   }
-  ~ArithLemma() {}
+  virtual ~ArithLemma() {}
 
   /** The inference id for the lemma */
   nl::Inference d_inference;
-
-  /** secant points to add
-   *
-   * A member (tf, d, c) in this vector indicates that point c should be added
-   * to the list of secant points for an application of a transcendental
-   * function tf for Taylor degree d. This is used for incremental linearization
-   * for underapproximation (resp. overapproximations) of convex (resp.
-   * concave) regions of transcendental functions. For details, see
-   * Cimatti et al., CADE 2017.
-   */
-  std::vector<std::tuple<Node, unsigned, Node> > d_secantPoint;
 };
 /**
  * Writes an arithmetic lemma to a stream.

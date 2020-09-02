@@ -104,11 +104,11 @@ void CadSolver::checkFull()
     Trace("nl-cad") << "UNSAT with MIS: " << mis << std::endl;
     if (mis.size() == 1)
     {
-      d_im.addLemma(mis.front(), Inference::CAD_CONFLICT);
+      d_im.addPendingArithLemma(mis.front(), Inference::CAD_CONFLICT);
     }
     else
     {
-      d_im.addLemma(nm->mkNode(Kind::OR, mis), Inference::CAD_CONFLICT);
+      d_im.addPendingArithLemma(nm->mkNode(Kind::OR, mis), Inference::CAD_CONFLICT);
     }
   }
 #else
@@ -150,7 +150,7 @@ void CadSolver::checkPartial()
       if (!conclusion.isNull()) {
         Node lemma = nm->mkNode(Kind::IMPLIES, premise, conclusion);
         Trace("nl-cad") << "Excluding " << first_var << " -> " << interval.d_interval << " using " << lemma << std::endl;
-        d_im.addLemma(lemma, Inference::CAD_EXCLUDED_INTERVAL);
+        d_im.addPendingArithLemma(lemma, Inference::CAD_EXCLUDED_INTERVAL);
       }
     }
   }

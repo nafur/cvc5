@@ -174,6 +174,9 @@ class NonlinearExtension
    */
   void presolve();
 
+  /** Process side effect se */
+  void processSideEffect(const NlLemma& se);
+
  private:
   /** Model-based refinement
    *
@@ -259,22 +262,6 @@ class NonlinearExtension
   /** compute relevant assertions */
   void computeRelevantAssertions(const std::vector<Node>& assertions,
                                  std::vector<Node>& keep);
-  /**
-   * Potentially adds lemmas to the set out and clears lemmas. Returns
-   * the number of lemmas added to out. We do not add lemmas that have already
-   * been sent on the output channel of TheoryArith.
-   */
-  unsigned filterLemmas(std::vector<ArithLemma>& lemmas,
-                        std::vector<ArithLemma>& out);
-  /** singleton version of above */
-  unsigned filterLemma(ArithLemma lem, std::vector<ArithLemma>& out);
-
-  /**
-   * Send lemmas in out on the output channel of theory of arithmetic.
-   */
-  void sendLemmas(const std::vector<ArithLemma>& out);
-  /** Process side effect se */
-  void processSideEffect(const ArithLemma& se);
 
   /** cache of all lemmas sent on the output channel (user-context-dependent) */
   NodeSet d_lemmas;
@@ -332,7 +319,7 @@ class NonlinearExtension
    * The lemmas we computed during collectModelInfo, to be sent out on the
    * output channel of TheoryArith.
    */
-  std::vector<ArithLemma> d_cmiLemmas;
+  std::vector<NlLemma> d_cmiLemmas;
   /**
    * The approximations computed during collectModelInfo. For details, see
    * NlModel::getModelValueRepair.

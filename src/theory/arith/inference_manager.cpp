@@ -26,15 +26,13 @@ namespace arith {
 InferenceManager::InferenceManager(TheoryArith& ta,
                                    ArithState& astate,
                                    ProofNodeManager* pnm)
-    : InferenceManagerBuffered(ta, astate, pnm),
-      d_lemmasPp(ta.getUserContext())
+    : InferenceManagerBuffered(ta, astate, pnm), d_lemmasPp(ta.getUserContext())
 {
 }
 
-void InferenceManager::addLemma(std::shared_ptr<ArithLemma> lemma)
+void InferenceManager::addPendingArithLemma(std::shared_ptr<ArithLemma> lemma,
+                                            bool isWaiting)
 {
-  Trace("nl-ext-lemma-debug")
-      << "NonlinearExtension::Lemma pre-rewrite : " << lemma->d_node << std::endl;
   lemma->d_node = Rewriter::rewrite(lemma->d_node);
   if (hasCachedLemma(lemma->d_node, lemma->d_property))
   {
@@ -42,42 +40,37 @@ void InferenceManager::addLemma(std::shared_ptr<ArithLemma> lemma)
   }
   if (isEntailedFalse(*lemma))
   {
+    if (isWaiting)
+    {
+      d_waitingLem.clear();
+    }
+    else
+    {
     d_pendingLem.clear();
     d_theoryState.notifyInConflict();
   }
-  addPendingLemma(std::move(lemma));
 }
-void InferenceManager::addLemma(const ArithLemma& lemma)
+  if (isWaiting)
 {
-  addLemma(std::make_shared<ArithLemma>(lemma));
+    d_waitingLem.emplace_back(std::move(lemma));
 }
-void InferenceManager::addLemma(const Node& lemma, nl::Inference inftype)
+  else
 {
-  addLemma(std::make_shared<ArithLemma>(
-      lemma, LemmaProperty::NONE, nullptr, inftype));
+    addPendingLemma(std::move(lemma));
 }
-
-void InferenceManager::addWaitingLemma(std::shared_ptr<ArithLemma> lemma)
-{
-  lemma->d_node = Rewriter::rewrite(lemma->d_node);
-  if (hasCachedLemma(lemma->d_node, lemma->d_property))
-  {
-    return;
   }
-  if (isEntailedFalse(*lemma))
+void InferenceManager::addPendingArithLemma(const ArithLemma& lemma,
+                                            bool isWaiting)
   {
-    d_waitingLem.clear();
+  addPendingArithLemma(std::make_shared<ArithLemma>(lemma), isWaiting);
   }
-  d_waitingLem.emplace_back(std::move(lemma));
-}
-void InferenceManager::addWaitingLemma(const ArithLemma& lemma)
+void InferenceManager::addPendingArithLemma(const Node& lemma,
+                                            nl::Inference inftype,
+                                            bool isWaiting)
 {
-  addLemma(std::make_shared<ArithLemma>(lemma));
-}
-void InferenceManager::addWaitingLemma(const Node& lemma, nl::Inference inftype)
-{
-  addLemma(std::make_shared<ArithLemma>(
-      lemma, LemmaProperty::NONE, nullptr, inftype));
+  addPendingArithLemma(std::make_shared<ArithLemma>(
+                           lemma, LemmaProperty::NONE, nullptr, inftype),
+                       isWaiting);
 }
 
 void InferenceManager::flushWaitingLemmas()
@@ -97,6 +90,29 @@ void InferenceManager::addConflict(const Node& conf, nl::Inference inftype)
 std::size_t InferenceManager::numWaitingLemmas() const
 {
   return d_waitingLem.size();
+}
+
+bool InferenceManager::hasCachedLemma(TNode lem, LemmaProperty p)
+{
+  if (isLemmaPropertyPreprocess(p))
+  {
+    return d_lemmasPp.find(lem) != d_lemmasPp.end();
+  }
+  return TheoryInferenceManager::hasCachedLemma(lem, p);
+}
+
+bool InferenceManager::cacheLemma(TNode lem, LemmaProperty p)
+{
+  if (isLemmaPropertyPreprocess(p))
+  {
+    if (d_lemmasPp.find(lem) != d_lemmasPp.end())
+    {
+      return false;
+    }
+    d_lemmasPp.insert(lem);
+    return true;
+  }
+  return TheoryInferenceManager::cacheLemma(lem, p);
 }
 
 bool InferenceManager::isEntailedFalse(const ArithLemma& lem)
