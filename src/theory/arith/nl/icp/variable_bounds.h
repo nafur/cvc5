@@ -40,9 +40,9 @@ namespace icp {
 class VariableBounds
 {
   /** A reference to a mapper from cvc nodes to poly variables. */
-  VariableMapper& mMapper;
+  VariableMapper& d_mapper;
   /** The currently strictest bounds for every variable. */
-  std::map<Node, Interval> mIntervals;
+  std::map<Node, Interval> d_intervals;
 
   /** Updates the lower bound for the given variable */
   void update_lower_bound(const Node& origin,
@@ -56,9 +56,10 @@ class VariableBounds
                           bool strict);
 
  public:
-  VariableBounds(VariableMapper& mapper) : mMapper(mapper) {}
-
-  const VariableMapper& getMapper() const { return mMapper; }
+  VariableBounds(VariableMapper& mapper) : d_mapper(mapper) {}
+  const VariableMapper& getMapper() const { return d_mapper; }
+  /** Reset the bounds */
+  void reset();
 
   /**
    * Get the current interval for v. Creates a new (full) interval if

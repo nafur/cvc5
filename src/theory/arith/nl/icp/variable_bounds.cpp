@@ -68,19 +68,21 @@ void VariableBounds::update_upper_bound(const Node& origin,
   }
 }
 
+void VariableBounds::reset() { d_intervals.clear(); }
+
 Interval& VariableBounds::get(const Node& v)
 {
-  auto it = mIntervals.find(v);
-  if (it == mIntervals.end())
+  auto it = d_intervals.find(v);
+  if (it == d_intervals.end())
   {
-    it = mIntervals.emplace(v, Interval()).first;
+    it = d_intervals.emplace(v, Interval()).first;
   }
   return it->second;
 }
 Interval VariableBounds::get(const Node& v) const
 {
-  auto it = mIntervals.find(v);
-  if (it == mIntervals.end())
+  auto it = d_intervals.find(v);
+  if (it == d_intervals.end())
   {
     return Interval{};
   }
@@ -90,9 +92,9 @@ Interval VariableBounds::get(const Node& v) const
 poly::IntervalAssignment VariableBounds::get() const
 {
   poly::IntervalAssignment res;
-  for (const auto& vi : mIntervals)
+  for (const auto& vi : d_intervals)
   {
-    poly::Variable v = mMapper(vi.first);
+    poly::Variable v = d_mapper(vi.first);
     poly::Interval i(vi.second.lower,
                      vi.second.lower_strict,
                      vi.second.upper,
@@ -130,7 +132,7 @@ bool VariableBounds::add(const Node& n)
       case Kind::GEQ: update_lower_bound(n, v.getNode(), val, false); break;
       default: Assert(false);
     }
-    mMapper(v.getNode());
+    d_mapper(v.getNode());
     return true;
   }
   return false;
