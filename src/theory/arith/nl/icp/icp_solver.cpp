@@ -20,11 +20,12 @@
 
 #include "base/check.h"
 #include "base/output.h"
-#include "theory/arith/nl/poly_conversion.h"
-#include "theory/rewriter.h"
-#include "theory/arith/arith_msum.h"
 #include "expr/node_algorithm.h"
+#include "theory/arith/arith_msum.h"
+#include "theory/arith/nl/poly_conversion.h"
 #include "theory/arith/normal_form.h"
+#include "theory/rewriter.h"
+#include "util/poly_util.h"
 
 namespace CVC4 {
 namespace theory {
@@ -33,6 +34,7 @@ namespace nl {
 namespace icp {
 
 namespace {
+/** A simple wrapper to nicely print an interval assignment. */
 struct IAWrapper
 {
   const poly::IntervalAssignment& ia;

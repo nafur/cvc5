@@ -27,7 +27,6 @@
 #include "theory/arith/nl/icp/intersection.h"
 #include "theory/arith/nl/icp/variable_bounds.h"
 #include "theory/arith/nl/poly_conversion.h"
-#include "util/poly_util.h"
 
 namespace CVC4 {
 namespace theory {
@@ -131,17 +130,6 @@ class ICPSolver
    * Performs a full ICP check.
    */
   void check();
-
-  void print()
-  {
-    std::cout << d_state.d_bounds << std::endl;
-    std::cout << "Candidates:" << std::endl;
-    for (const auto& c : d_state.d_candidates)
-    {
-      std::cout << "\t" << c << std::endl;
-    }
-    std::cout << d_state.d_origins << std::endl;
-  }
 };
 
 }  // namespace icp
