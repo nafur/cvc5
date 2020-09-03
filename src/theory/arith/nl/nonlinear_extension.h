@@ -30,7 +30,7 @@
 #include "theory/arith/nl/cad_solver.h"
 #include "theory/arith/nl/ext_theory_callback.h"
 #include "theory/arith/nl/iand_solver.h"
-#include "theory/arith/nl/icp/icp.h"
+#include "theory/arith/nl/icp/icp_solver.h"
 #include "theory/arith/nl/nl_model.h"
 #include "theory/arith/nl/nl_solver.h"
 #include "theory/arith/nl/stats.h"

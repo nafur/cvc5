@@ -17,7 +17,6 @@
 
 #include "theory/arith/nl/nonlinear_extension.h"
 
-#include "icp/icp.h"
 #include "options/arith_options.h"
 #include "options/theory_options.h"
 #include "theory/arith/arith_state.h"

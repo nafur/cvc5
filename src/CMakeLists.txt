@@ -325,8 +325,8 @@ libcvc4_add_sources(
   theory/arith/nl/icp/candidate.h
   theory/arith/nl/icp/contraction_origins.cpp
   theory/arith/nl/icp/contraction_origins.h
-  theory/arith/nl/icp/icp.cpp
-  theory/arith/nl/icp/icp.h
+  theory/arith/nl/icp/icp_solver.cpp
+  theory/arith/nl/icp/icp_solver.h
   theory/arith/nl/icp/intersection.cpp
   theory/arith/nl/icp/intersection.h
   theory/arith/nl/icp/variable_bounds.cpp
