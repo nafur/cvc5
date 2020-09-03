@@ -14,10 +14,13 @@
 
 #include "theory/arith/nl/icp/candidate.h"
 
+#ifdef CVC4_POLY_IMP
+
 #include <iostream>
 
 #include "base/check.h"
 #include "base/output.h"
+#include "theory/arith/nl/icp/intersection.h"
 #include "theory/arith/nl/poly_conversion.h"
 
 namespace CVC4 {
@@ -26,8 +29,10 @@ namespace arith {
 namespace nl {
 namespace icp {
 
-PropagationResult Candidate::propagate(poly::IntervalAssignment& ia, std::size_t size_threshold) const
+PropagationResult Candidate::propagate(poly::IntervalAssignment& ia,
+                                       std::size_t size_threshold) const
 {
+  // Evaluate the right hand side
   auto res = poly::evaluate(rhs, ia) * poly::Interval(poly::Value(rhsmult));
   if (get_lower(res) == poly::Value::minus_infty()
       && get_upper(res) == poly::Value::plus_infty())
@@ -35,6 +40,7 @@ PropagationResult Candidate::propagate(poly::IntervalAssignment& ia, std::size_t
     return PropagationResult::NOT_CHANGED;
   }
   Trace("nl-icp") << "Prop: " << *this << " -> " << res << std::endl;
+  // Remove bounds based on the sign condition
   switch (rel)
   {
     case poly::SignCondition::LT:
@@ -54,9 +60,12 @@ PropagationResult Candidate::propagate(poly::IntervalAssignment& ia, std::size_t
       res.set_upper(poly::Value::plus_infty(), true);
       break;
   }
+  // Get the current interval for lhs
   auto cur = ia.get(lhs);
 
+  // Update the current interval
   PropagationResult result = intersect_interval_with(cur, res, size_threshold);
+  // Check for strong propagations
   switch (result)
   {
     case PropagationResult::CONTRACTED:
@@ -107,3 +116,5 @@ std::ostream& operator<<(std::ostream& os, const Candidate& c)
 }  // namespace arith
 }  // namespace theory
 }  // namespace CVC4
+
+#endif

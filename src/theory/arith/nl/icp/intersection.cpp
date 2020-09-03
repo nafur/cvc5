@@ -14,6 +14,8 @@
 
 #include "theory/arith/nl/icp/intersection.h"
 
+#ifdef CVC4_POLY_IMP
+
 #include <iostream>
 
 #include "base/check.h"
@@ -227,3 +229,5 @@ PropagationResult intersect_interval_with(poly::Interval& cur,
 }  // namespace arith
 }  // namespace theory
 }  // namespace CVC4
+
+#endif
