@@ -40,7 +40,8 @@ PropagationResult intersect_interval_with(poly::Interval& cur,
     return PropagationResult::NOT_CHANGED;
   }
 
-  // bounds for res have 5 positions:
+  // Basic idea to organize this function:
+  // The bounds for res have 5 positions:
   // 1 < 2 (lower(cur)) < 3 < 4 (upper(cur)) < 5
 
   if (get_upper(res) < get_lower(cur))
