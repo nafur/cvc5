@@ -14,6 +14,11 @@
 
 #include "theory/arith/nl/icp/variable_bounds.h"
 
+#ifdef CVC4_POLY_IMP
+
+#include "theory/arith/normal_form.h"
+#include "util/poly_util.h"
+
 namespace CVC4 {
 namespace theory {
 namespace arith {
@@ -82,26 +87,6 @@ Interval VariableBounds::get(const Node& v) const
   return it->second;
 }
 
-std::vector<Node> VariableBounds::getOrigins() const
-{
-  std::vector<Node> res;
-  for (const auto& vi : mIntervals)
-  {
-    if (!vi.second.lower_origin.isNull())
-    {
-      res.emplace_back(vi.second.lower_origin);
-    }
-    if (!vi.second.upper_origin.isNull())
-    {
-      if (!res.empty() && vi.second.upper_origin != res.back())
-      {
-        res.emplace_back(vi.second.upper_origin);
-      }
-    }
-  }
-  return res;
-}
-
 poly::IntervalAssignment VariableBounds::get() const
 {
   poly::IntervalAssignment res;
@@ -118,14 +103,16 @@ poly::IntervalAssignment VariableBounds::get() const
 }
 bool VariableBounds::add(const Node& n)
 {
+  // Parse the node as a comparison
   auto comp = Comparison::parseNormalForm(n);
-  auto foo = comp.decompose(true);
-  if (std::get<0>(foo).isVariable())
+  auto dec = comp.decompose(true);
+  if (std::get<0>(dec).isVariable())
   {
-    Variable v = std::get<0>(foo).getVariable();
-    Kind relation = std::get<1>(foo);
+    Variable v = std::get<0>(dec).getVariable();
+    Kind relation = std::get<1>(dec);
     if (relation == Kind::DISTINCT) return false;
-    Constant bound = std::get<2>(foo);
+    Constant bound = std::get<2>(dec);
+    // has the form  v  ~relation~  bound
 
     poly::Value val = node_to_value(bound.getNode(), v.getNode());
     poly::Interval newi = poly::Interval::full();
@@ -165,3 +152,5 @@ std::ostream& operator<<(std::ostream& os, const VariableBounds& vb)
 }  // namespace arith
 }  // namespace theory
 }  // namespace CVC4
+
+#endif
