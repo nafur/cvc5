@@ -14,7 +14,6 @@
 
 #include "theory/arith/inference_manager.h"
 
-#include "base/output.h"
 #include "options/arith_options.h"
 #include "theory/arith/theory_arith.h"
 #include "theory/rewriter.h"
@@ -30,7 +29,7 @@ InferenceManager::InferenceManager(TheoryArith& ta,
 {
 }
 
-void InferenceManager::addPendingArithLemma(std::shared_ptr<ArithLemma> lemma,
+void InferenceManager::addPendingArithLemma(std::unique_ptr<ArithLemma> lemma,
                                             bool isWaiting)
 {
   lemma->d_node = Rewriter::rewrite(lemma->d_node);
@@ -46,30 +45,31 @@ void InferenceManager::addPendingArithLemma(std::shared_ptr<ArithLemma> lemma,
     }
     else
     {
-    d_pendingLem.clear();
-    d_theoryState.notifyInConflict();
+      d_pendingLem.clear();
+      d_theoryState.notifyInConflict();
+    }
   }
-}
   if (isWaiting)
-{
+  {
     d_waitingLem.emplace_back(std::move(lemma));
-}
-  else
-{
-    addPendingLemma(std::move(lemma));
-}
   }
+  else
+  {
+    d_pendingLem.emplace_back(std::move(lemma));
+  }
+}
 void InferenceManager::addPendingArithLemma(const ArithLemma& lemma,
                                             bool isWaiting)
-  {
-  addPendingArithLemma(std::make_shared<ArithLemma>(lemma), isWaiting);
-  }
+{
+  addPendingArithLemma(std::unique_ptr<ArithLemma>(new ArithLemma(lemma)),
+                       isWaiting);
+}
 void InferenceManager::addPendingArithLemma(const Node& lemma,
                                             nl::Inference inftype,
                                             bool isWaiting)
 {
-  addPendingArithLemma(std::make_shared<ArithLemma>(
-                           lemma, LemmaProperty::NONE, nullptr, inftype),
+  addPendingArithLemma(std::unique_ptr<ArithLemma>(new ArithLemma(
+                           lemma, LemmaProperty::NONE, nullptr, inftype)),
                        isWaiting);
 }
 
@@ -77,7 +77,7 @@ void InferenceManager::flushWaitingLemmas()
 {
   for (auto& lem : d_waitingLem)
   {
-    addPendingLemma(std::move(lem));
+    d_pendingLem.emplace_back(std::move(lem));
   }
   d_waitingLem.clear();
 }
