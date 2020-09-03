@@ -21,6 +21,7 @@
 #include <poly/polyxx.h>
 
 #include "expr/node.h"
+#include "theory/arith/nl/icp/intersection.h"
 
 namespace CVC4 {
 namespace theory {
