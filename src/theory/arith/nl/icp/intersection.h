@@ -34,7 +34,8 @@ enum class PropagationResult
 };
 
 PropagationResult intersect_interval_with(poly::Interval& cur,
-                                          const poly::Interval& res);
+                                          const poly::Interval& res,
+                                          std::size_t size_threshold);
 
 }  // namespace icp
 }  // namespace nl

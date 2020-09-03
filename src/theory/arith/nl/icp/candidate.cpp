@@ -26,61 +26,80 @@ namespace arith {
 namespace nl {
 namespace icp {
 
-PropagationResult Candidate::propagate(poly::IntervalAssignment& ia) const {
-        auto res = poly::evaluate(rhs, ia) * poly::Interval(poly::Value(rhsmult));
-        if (get_lower(res) == poly::Value::minus_infty() && get_upper(res) == poly::Value::plus_infty()) {
-            return PropagationResult::NOT_CHANGED;
-        }
-        Trace("nl-icp") << "Prop: " << *this << " -> " << res << std::endl;
-        switch (rel) {
-            case poly::SignCondition::LT:
-                res.set_lower(poly::Value::minus_infty(), true);
-                res.set_upper(get_upper(res), true);
-                break;
-            case poly::SignCondition::LE: res.set_lower(poly::Value::minus_infty(), true); break;
-            case poly::SignCondition::EQ: break;
-            case poly::SignCondition::NE: Assert(false); break;
-            case poly::SignCondition::GT:
-                res.set_lower(get_lower(res), true);
-                res.set_upper(poly::Value::plus_infty(), true);
-                break;
-            case poly::SignCondition::GE: res.set_upper(poly::Value::plus_infty(), true); break;
-        }
-        auto cur = ia.get(lhs);
+PropagationResult Candidate::propagate(poly::IntervalAssignment& ia, std::size_t size_threshold) const
+{
+  auto res = poly::evaluate(rhs, ia) * poly::Interval(poly::Value(rhsmult));
+  if (get_lower(res) == poly::Value::minus_infty()
+      && get_upper(res) == poly::Value::plus_infty())
+  {
+    return PropagationResult::NOT_CHANGED;
+  }
+  Trace("nl-icp") << "Prop: " << *this << " -> " << res << std::endl;
+  switch (rel)
+  {
+    case poly::SignCondition::LT:
+      res.set_lower(poly::Value::minus_infty(), true);
+      res.set_upper(get_upper(res), true);
+      break;
+    case poly::SignCondition::LE:
+      res.set_lower(poly::Value::minus_infty(), true);
+      break;
+    case poly::SignCondition::EQ: break;
+    case poly::SignCondition::NE: Assert(false); break;
+    case poly::SignCondition::GT:
+      res.set_lower(get_lower(res), true);
+      res.set_upper(poly::Value::plus_infty(), true);
+      break;
+    case poly::SignCondition::GE:
+      res.set_upper(poly::Value::plus_infty(), true);
+      break;
+  }
+  auto cur = ia.get(lhs);
 
-        PropagationResult result = intersect_interval_with(cur, res);
-        switch (result) {
-            case PropagationResult::CONTRACTED:
-            case PropagationResult::CONTRACTED_WITHOUT_CURRENT: {
-                Trace("nl-icp") << *this << " contracted " << lhs << " -> " << cur << std::endl;
-                auto old = ia.get(lhs);
-                bool strong = false;
-                strong = strong || (is_minus_infinity(get_lower(old)) && !is_minus_infinity(get_lower(cur)));
-                strong = strong || (is_plus_infinity(get_upper(old)) && !is_plus_infinity(get_upper(cur)));
-                ia.set(lhs, cur);
-                if (strong) {
-                    if (result == PropagationResult::CONTRACTED) {
-                        result = PropagationResult::CONTRACTED_STRONGLY;
-                    } else if (result == PropagationResult::CONTRACTED_WITHOUT_CURRENT) {
-                        result = PropagationResult::CONTRACTED_STRONGLY_WITHOUT_CURRENT;
-                    }
-                }
-                break;
-            }
-            case PropagationResult::CONTRACTED_STRONGLY:
-            case PropagationResult::CONTRACTED_STRONGLY_WITHOUT_CURRENT:
-                Assert(false) << "This method should not return strong flags.";
-                break;
-            default:
-                break;
+  PropagationResult result = intersect_interval_with(cur, res, size_threshold);
+  switch (result)
+  {
+    case PropagationResult::CONTRACTED:
+    case PropagationResult::CONTRACTED_WITHOUT_CURRENT:
+    {
+      Trace("nl-icp") << *this << " contracted " << lhs << " -> " << cur
+                      << std::endl;
+      auto old = ia.get(lhs);
+      bool strong = false;
+      strong = strong
+               || (is_minus_infinity(get_lower(old))
+                   && !is_minus_infinity(get_lower(cur)));
+      strong = strong
+               || (is_plus_infinity(get_upper(old))
+                   && !is_plus_infinity(get_upper(cur)));
+      ia.set(lhs, cur);
+      if (strong)
+      {
+        if (result == PropagationResult::CONTRACTED)
+        {
+          result = PropagationResult::CONTRACTED_STRONGLY;
         }
-        return result;
+        else if (result == PropagationResult::CONTRACTED_WITHOUT_CURRENT)
+        {
+          result = PropagationResult::CONTRACTED_STRONGLY_WITHOUT_CURRENT;
+        }
+      }
+      break;
     }
+    case PropagationResult::CONTRACTED_STRONGLY:
+    case PropagationResult::CONTRACTED_STRONGLY_WITHOUT_CURRENT:
+      Assert(false) << "This method should not return strong flags.";
+      break;
+    default: break;
+  }
+  return result;
+}
 
-std::ostream& operator<<(std::ostream& os, const Candidate& c) {
-    os << c.lhs << " " << c.rel << " ";
-    if (c.rhsmult != poly::Rational(1)) os << c.rhsmult << " * ";
-    return os << c.rhs;
+std::ostream& operator<<(std::ostream& os, const Candidate& c)
+{
+  os << c.lhs << " " << c.rel << " ";
+  if (c.rhsmult != poly::Rational(1)) os << c.rhsmult << " * ";
+  return os << c.rhs;
 }
 
 }  // namespace icp

@@ -26,16 +26,16 @@ namespace arith {
 namespace nl {
 namespace icp {
 
+struct Candidate
+{
+  poly::Variable lhs;
+  poly::SignCondition rel;
+  poly::Polynomial rhs;
+  poly::Rational rhsmult;
+  Node origin;
+  std::vector<Node> rhsVariables;
 
-struct Candidate {
-    poly::Variable lhs;
-    poly::SignCondition rel;
-    poly::Polynomial rhs;
-    poly::Rational rhsmult;
-    Node origin;
-    std::vector<Node> rhsVariables;
-
-    PropagationResult propagate(poly::IntervalAssignment& ia) const;
+  PropagationResult propagate(poly::IntervalAssignment& ia, std::size_t size_threshold) const;
 };
 std::ostream& operator<<(std::ostream& os, const Candidate& c);
 
