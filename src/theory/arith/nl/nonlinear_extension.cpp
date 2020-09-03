@@ -304,7 +304,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
   if (options::nlICP())
   {
     d_icpSlv.reset(assertions);
-    d_icpSlv.execute();
+    d_icpSlv.check();
 
     if (d_im.hasProcessed())
     {
