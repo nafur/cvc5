@@ -339,8 +339,6 @@ libcvc4_add_sources(
   theory/arith/nl/icp/intersection.h
   theory/arith/nl/icp/variable_bounds.cpp
   theory/arith/nl/icp/variable_bounds.h
-  theory/arith/nl/inference.cpp
-  theory/arith/nl/inference.h
   theory/arith/nl/nl_constraint.cpp
   theory/arith/nl/nl_constraint.h
   theory/arith/nl/nl_lemma_utils.cpp
