@@ -206,6 +206,8 @@ libcvc4_add_sources(
   smt/logic_exception.h
   smt/logic_request.cpp
   smt/logic_request.h
+  smt/interpolation_solver.cpp
+  smt/interpolation_solver.h
   smt/managed_ostreams.cpp
   smt/managed_ostreams.h
   smt/model.cpp
@@ -226,6 +228,10 @@ libcvc4_add_sources(
   smt/preprocess_proof_generator.h
   smt/process_assertions.cpp
   smt/process_assertions.h
+  smt/proof_manager.cpp
+  smt/proof_manager.h
+  smt/proof_post_processor.cpp
+  smt/proof_post_processor.h
   smt/set_defaults.cpp
   smt/set_defaults.h
   smt/smt_engine.cpp
@@ -295,6 +301,8 @@ libcvc4_add_sources(
   theory/arith/fc_simplex.h
   theory/arith/infer_bounds.cpp
   theory/arith/infer_bounds.h
+  theory/arith/inference_id.cpp
+  theory/arith/inference_id.h
   theory/arith/inference_manager.cpp
   theory/arith/inference_manager.h
   theory/arith/linear_equality.cpp
@@ -424,6 +432,9 @@ libcvc4_add_sources(
   theory/bv/bv_inequality_graph.h
   theory/bv/bv_quick_check.cpp
   theory/bv/bv_quick_check.h
+  theory/bv/bv_solver.h
+  theory/bv/bv_solver_lazy.cpp
+  theory/bv/bv_solver_lazy.h
   theory/bv/bv_subtheory.h
   theory/bv/bv_subtheory_algebraic.cpp
   theory/bv/bv_subtheory_algebraic.h
@@ -603,6 +614,8 @@ libcvc4_add_sources(
   theory/quantifiers/quant_util.h
   theory/quantifiers/quantifiers_attributes.cpp
   theory/quantifiers/quantifiers_attributes.h
+  theory/quantifiers/quantifiers_modules.cpp
+  theory/quantifiers/quantifiers_modules.h
   theory/quantifiers/quantifiers_rewriter.cpp
   theory/quantifiers/quantifiers_rewriter.h
   theory/quantifiers/quantifiers_state.cpp
@@ -724,6 +737,8 @@ libcvc4_add_sources(
   theory/sets/skolem_cache.h
   theory/sets/solver_state.cpp
   theory/sets/solver_state.h
+  theory/sets/term_registry.cpp
+  theory/sets/term_registry.h
   theory/sets/theory_sets.cpp
   theory/sets/theory_sets.h
   theory/sets/theory_sets_private.cpp
@@ -812,6 +827,7 @@ libcvc4_add_sources(
   theory/theory_engine_proof_generator.h
   theory/theory_id.cpp
   theory/theory_id.h
+  theory/theory_eq_notify.h
   theory/theory_inference.cpp
   theory/theory_inference.h
   theory/theory_inference_manager.cpp

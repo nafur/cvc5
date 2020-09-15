@@ -97,7 +97,9 @@ class TheoryArith : public Theory {
 
   std::pair<bool, Node> entailmentCheck(TNode lit) override;
 
-  InferenceManager& getInferenceManager() {
+  /** Return a reference to the arith::InferenceManager. */
+  InferenceManager& getInferenceManager()
+  {
     return d_inferenceManager;
   }
 
@@ -105,6 +107,7 @@ class TheoryArith : public Theory {
   /** The state object wrapping TheoryArithPrivate  */
   ArithState d_astate;
 
+  /** The arith::InferenceManager. */
   InferenceManager d_inferenceManager;
 
 };/* class TheoryArith */

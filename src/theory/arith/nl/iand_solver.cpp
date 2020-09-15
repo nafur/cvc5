@@ -100,7 +100,7 @@ void IAndSolver::checkInitialRefine()
       Node lem = conj.size() == 1 ? conj[0] : nm->mkNode(AND, conj);
       Trace("iand-lemma") << "IAndSolver::Lemma: " << lem << " ; INIT_REFINE"
                           << std::endl;
-      d_im.addPendingArithLemma(lem, Inference::IAND_INIT_REFINE);
+      d_im.addPendingArithLemma(lem, InferenceId::NL_IAND_INIT_REFINE);
     }
   }
 }
@@ -160,7 +160,7 @@ void IAndSolver::checkFullRefine()
         Node lem = valueBasedLemma(i);
         Trace("iand-lemma")
             << "IAndSolver::Lemma: " << lem << " ; VALUE_REFINE" << std::endl;
-        d_im.addPendingArithLemma(lem, Inference::IAND_VALUE_REFINE);
+        d_im.addPendingArithLemma(lem, InferenceId::NL_IAND_VALUE_REFINE);
       }
     }
   }

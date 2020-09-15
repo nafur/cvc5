@@ -289,6 +289,7 @@ set(regress_0_tests
   regress0/bv/core/slice-18.smtv1.smt2
   regress0/bv/core/slice-19.smtv1.smt2
   regress0/bv/core/slice-20.smtv1.smt2
+  regress0/bv/div_mod.cvc
   regress0/bv/divtest_2_5.smt2
   regress0/bv/divtest_2_6.smt2
   regress0/bv/eager-inc-cadical.smt2
@@ -366,6 +367,8 @@ set(regress_0_tests
   regress0/bv/mul-neg-unsat.smt2
   regress0/bv/mul-negpow2.smt2
   regress0/bv/mult-pow2-negative.smt2
+  regress0/bv/pr4993-bvugt-bvurem-a.smt2
+  regress0/bv/pr4993-bvugt-bvurem-b.smt2
   regress0/bv/sizecheck.cvc
   regress0/bv/smtcompbug.smtv1.smt2
   regress0/bv/test-bv_intro_pow2.smt2
@@ -855,6 +858,7 @@ set(regress_0_tests
   regress0/sep/sep-01.smt2
   regress0/sep/sep-plus1.smt2
   regress0/sep/sep-simp-unsat-emp.smt2
+  regress0/sep/simple-080420-const-sets.smt2
   regress0/sep/skolem_emp.smt2
   regress0/sep/trees-1.smt2
   regress0/sep/wand-crash.smt2
@@ -1579,6 +1583,7 @@ set(regress_1_tests
   regress1/quantifiers/issue4290-cegqi-r.smt2
   regress1/quantifiers/issue4620-erq-witness-unsound.smt2
   regress1/quantifiers/issue4685-wrewrite.smt2
+  regress1/quantifiers/issue5019-cegqi-i.smt2
   regress1/quantifiers/issue993.smt2
   regress1/quantifiers/javafe.ast.StmtVec.009.smt2
   regress1/quantifiers/lra-vts-inf.smt2
@@ -1759,6 +1764,7 @@ set(regress_1_tests
   regress1/sets/infinite-type/sets-card-int-1.smt2
   regress1/sets/infinite-type/sets-card-int-2.smt2
   regress1/sets/insert_invariant_37_2.smt2
+  regress1/sets/is_singleton1.smt2
   regress1/sets/issue2568.smt2
   regress1/sets/issue2904.smt2
   regress1/sets/issue4391-card-lasso.smt2
@@ -1938,6 +1944,14 @@ set(regress_1_tests
   regress1/sygus/inv-example.sy
   regress1/sygus/inv-missed-sol-true.sy
   regress1/sygus/inv-unused.sy
+  regress1/sygus/interpol1.smt2
+  regress1/sygus/interpol2.smt2
+  regress1/sygus/interpol3.smt2
+  regress1/sygus/interpol_arr1.smt2
+  regress1/sygus/interpol_arr2.smt2
+  regress1/sygus/interpol_cosa_1.smt2
+  regress1/sygus/interpol_from_pono_1.smt2
+  regress1/sygus/interpol_from_pono_2.smt2
   regress1/sygus/issue2914.sy
   regress1/sygus/issue2935.sy
   regress1/sygus/issue3199.smt2
@@ -1997,6 +2011,7 @@ set(regress_1_tests
   regress1/sygus/rec-fun-while-infinite.sy
   regress1/sygus/re-concat.sy
   regress1/sygus/repair-const-rl.sy
+  regress1/sygus/rex-strings-alarm.sy
   regress1/sygus/sets-pred-test.sy
   regress1/sygus/simple-regexp.sy
   regress1/sygus/stopwatch-bt.sy
@@ -2078,6 +2093,7 @@ set(regress_2_tests
   regress2/bv_to_int_inc1.smt2
   regress2/bv_to_int_mask_array_1.smt2
   regress2/bv_to_int_mask_array_2.smt2
+  regress2/bv_to_int_mask_array_3.smt2
   regress2/bv_to_int_shifts.smt2
   regress2/error0.smt2
   regress2/error1.smtv1.smt2

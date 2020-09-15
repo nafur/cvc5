@@ -135,7 +135,7 @@ void TranscendentalSolver::initLastCall(const std::vector<Node>& assertions,
             }
             Node expn = exp.size() == 1 ? exp[0] : nm->mkNode(AND, exp);
             Node cong_lemma = nm->mkNode(OR, expn.negate(), a.eqNode(aa));
-            d_im.addPendingArithLemma(cong_lemma, Inference::CONGRUENCE);
+            d_im.addPendingArithLemma(cong_lemma, InferenceId::NL_CONGRUENCE);
           }
         }
         else
@@ -211,7 +211,7 @@ void TranscendentalSolver::initLastCall(const std::vector<Node>& assertions,
     // note we must do preprocess on this lemma
     Trace("nl-ext-lemma") << "NonlinearExtension::Lemma : purify : " << lem
                           << std::endl;
-    NlLemma nlem(lem, LemmaProperty::PREPROCESS, nullptr, Inference::T_PURIFY_ARG);
+    NlLemma nlem(lem, LemmaProperty::PREPROCESS, nullptr, InferenceId::NL_T_PURIFY_ARG);
     d_im.addPendingArithLemma(nlem);
   }
 
@@ -367,7 +367,7 @@ void TranscendentalSolver::getCurrentPiBounds()
   Node pi_lem = nm->mkNode(AND,
                            nm->mkNode(GEQ, d_pi, d_pi_bound[0]),
                            nm->mkNode(LEQ, d_pi, d_pi_bound[1]));
-  d_im.addPendingArithLemma(pi_lem, Inference::T_PI_BOUND);
+  d_im.addPendingArithLemma(pi_lem, InferenceId::NL_T_PI_BOUND);
 }
 
 void TranscendentalSolver::checkTranscendentalInitialRefine()
@@ -451,7 +451,7 @@ void TranscendentalSolver::checkTranscendentalInitialRefine()
         }
         if (!lem.isNull())
         {
-          d_im.addPendingArithLemma(lem, Inference::T_INIT_REFINE);
+          d_im.addPendingArithLemma(lem, InferenceId::NL_T_INIT_REFINE);
         }
       }
     }
@@ -625,7 +625,7 @@ void TranscendentalSolver::checkTranscendentalMonotonic()
               Trace("nl-ext-tf-mono")
                   << "Monotonicity lemma : " << mono_lem << std::endl;
 
-              d_im.addPendingArithLemma(mono_lem, Inference::T_MONOTONICITY);
+              d_im.addPendingArithLemma(mono_lem, InferenceId::NL_T_MONOTONICITY);
             }
           }
           // store the previous values
@@ -872,7 +872,7 @@ bool TranscendentalSolver::checkTfTangentPlanesFun(Node tf,
         << "*** Tangent plane lemma : " << lem << std::endl;
     Assert(d_model.computeAbstractModelValue(lem) == d_false);
     // Figure 3 : line 9
-    d_im.addPendingArithLemma(lem, Inference::T_TANGENT);
+    d_im.addPendingArithLemma(lem, InferenceId::NL_T_TANGENT);
   }
   else if (is_secant)
   {
@@ -1006,7 +1006,7 @@ bool TranscendentalSolver::checkTfTangentPlanesFun(Node tf,
     Assert(!lemmaConj.empty());
     Node lem =
         lemmaConj.size() == 1 ? lemmaConj[0] : nm->mkNode(AND, lemmaConj);
-    NlLemma nlem(lem, LemmaProperty::NONE, nullptr, Inference::T_SECANT);
+    NlLemma nlem(lem, LemmaProperty::NONE, nullptr, InferenceId::NL_T_SECANT);
     // The side effect says that if lem is added, then we should add the
     // secant point c for (tf,d).
     nlem.d_secantPoint.push_back(std::make_tuple(tf, d, c));

@@ -19,7 +19,7 @@
 #endif
 
 #include "theory/arith/nl/cad/theory_call_exporter.h"
-#include "theory/arith/nl/inference.h"
+#include "theory/arith/inference_id.h"
 #include "theory/arith/nl/cad/cdcac.h"
 #include "theory/arith/nl/poly_conversion.h"
 #include "util/poly_util.h"
@@ -95,27 +95,15 @@ void CadSolver::checkFull()
     d_foundSatisfiability = false;
     auto mis = collectConstraints(covering);
     Trace("nl-cad") << "Collected MIS: " << mis << std::endl;
-    auto* nm = NodeManager::currentNM();
-    for (auto& n : mis)
-    {
-      n = n.negate();
-    }
     Assert(!mis.empty()) << "Infeasible subset can not be empty";
     Trace("nl-cad") << "UNSAT with MIS: " << mis << std::endl;
-    if (mis.size() == 1)
-    {
-      d_im.addPendingArithLemma(mis.front(), Inference::CAD_CONFLICT);
-    }
-    else
-    {
-      d_im.addPendingArithLemma(nm->mkNode(Kind::OR, mis), Inference::CAD_CONFLICT);
-    }
+    d_im.addConflict(NodeManager::currentNM()->mkAnd(mis),
+                     InferenceId::NL_CAD_CONFLICT);
   }
 #else
   Warning() << "Tried to use CadSolver but libpoly is not available. Compile "
                "with --poly."
             << std::endl;
-  return {};
 #endif
 }
 
@@ -147,10 +135,13 @@ void CadSolver::checkPartial()
       }
       Node conclusion =
           excluding_interval_to_lemma(first_var, interval.d_interval, false);
-      if (!conclusion.isNull()) {
+      if (!conclusion.isNull())
+      {
         Node lemma = nm->mkNode(Kind::IMPLIES, premise, conclusion);
-        Trace("nl-cad") << "Excluding " << first_var << " -> " << interval.d_interval << " using " << lemma << std::endl;
-        d_im.addPendingArithLemma(lemma, Inference::CAD_EXCLUDED_INTERVAL);
+        Trace("nl-cad") << "Excluding " << first_var << " -> "
+                        << interval.d_interval << " using " << lemma
+                        << std::endl;
+        d_im.addPendingArithLemma(lemma, InferenceId::NL_CAD_EXCLUDED_INTERVAL);
       }
     }
   }
@@ -158,7 +149,6 @@ void CadSolver::checkPartial()
   Warning() << "Tried to use CadSolver but libpoly is not available. Compile "
                "with --poly."
             << std::endl;
-  return {};
 #endif
 }
 

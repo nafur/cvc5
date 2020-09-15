@@ -177,7 +177,7 @@ void NlSolver::checkSplitZero()
       eq = Rewriter::rewrite(eq);
       d_im.addPendingPhaseRequirement(eq, true);
       Node lem = eq.orNode(eq.negate());
-      d_im.addPendingArithLemma(lem, Inference::SPLIT_ZERO);
+      d_im.addPendingArithLemma(lem, InferenceId::NL_SPLIT_ZERO);
     }
   }
 }
@@ -271,7 +271,7 @@ int NlSolver::compareSign(Node oa,
     {
       Node lemma =
           safeConstructNary(AND, exp).impNode(mkLit(oa, d_zero, status * 2));
-      d_im.addPendingArithLemma(lemma, Inference::SIGN);
+      d_im.addPendingArithLemma(lemma, InferenceId::NL_SIGN);
     }
     return status;
   }
@@ -288,7 +288,7 @@ int NlSolver::compareSign(Node oa,
     if (mvaoa.getConst<Rational>().sgn() != 0)
     {
       Node lemma = av.eqNode(d_zero).impNode(oa.eqNode(d_zero));
-      d_im.addPendingArithLemma(lemma, Inference::SIGN);
+      d_im.addPendingArithLemma(lemma, InferenceId::NL_SIGN);
     }
     return 0;
   }
@@ -445,7 +445,7 @@ bool NlSolver::compareMonomial(
       Node clem = nm->mkNode(
           IMPLIES, safeConstructNary(AND, exp), mkLit(oa, ob, status, true));
       Trace("nl-ext-comp-lemma") << "comparison lemma : " << clem << std::endl;
-      lem.emplace_back(clem, LemmaProperty::NONE, nullptr, Inference::COMPARISON);
+      lem.emplace_back(clem, LemmaProperty::NONE, nullptr, InferenceId::NL_COMPARISON);
       cmp_infers[status][oa][ob] = clem;
     }
     return true;
@@ -996,7 +996,7 @@ void NlSolver::checkTangentPlanes(bool addWaitingLemmas)
             tplaneConj.push_back(lb_reverse2);
 
             Node tlem = nm->mkNode(AND, tplaneConj);
-            d_im.addPendingArithLemma(tlem, Inference::TANGENT_PLANE, addWaitingLemmas);
+            d_im.addPendingArithLemma(tlem, InferenceId::NL_TANGENT_PLANE, addWaitingLemmas);
           }
         }
       }
@@ -1244,7 +1244,7 @@ void NlSolver::checkMonomialInferBounds(
                 << " (pre-rewrite : " << pr_iblem << ")" << std::endl;
             // Trace("nl-ext-bound-lemma") << "       intro new
             // monomials = " << introNewTerms << std::endl;
-            d_im.addPendingArithLemma(iblem, Inference::INFER_BOUNDS_NT, introNewTerms);
+            d_im.addPendingArithLemma(iblem, InferenceId::NL_INFER_BOUNDS_NT, introNewTerms);
           }
         }
       }
@@ -1372,7 +1372,7 @@ void NlSolver::checkFactoring(const std::vector<Node>& asserts, const std::vecto
           lemma_disj.push_back(conc_lit);
           Node flem = nm->mkNode(OR, lemma_disj);
           Trace("nl-ext-factor") << "...lemma is " << flem << std::endl;
-          d_im.addPendingArithLemma(flem, Inference::FACTOR);
+          d_im.addPendingArithLemma(flem, InferenceId::NL_FACTOR);
         }
       }
     }
@@ -1542,7 +1542,7 @@ void NlSolver::checkMonomialInferResBounds()
                   rblem = Rewriter::rewrite(rblem);
                   Trace("nl-ext-rbound-lemma")
                       << "Resolution bound lemma : " << rblem << std::endl;
-                  d_im.addPendingArithLemma(rblem, Inference::RES_INFER_BOUNDS);
+                  d_im.addPendingArithLemma(rblem, InferenceId::NL_RES_INFER_BOUNDS);
                 }
               }
               exp.pop_back();

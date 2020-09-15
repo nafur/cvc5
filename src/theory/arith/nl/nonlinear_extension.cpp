@@ -35,9 +35,7 @@ namespace nl {
 NonlinearExtension::NonlinearExtension(TheoryArith& containing,
                                        ArithState& state,
                                        eq::EqualityEngine* ee)
-    : d_lemmas(containing.getUserContext()),
-      d_lemmasPp(containing.getUserContext()),
-      d_containing(containing),
+    : d_containing(containing),
       d_im(containing.getInferenceManager()),
       d_ee(ee),
       d_needsLastCall(false),
@@ -119,7 +117,8 @@ void NonlinearExtension::getAssertions(std::vector<Node>& assertions)
   {
     nassertions++;
     const Assertion& assertion = *it;
-    Trace("nl-ext") << "Loaded " << assertion.d_assertion << " from theory" << std::endl;
+    Trace("nl-ext") << "Loaded " << assertion.d_assertion << " from theory"
+                    << std::endl;
     Node lit = assertion.d_assertion;
     if (useRelevance && !v.isRelevant(lit))
     {
@@ -220,9 +219,22 @@ void NonlinearExtension::getAssertions(std::vector<Node>& assertions)
     }
   }
 
-  for (Theory::assertions_iterator it = d_containing.facts_begin();
-       it != d_containing.facts_end();
+  // Try to be "more deterministic" by adding assertions in the order they were
+  // given
+  for (auto it = d_containing.facts_begin(); it != d_containing.facts_end();
        ++it)
+  {
+    Node lit = (*it).d_assertion;
+    auto iait = init_assertions.find(lit);
+    if (iait != init_assertions.end())
+    {
+      assertions.push_back(lit);
+      init_assertions.erase(iait);
+    }
+  }
+  // Now add left over assertions that have been newly created within this
+  // function by the code above.
+  for (const Node& a : init_assertions)
   {
     Node lit = (*it).d_assertion;
     if (init_assertions.find(lit) != init_assertions.end()) {
@@ -487,15 +499,14 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
   if (options::nlCad())
   {
     d_cadSlv.checkFull();
-    if (!d_im.hasProcessed())
+    if (!d_im.hasUsed())
     {
       Trace("nl-cad") << "nl-cad found SAT!" << std::endl;
     }
     else
     {
-      Trace("nl-ext") << "  ...finished with " << d_im.numPendingLemmas() << " new lemmas."
-                      << std::endl;
-      return d_im.numPendingLemmas();
+      // checkFull() only adds a single conflict
+      return 1;
     }
   }
   // run the full refinement in the IAND solver
@@ -538,8 +549,10 @@ void NonlinearExtension::check(Theory::Effort e)
   else
   {
     // If we computed lemmas during collectModelInfo, send them now.
-    if (d_im.hasPendingLemma())
+    if (!d_cmiLemmas.empty() || d_im.hasPendingLemma())
     {
+      sendLemmas(d_cmiLemmas);
+      d_im.doPendingFacts();
       d_im.doPendingLemmas();
       d_im.doPendingPhaseRequirements();
       return;
@@ -712,7 +725,7 @@ bool NonlinearExtension::modelBasedRefinement()
             d_containing.getOutputChannel().requirePhase(literal, true);
             Trace("nl-ext-debug") << "Split on : " << literal << std::endl;
             Node split = literal.orNode(literal.negate());
-            ArithLemma nsplit(split, LemmaProperty::NONE, nullptr, Inference::SHARED_TERM_VALUE_SPLIT);
+            ArithLemma nsplit(split, LemmaProperty::NONE, nullptr, InferenceId::NL_SHARED_TERM_VALUE_SPLIT);
             d_im.addPendingArithLemma(nsplit);
           }
           if (d_im.numWaitingLemmas() > 0)
