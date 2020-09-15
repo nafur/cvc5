@@ -1387,7 +1387,7 @@ Node NlSolver::getFactorSkolem(Node n)
     NodeManager* nm = NodeManager::currentNM();
     Node k = nm->mkSkolem("kf", n.getType());
     Node k_eq = Rewriter::rewrite(k.eqNode(n));
-    d_im.addPendingArithLemma(k_eq, Inference::FACTOR);
+    d_im.addPendingArithLemma(k_eq, InferenceId::NL_FACTOR);
     d_factor_skolem[n] = k;
     return k;
   }

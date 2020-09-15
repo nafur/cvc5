@@ -837,10 +837,14 @@ DeltaRational Comparison::normalizedDeltaRational() const {
   }
 }
 
-std::tuple<Polynomial,Kind,Constant> Comparison::decompose(bool split_constant) const {
+std::tuple<Polynomial, Kind, Constant> Comparison::decompose(
+    bool split_constant) const
+{
   Kind rel = getNode().getKind();
-  if (rel == Kind::NOT) {
-    switch (getNode()[0].getKind()) {
+  if (rel == Kind::NOT)
+  {
+    switch (getNode()[0].getKind())
+    {
       case kind::LEQ: rel = Kind::GT; break;
       case kind::LT: rel = Kind::GEQ; break;
       case kind::EQUAL: rel = Kind::DISTINCT; break;
@@ -854,36 +858,41 @@ std::tuple<Polynomial,Kind,Constant> Comparison::decompose(bool split_constant) 
 
   Polynomial poly = getLeft() - getRight();
 
-  if (!split_constant) {
-    return std::tuple<Polynomial,Kind,Constant>{poly, rel, Constant::mkZero()};
+  if (!split_constant)
+  {
+    return std::tuple<Polynomial, Kind, Constant>{
+        poly, rel, Constant::mkZero()};
   }
 
-  Constant right = Constant::mkZero(); 
-  if (poly.containsConstant()) {
+  Constant right = Constant::mkZero();
+  if (poly.containsConstant())
+  {
     right = -poly.getHead().getConstant();
     poly = poly + Polynomial::mkPolynomial(right);
   }
 
   Constant lcoeff = poly.getHead().getConstant();
-  if (!lcoeff.isOne()) {
+  if (!lcoeff.isOne())
+  {
     Constant invlcoeff = lcoeff.inverse();
-    if (lcoeff.isNegative()) {
-      switch (rel) {
+    if (lcoeff.isNegative())
+    {
+      switch (rel)
+      {
         case kind::LEQ: rel = Kind::GEQ; break;
         case kind::LT: rel = Kind::GT; break;
         case kind::EQUAL: break;
         case kind::DISTINCT: break;
         case kind::GEQ: rel = Kind::LEQ; break;
         case kind::GT: rel = Kind::LT; break;
-        default:
-          Assert(false) << "Unsupported relation: " << rel;
+        default: Assert(false) << "Unsupported relation: " << rel;
       }
     }
     poly = poly * invlcoeff;
     right = right * invlcoeff;
   }
 
-  return std::tuple<Polynomial,Kind,Constant>{ poly, rel, right};
+  return std::tuple<Polynomial, Kind, Constant>{poly, rel, right};
 }
 
 Comparison Comparison::parseNormalForm(TNode n) {

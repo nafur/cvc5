@@ -71,6 +71,17 @@ void NonlinearExtension::preRegisterTerm(TNode n)
   d_extTheory.registerTermRec(n);
 }
 
+void NonlinearExtension::sendLemmas(const std::vector<NlLemma>& out)
+{
+  for (const NlLemma& nlem : out)
+  {
+    Trace("nl-ext-lemma") << "NonlinearExtension::Lemma : " << nlem.d_inference
+                          << " : " << nlem.d_node << std::endl;
+    d_im.addPendingArithLemma(nlem);
+    d_stats.d_inferences << nlem.d_inference;
+  }
+}
+
 void NonlinearExtension::processSideEffect(const NlLemma& se)
 {
   d_trSlv.processSideEffect(se);
@@ -234,9 +245,8 @@ void NonlinearExtension::getAssertions(std::vector<Node>& assertions)
   }
   // Now add left over assertions that have been newly created within this
   // function by the code above.
-  for (const Node& a : init_assertions)
+  for (const Node& lit : init_assertions)
   {
-    Node lit = (*it).d_assertion;
     if (init_assertions.find(lit) != init_assertions.end()) {
       assertions.push_back(lit);
     }
@@ -318,7 +328,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
     d_icpSlv.reset(assertions);
     d_icpSlv.check();
 
-    if (d_im.hasProcessed())
+    if (d_im.hasUsed())
     {
       Trace("nl-ext") << "  ...finished with " << d_im.numPendingLemmas()
                       << " new lemmas from ICP." << std::endl;
@@ -338,7 +348,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
   // init last call with IAND
   d_iandSlv.initLastCall(assertions, false_asserts, xts);
 
-  if (d_im.hasProcessed())
+  if (d_im.hasUsed())
   {
     Trace("nl-ext") << "  ...finished with " << d_im.numPendingLemmas()
                     << " new lemmas during registration." << std::endl;
@@ -350,7 +360,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
   {
     Trace("nl-ext") << "Get zero split lemmas..." << std::endl;
     d_nlSlv.checkSplitZero();
-    if (d_im.hasProcessed())
+    if (d_im.hasUsed())
     {
       Trace("nl-ext") << "  ...finished with " << d_im.numPendingLemmas() << " new lemmas."
                       << std::endl;
@@ -363,7 +373,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
   {
     // functions
     d_trSlv.checkTranscendentalInitialRefine();
-    if (d_im.hasProcessed())
+    if (d_im.hasUsed())
     {
       Trace("nl-ext") << "  ...finished with " << d_im.numPendingLemmas() << " new lemmas."
                       << std::endl;
@@ -372,7 +382,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
   }
   //-----------------------------------initial lemmas for iand
   d_iandSlv.checkInitialRefine();
-  if (d_im.hasProcessed())
+  if (d_im.hasUsed())
   {
     Trace("nl-ext") << "  ...finished with " << d_im.numPendingLemmas() << " new lemmas."
                     << std::endl;
@@ -384,7 +394,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
   {
     //---------------------------------lemmas based on sign (comparison to zero)
     d_nlSlv.checkMonomialSign();
-    if (d_im.hasProcessed())
+    if (d_im.hasUsed())
     {
       Trace("nl-ext") << "  ...finished with " << d_im.numPendingLemmas() << " new lemmas."
                       << std::endl;
@@ -393,7 +403,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
 
     //-----------------------------------monotonicity of transdental functions
     d_trSlv.checkTranscendentalMonotonic();
-    if (d_im.hasProcessed())
+    if (d_im.hasUsed())
     {
       Trace("nl-ext") << "  ...finished with " << d_im.numPendingLemmas() << " new lemmas."
                       << std::endl;
@@ -405,7 +415,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
     {
       // c is effort level
       d_nlSlv.checkMonomialMagnitude(c);
-      if (d_im.hasProcessed())
+      if (d_im.hasUsed())
       {
         Trace("nl-ext") << "  ...finished with " << d_im.numPendingLemmas()
                         << " new lemmas." << std::endl;
@@ -425,7 +435,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
       d_nlSlv.checkTangentPlanes(false);
     }
 
-    if (d_im.hasProcessed())
+    if (d_im.hasUsed())
     {
       Trace("nl-ext") << "  ...finished with " << d_im.numPendingLemmas() << " new lemmas."
                       << std::endl;
@@ -434,7 +444,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
 
     // from inferred bound inferences : now do ones that introduce new terms
     d_im.flushWaitingLemmas();
-    if (d_im.hasProcessed())
+    if (d_im.hasUsed())
     {
       Trace("nl-ext") << "  ...finished with " << d_im.numPendingLemmas()
                       << " new (monomial-introducing) lemmas." << std::endl;
@@ -446,7 +456,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
     if (options::nlExtFactor())
     {
       d_nlSlv.checkFactoring(assertions, false_asserts);
-      if (d_im.hasProcessed())
+      if (d_im.hasUsed())
       {
         Trace("nl-ext") << "  ...finished with " << d_im.numPendingLemmas()
                         << " new lemmas." << std::endl;
@@ -459,7 +469,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
     if (options::nlExtResBound())
     {
       d_nlSlv.checkMonomialInferResBounds();
-      if (d_im.hasProcessed())
+      if (d_im.hasUsed())
       {
         Trace("nl-ext") << "  ...finished with " << d_im.numPendingLemmas()
                         << " new lemmas." << std::endl;
@@ -485,7 +495,7 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
   if (options::nlCadPartial())
   {
     d_cadSlv.checkPartial();
-    if (!d_im.hasProcessed())
+    if (!d_im.hasUsed())
     {
       Trace("nl-cad") << "nl-cad found SAT!" << std::endl;
     }
@@ -667,7 +677,7 @@ bool NonlinearExtension::modelBasedRefinement()
     {
       complete_status = num_shared_wrong_value > 0 ? -1 : 0;
       checkLastCall(assertions, false_asserts, xts);
-      if (d_im.hasProcessed()) {
+      if (d_im.hasUsed()) {
         return true;
       }
     }
@@ -694,7 +704,7 @@ bool NonlinearExtension::modelBasedRefinement()
         d_containing.getOutputChannel().requirePhase(mgr, true);
         d_builtModel = true;
       }
-      if (d_im.hasProcessed())
+      if (d_im.hasUsed())
       {
         return true;
       }

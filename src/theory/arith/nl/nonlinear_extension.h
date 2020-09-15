@@ -133,6 +133,8 @@ class NonlinearExtension
    */
   void presolve();
 
+  void sendLemmas(const std::vector<NlLemma>& out);
+
   /** Process side effect se */
   void processSideEffect(const NlLemma& se);
 
