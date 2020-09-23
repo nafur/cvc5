@@ -645,6 +645,21 @@ Node BVToInt::translateWithChildren(Node original,
       }
       break;
     }
+    case kind::BOUND_VAR_LIST:
+    {
+      returnNode = d_nm->mkNode(oldKind, translated_children);
+      break;
+    }
+    case kind::FORALL:
+    {
+      returnNode = translateQuantifiedFormula(original);
+      break;
+    }
+    case kind::EXISTS:
+    {
+      // Exists is eliminated by the rewriter.
+      Assert(false);
+    }
     default:
     {
       // In the default case, we have reached an operator that we do not
@@ -679,6 +694,20 @@ Node BVToInt::translateNoChildren(Node original)
   {
     if (original.getType().isBitVector())
     {
+      // For bit-vector variables, we create fresh integer variables.
+      if (original.getKind() == kind::BOUND_VARIABLE)
+      {
+        // Range constraints for the bound integer variables are not added now.
+        // they will be added once the quantifier itself is handled.
+        std::stringstream ss;
+        ss << original;
+        translation = d_nm->mkBoundVar(ss.str() + "_int", d_nm->integerType());
+      }
+      else
+      {
+        // New integer variables  that are not bound (symbolic constants)
+        // are added together with range constraints induced by the 
+        // bit-width of the original bit-vector variables.
         Node newVar = d_nm->mkSkolem("__bvToInt_var",
                                      d_nm->integerType(),
                                      "Variable introduced in bvToInt "
@@ -687,11 +716,8 @@ Node BVToInt::translateNoChildren(Node original)
         uint64_t bvsize = original.getType().getBitVectorSize();
         translation = newVar;
         d_rangeAssertions.insert(mkRangeConstraint(newVar, bvsize));
-        std::vector<Expr> args;
-        Node intToBVOp = d_nm->mkConst<IntToBitVector>(IntToBitVector(bvsize));
-        Node newNode = d_nm->mkNode(intToBVOp, newVar);
-        smt::currentSmtEngine()->defineFunction(
-            original.toExpr(), args, newNode.toExpr(), true);
+        defineBVUFAsIntUF(original, newVar);
+      }
     }
     else if (original.getType().isFunction())
     {
@@ -756,41 +782,49 @@ Node BVToInt::translateFunctionSymbol(Node bvUF)
 
 void BVToInt::defineBVUFAsIntUF(Node bvUF, Node intUF)
 {
-  // This function should only be called after translating
-  // the function symbol to a new function symbol
-  // with the right domain and range.
-
-  // get domain and range of the original function
-  TypeNode tn = bvUF.getType();
-  vector<TypeNode> bvDomain = tn.getArgTypes();
-  TypeNode bvRange = tn.getRangeType();
-
+  // The resulting term
+  Node result;
+  // The type of the resulting term
+  TypeNode resultType;
   // symbolic arguments of original function
   vector<Expr> args;
-  // children of the new symbolic application
-  vector<Node> achildren;
-  achildren.push_back(intUF);
-  int i = 0;
-  for (TypeNode d : bvDomain)
-  {
-    // Each bit-vector argument is casted to a natural number
-    // Other arguments are left intact.
-    Node fresh_bound_var = d_nm->mkBoundVar(d);
-    args.push_back(fresh_bound_var.toExpr());
-    Node castedArg = args[i];
-    if (d.isBitVector())
+  if (!bvUF.getType().isFunction()) {
+    // bvUF is a variable.
+    // in this case, the result is just the original term
+    // (it will be casted later if needed)
+    result = intUF;
+    resultType = bvUF.getType();
+  } else {
+    // bvUF is a function with arguments
+    // The arguments need to be casted as well.
+    TypeNode tn = bvUF.getType();
+    resultType = tn.getRangeType();
+    vector<TypeNode> bvDomain = tn.getArgTypes();
+    // children of the new symbolic application
+    vector<Node> achildren;
+    achildren.push_back(intUF);
+    int i = 0;
+    for (const TypeNode& d : bvDomain)
     {
-      castedArg = castToType(castedArg, d_nm->integerType());
+      // Each bit-vector argument is casted to a natural number
+      // Other arguments are left intact.
+      Node fresh_bound_var = d_nm->mkBoundVar(d);
+      args.push_back(fresh_bound_var.toExpr());
+      Node castedArg = args[i];
+      if (d.isBitVector())
+      {
+        castedArg = castToType(castedArg, d_nm->integerType());
+      }
+      achildren.push_back(castedArg);
+      i++;
     }
-    achildren.push_back(castedArg);
-    i++;
+    result = d_nm->mkNode(kind::APPLY_UF, achildren);
   }
-  Node intApplication = d_nm->mkNode(kind::APPLY_UF, achildren);
-  // If the range is BV, the application needs to be casted back.
-  intApplication = castToType(intApplication, bvRange);
+  // If the result is BV, it needs to be casted back.
+  result = castToType(result, resultType);
   // add the function definition to the smt engine.
   smt::currentSmtEngine()->defineFunction(
-      bvUF.toExpr(), args, intApplication.toExpr(), true);
+      bvUF.toExpr(), args, result.toExpr(), true);
 }
 
 bool BVToInt::childrenTypesChanged(Node n)
@@ -948,6 +982,69 @@ Node BVToInt::createShiftNode(vector<Node> children,
                        ite);
   }
   return ite;
+}
+
+Node BVToInt::translateQuantifiedFormula(Node quantifiedNode)
+{
+  kind::Kind_t k = quantifiedNode.getKind();
+  Node boundVarList = quantifiedNode[0];
+  Assert(boundVarList.getKind() == kind::BOUND_VAR_LIST);
+  // Since bit-vector variables are being translated to
+  // integer variables, we need to substitute the new ones
+  // for the old ones.
+  vector<Node> oldBoundVars;
+  vector<Node> newBoundVars;
+  vector<Node> rangeConstraints;
+  for (Node bv : quantifiedNode[0])
+  {
+    oldBoundVars.push_back(bv);
+    if (bv.getType().isBitVector())
+    {
+      // bit-vector variables are replaced by integer ones.
+      // the new variables induce range constraints based on the
+      // original bit-width.
+      Node newBoundVar = d_bvToIntCache[bv];
+      newBoundVars.push_back(newBoundVar);
+      rangeConstraints.push_back(
+          mkRangeConstraint(newBoundVar, bv.getType().getBitVectorSize()));
+    }
+    else
+    {
+      // variables that are not bit-vectors are not changed
+      newBoundVars.push_back(bv);
+    }
+  }
+
+  // the body of the quantifier
+  Node matrix = d_bvToIntCache[quantifiedNode[1]];
+  // make the substitution
+  matrix = matrix.substitute(oldBoundVars.begin(),
+                             oldBoundVars.end(),
+                             newBoundVars.begin(),
+                             newBoundVars.end());
+  // A node to represent all the range constraints.
+  Node ranges;
+  if (rangeConstraints.size() > 0)
+  {
+    if (rangeConstraints.size() == 1)
+    {
+      ranges = rangeConstraints[0];
+    }
+    else
+    {
+      ranges = d_nm->mkNode(kind::AND, rangeConstraints);
+    }
+    // Add the range constraints to the body of the quantifier.
+    // For "exists", this is added conjunctively
+    // For "forall", this is added to the left side of an implication.
+    matrix = d_nm->mkNode(
+        k == kind::FORALL ? kind::IMPLIES : kind::AND, ranges, matrix);
+  }
+
+  // create the new quantified formula and return it.
+  Node newBoundVarsList = d_nm->mkNode(kind::BOUND_VAR_LIST, newBoundVars);
+  Node result = d_nm->mkNode(kind::FORALL, newBoundVarsList, matrix);
+  return result;
 }
 
 Node BVToInt::createITEFromTable(

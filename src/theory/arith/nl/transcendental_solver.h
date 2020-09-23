@@ -21,9 +21,8 @@
 #include <vector>
 
 #include "expr/node.h"
-#include "theory/arith/nl/nl_lemma_utils.h"
+#include "theory/arith/inference_manager.h"
 #include "theory/arith/nl/nl_model.h"
-#include "theory/arith/theory_arith.h"
 
 namespace CVC4 {
 namespace theory {
@@ -80,7 +79,7 @@ class TranscendentalSolver
   //-------------------------------------------- lemma schemas
   /** check transcendental initial refine
    *
-   * Returns a set of valid theory lemmas, based on
+   * Constructs a set of valid theory lemmas, based on
    * simple facts about transcendental functions.
    * This mostly follows the initial axioms described in
    * Section 4 of "Satisfiability
@@ -98,7 +97,7 @@ class TranscendentalSolver
 
   /** check transcendental monotonic
    *
-   * Returns a set of valid theory lemmas, based on a
+   * Constructs a set of valid theory lemmas, based on a
    * lemma scheme that ensures that applications
    * of transcendental functions respect monotonicity.
    *
@@ -112,7 +111,7 @@ class TranscendentalSolver
 
   /** check transcendental tangent planes
    *
-   * Returns a set of valid theory lemmas, based on
+   * Constructs a set of valid theory lemmas, based on
    * computing an "incremental linearization" of
    * transcendental functions based on the model values
    * of transcendental functions and their arguments.
@@ -272,7 +271,7 @@ class TranscendentalSolver
   /** Make the node -pi <= a <= pi */
   static Node mkValidPhase(Node a, Node pi);
 
-  // The inference manager that we push conflicts and lemmas to.
+  /** The inference manager that we push conflicts and lemmas to. */
   InferenceManager& d_im;
   /** Reference to the non-linear model object */
   NlModel& d_model;

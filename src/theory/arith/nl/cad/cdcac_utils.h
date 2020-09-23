@@ -95,6 +95,13 @@ std::vector<Node> collectConstraints(const std::vector<CACInterval>& intervals);
 bool sampleOutside(const std::vector<CACInterval>& infeasible,
                    poly::Value& sample);
 
+/**
+ * Compute the finest square of the upper polynomials of lhs and the lower
+ * polynomials of rhs. Also pushes reduced polynomials to lower level if
+ * necessary.
+ */
+void makeFinestSquareFreeBasis(CACInterval& lhs, CACInterval& rhs);
+
 class CDCACDebugger
 {
   std::size_t mCheckCounter = 0;

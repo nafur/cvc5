@@ -350,9 +350,10 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
 
   if (d_im.hasUsed())
   {
-    Trace("nl-ext") << "  ...finished with " << d_im.numPendingLemmas()
+    unsigned count = d_im.numPendingLemmas() + d_im.numSentLemmas();
+    Trace("nl-ext") << "  ...finished with " << count
                     << " new lemmas during registration." << std::endl;
-    return d_im.numPendingLemmas();
+    return count;
   }
 
   //----------------------------------- possibly split on zero
@@ -375,9 +376,10 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
     d_trSlv.checkTranscendentalInitialRefine();
     if (d_im.hasUsed())
     {
-      Trace("nl-ext") << "  ...finished with " << d_im.numPendingLemmas() << " new lemmas."
+      unsigned count = d_im.numPendingLemmas() + d_im.numSentLemmas();
+      Trace("nl-ext") << "  ...finished with " << count << " new lemmas."
                       << std::endl;
-      return d_im.numPendingLemmas();
+      return count;
     }
   }
   //-----------------------------------initial lemmas for iand
@@ -405,9 +407,10 @@ int NonlinearExtension::checkLastCall(const std::vector<Node>& assertions,
     d_trSlv.checkTranscendentalMonotonic();
     if (d_im.hasUsed())
     {
-      Trace("nl-ext") << "  ...finished with " << d_im.numPendingLemmas() << " new lemmas."
+      unsigned count = d_im.numPendingLemmas() + d_im.numSentLemmas();
+      Trace("nl-ext") << "  ...finished with " << count << " new lemmas."
                       << std::endl;
-      return d_im.numPendingLemmas();
+      return count;
     }
 
     //------------------------lemmas based on magnitude of non-zero monomials
@@ -565,6 +568,7 @@ void NonlinearExtension::check(Theory::Effort e)
       d_im.doPendingFacts();
       d_im.doPendingLemmas();
       d_im.doPendingPhaseRequirements();
+      d_im.reset();
       return;
     }
     // Otherwise, we will answer SAT. The values that we approximated are
