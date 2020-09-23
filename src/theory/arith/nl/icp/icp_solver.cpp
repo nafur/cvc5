@@ -14,8 +14,6 @@
 
 #include "theory/arith/nl/icp/icp_solver.h"
 
-#ifdef CVC4_POLY_IMP
-
 #include <iostream>
 
 #include "base/check.h"
@@ -32,6 +30,8 @@ namespace theory {
 namespace arith {
 namespace nl {
 namespace icp {
+
+#ifdef CVC4_POLY_IMP
 
 namespace {
 /** A simple wrapper to nicely print an interval assignment. */
@@ -117,7 +117,6 @@ std::vector<Candidate> ICPSolver::constructCandidates(const Node& n)
       poly::Polynomial rhs = as_poly_polynomial(val, d_mapper, rhsmult);
       rhsmult = poly::Rational(1) / rhsmult;
       // only correct up to a constant (denominator is thrown away!)
-      // std::cout << "rhs = " << rhs << std::endl;
       if (!veq_c.isNull())
       {
         rhsmult = poly_utils::toRational(veq_c.getConst<Rational>());
@@ -261,34 +260,40 @@ std::vector<Node> ICPSolver::generateLemmas() const
     {
       Kind rel = get_lower_open(i) ? Kind::GT : Kind::GEQ;
       Node c = nm->mkNode(rel, v, value_to_node(get_lower(i), v));
-      Node premise = d_state.d_origins.getOrigins(v);
-      Trace("nl-icp") << premise << " => " << c << std::endl;
-      Node lemma = Rewriter::rewrite(nm->mkNode(Kind::IMPLIES, premise, c));
-      if (lemma.isConst())
+      if (!d_state.d_origins.isInOrigins(v, c))
       {
-        Assert(lemma == nm->mkConst<bool>(true));
-      }
-      else
-      {
-        Trace("nl-icp") << "Adding lemma " << lemma << std::endl;
-        lemmas.emplace_back(lemma);
+        Node premise = d_state.d_origins.getOrigins(v);
+        Trace("nl-icp") << premise << " => " << c << std::endl;
+        Node lemma = Rewriter::rewrite(nm->mkNode(Kind::IMPLIES, premise, c));
+        if (lemma.isConst())
+        {
+          Assert(lemma == nm->mkConst<bool>(true));
+        }
+        else
+        {
+          Trace("nl-icp") << "Adding lemma " << lemma << std::endl;
+          lemmas.emplace_back(lemma);
+        }
       }
     }
     if (!is_plus_infinity(get_upper(i)))
     {
       Kind rel = get_upper_open(i) ? Kind::LT : Kind::LEQ;
       Node c = nm->mkNode(rel, v, value_to_node(get_upper(i), v));
-      Node premise = d_state.d_origins.getOrigins(v);
-      Trace("nl-icp") << premise << " => " << c << std::endl;
-      Node lemma = Rewriter::rewrite(nm->mkNode(Kind::IMPLIES, premise, c));
-      if (lemma.isConst())
+      if (!d_state.d_origins.isInOrigins(v, c))
       {
-        Assert(lemma == nm->mkConst<bool>(true));
-      }
-      else
-      {
-        Trace("nl-icp") << "Adding lemma " << lemma << std::endl;
-        lemmas.emplace_back(lemma);
+        Node premise = d_state.d_origins.getOrigins(v);
+        Trace("nl-icp") << premise << " => " << c << std::endl;
+        Node lemma = Rewriter::rewrite(nm->mkNode(Kind::IMPLIES, premise, c));
+        if (lemma.isConst())
+        {
+          Assert(lemma == nm->mkConst<bool>(true));
+        }
+        else
+        {
+          Trace("nl-icp") << "Adding lemma " << lemma << std::endl;
+          lemmas.emplace_back(lemma);
+        }
       }
     }
   }
@@ -342,17 +347,30 @@ void ICPSolver::check()
   } while (progress);
   if (did_progress)
   {
-    for (const auto& l : generateLemmas())
+    std::vector<Node> lemmas = generateLemmas();
+    for (const auto& l : lemmas)
     {
       d_im.addPendingArithLemma(l, InferenceId::NL_ICP_PROPAGATION);
     }
   }
 }
 
+#else /* CVC4_POLY_IMP */
+
+void ICPSolver::reset(const std::vector<Node>& assertions)
+{
+  Unimplemented() << "ICPSolver requires CVC4 to be configured with LibPoly";
+}
+
+void ICPSolver::check()
+{
+  Unimplemented() << "ICPSolver requires CVC4 to be configured with LibPoly";
+}
+
+#endif /* CVC4_POLY_IMP */
+
 }  // namespace icp
 }  // namespace nl
 }  // namespace arith
 }  // namespace theory
 }  // namespace CVC4
-
-#endif
