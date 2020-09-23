@@ -30,15 +30,15 @@ void export_theory_call(std::size_t n,
   }
   for (const auto& v : vars)
   {
-    out << CVC4::DeclareFunctionCommand(
-        v.toString(), v.toExpr(), v.getType().toType())
-        << std::endl;
+    //out << CVC4::DeclareFunctionCommand(
+    //    v.toString(), v.toExpr(), v.getType().toType())
+    //    << std::endl;
   }
 
   // Add assertions
   for (const auto& a : assertions)
   {
-    out << CVC4::AssertCommand(a.toExpr()) << std::endl;
+    //out << CVC4::AssertCommand(a.toExpr()) << std::endl;
   }
 
   // Add check-sat
