@@ -1,5 +1,7 @@
 #include "theory_call_exporter.h"
 
+#ifdef CVC4_POLY_IMP
+
 #include "expr/node_algorithm.h"
 #include "smt/command.h"
 
@@ -52,3 +54,5 @@ void export_theory_call(std::size_t n,
 }  // namespace arith
 }  // namespace theory
 }  // namespace CVC4
+
+#endif

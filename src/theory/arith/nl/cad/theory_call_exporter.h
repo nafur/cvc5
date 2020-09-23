@@ -1,6 +1,10 @@
 #ifndef CVC4__THEORY__NLARITH__CAD__THEORY_CALL_EXPORTER_H
 #define CVC4__THEORY__NLARITH__CAD__THEORY_CALL_EXPORTER_H
 
+#include "util/real_algebraic_number.h"
+
+#ifdef CVC4_POLY_IMP
+
 #include "cdcac_stats.h"
 #include "expr/node.h"
 
@@ -22,4 +26,5 @@ void export_theory_call(std::size_t n,
 }  // namespace theory
 }  // namespace CVC4
 
+#endif
 #endif
