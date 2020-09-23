@@ -4,6 +4,8 @@
 #include "util/poly_util.h"
 #include "variable_ordering.h"
 
+#ifdef CVC4_POLY_IMP
+
 namespace CVC4 {
 namespace theory {
 namespace arith {
@@ -239,3 +241,5 @@ void NRAStatistics::set(const NRAFeatures& features) {
 }  // namespace arith
 }  // namespace theory
 }  // namespace CVC4
+
+#endif

@@ -1,6 +1,10 @@
 #ifndef CVC4__THEORY__NLARITH__CAD__CDCAC_STATS_H
 #define CVC4__THEORY__NLARITH__CAD__CDCAC_STATS_H
 
+#include "util/real_algebraic_number.h"
+
+#ifdef CVC4_POLY_IMP
+
 #include "smt/smt_statistics_registry.h"
 
 #include "constraints.h"
@@ -85,4 +89,5 @@ struct NRAStatistics
 }  // namespace theory
 }  // namespace CVC4
 
+#endif
 #endif
