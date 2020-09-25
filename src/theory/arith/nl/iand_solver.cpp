@@ -160,7 +160,7 @@ void IAndSolver::checkFullRefine()
         Node lem = valueBasedLemma(i);
         Trace("iand-lemma")
             << "IAndSolver::Lemma: " << lem << " ; VALUE_REFINE" << std::endl;
-        d_im.addPendingArithLemma(lem, InferenceId::NL_IAND_VALUE_REFINE);
+        d_im.addPendingArithLemma(lem, InferenceId::NL_IAND_VALUE_REFINE, true);
       }
     }
   }
