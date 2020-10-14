@@ -110,7 +110,7 @@ public:
    * is consistent after asserting the equality engine to this model.
    */
   bool assertEqualityEngine(const eq::EqualityEngine* ee,
-                            std::set<Node>* termSet = NULL);
+                            const std::set<Node>* termSet = NULL);
   /** assert skeleton
    *
    * This method gives a "skeleton" for the model value of the equivalence
@@ -300,6 +300,8 @@ public:
   //---------------------------- separation logic
   /** set the heap and value sep.nil is equal to */
   void setHeapModel(Node h, Node neq);
+  /** get the heap and value sep.nil is equal to */
+  bool getHeapModel(Node& h, Node& neq) const;
   /** get the heap and value sep.nil is equal to */
   bool getHeapModel(Expr& h, Expr& neq) const override;
   //---------------------------- end separation logic
