@@ -582,6 +582,8 @@ header = "options/arith_options.h"
   type       = "bool"
   default    = "false"
   help       = "whether to use allow partial cad checks to construct lemmas with nonlinear constraints"
+
+[[option]]
   name       = "nlCadUseInitial"
   category   = "regular"
   long       = "nl-cad-initial"
