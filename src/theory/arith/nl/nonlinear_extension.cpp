@@ -306,7 +306,7 @@ bool NonlinearExtension::checkModel(const std::vector<Node>& assertions,
 
   Trace("nl-ext-cm") << "-----" << std::endl;
   unsigned tdegree = d_trSlv.getTaylorDegree();
-  std::vector<NlLemma> lemmas;
+  std::vector<ArithLemma> lemmas;
   bool ret = d_model.checkModel(passertions, tdegree, lemmas, gs);
   for (const auto& al : lemmas)
   {
