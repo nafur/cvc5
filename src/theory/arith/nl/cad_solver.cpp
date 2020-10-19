@@ -18,6 +18,11 @@
 #include <poly/polyxx.h>
 #endif
 
+// #define EXPORT_THEORY_CALLS
+
+#ifdef EXPORT_THEORY_CALLS
+#include "theory/arith/nl/cad/theory_call_exporter.h"
+#endif
 #include "theory/arith/inference_id.h"
 #include "theory/arith/nl/cad/cdcac.h"
 #include "theory/arith/nl/poly_conversion.h"
@@ -27,6 +32,8 @@ namespace CVC4 {
 namespace theory {
 namespace arith {
 namespace nl {
+
+// #define EXPORT_THEORY_CALLS
 
 CadSolver::CadSolver(InferenceManager& im, NlModel& model)
     : d_foundSatisfiability(false), d_im(im), d_model(model)
@@ -58,6 +65,12 @@ void CadSolver::initLastCall(const std::vector<Node>& assertions)
   {
     d_CAC.getConstraints().addConstraint(a);
   }
+#ifdef EXPORT_THEORY_CALLS
+  static std::size_t theory_calls = 0;
+  ++theory_calls;
+  cad::NRAFeatures stats(d_CAC.get_constraints().get_constraints());
+  cad::export_theory_call(theory_calls, assertions, stats);
+#endif
   d_CAC.computeVariableOrdering();
   d_CAC.retrieveInitialAssignment(d_model, d_ranVariable);
 #else
@@ -70,6 +83,11 @@ void CadSolver::initLastCall(const std::vector<Node>& assertions)
 void CadSolver::checkFull()
 {
 #ifdef CVC4_POLY_IMP
+#ifdef EXPORT_THEORY_CALLS
+  std::cout << "Abort solving as we only export theory calls." << std::endl;
+  return {};
+#endif
+
   auto covering = d_CAC.getUnsatCover();
   if (covering.empty())
   {

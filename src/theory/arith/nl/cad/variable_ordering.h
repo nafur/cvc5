@@ -42,11 +42,19 @@ enum class VariableOrderingStrategy
   /** Triangular as of DOI:10.1145/2755996.2756678 */
   TRIANGULAR,
   /** Brown as of DOI:10.1145/2755996.2756678 */
-  BROWN
+  BROWN,
+#ifdef CVC4_USE_DLIB
+  ML
+#endif
 };
+
+class VOMLState;
 
 class VariableOrdering
 {
+ private:
+  mutable std::unique_ptr<VOMLState> state_ml;
+
  public:
   VariableOrdering();
   ~VariableOrdering();
