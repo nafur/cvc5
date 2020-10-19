@@ -18,13 +18,7 @@
 
 #ifdef CVC4_POLY_IMP
 
-#include "cdcac_stats.h"
-
 #include "util/poly_util.h"
-
-#ifdef CVC4_USE_DLIB
-#include <dlib/svm.h>
-#endif
 
 namespace CVC4 {
 namespace theory {
@@ -117,51 +111,7 @@ std::vector<poly::Variable> sortTriangular(
   return getVariables(vi);
 };
 
-#ifdef CVC4_USE_DLIB
-class VOMLState
-{
-    using sample_type = dlib::matrix<double, NRAFeatures::feature_count, 1>;
-    using kernel_type = dlib::radial_basis_kernel<sample_type>;
-    using tester_type = dlib::decision_function<kernel_type>;
-    std::vector<tester_type> regressions;
-public:
-  VOMLState(const std::string& filename) {
-    dlib::deserialize(filename) >> regressions;
-  }
-  std::size_t operator()(const NRAFeatures& features) const {
-      double min = std::numeric_limits<double>::max();
-      std::size_t res = 0;
-      auto f = dlib::mat(features.to_feature_vector());
-      for (std::size_t i = 0; i < regressions.size(); ++i) {
-          double cur = regressions[i](f);
-          if (cur < min) {
-              min = cur;
-              res = i;
-          }
-      }
-      return res;
-  }
-};
-
-std::vector<poly::Variable> sort_ml(const Constraints::ConstraintVector& polys, std::unique_ptr<VOMLState>& state) {
-  if (!state) {
-    state.reset(new VOMLState("vo-ml.model"));
-  }
-  std::size_t selection = (*state)(cad::NRAFeatures(polys));
-  switch (selection) {
-    case 0: return sort_brown(polys);
-    case 1: return sort_byid(polys);
-    case 2: return sort_triangular(polys);
-    default:
-      Notice() << "Learned heuristic selected unsupported variable ordering: " << selection;
-      return sort_brown(polys);
-  }
-}
-#else
-class VOMLState {};
-#endif
-
-VariableOrdering::VariableOrdering() : state_ml(nullptr) {}
+VariableOrdering::VariableOrdering() {}
 VariableOrdering::~VariableOrdering() {}
 
 std::vector<poly::Variable> VariableOrdering::operator()(
@@ -173,9 +123,6 @@ std::vector<poly::Variable> VariableOrdering::operator()(
     case VariableOrderingStrategy::BYID: return sortByid(polys);
     case VariableOrderingStrategy::BROWN: return sortBrown(polys);
     case VariableOrderingStrategy::TRIANGULAR: return sortTriangular(polys);
-#ifdef CVC4_USE_DLIB
-    case VariableOrderingStrategy::ML: return sort_ml(polys, state_ml);
-#endif
     default: Assert(false) << "Unsupported variable ordering.";
   }
   return {};

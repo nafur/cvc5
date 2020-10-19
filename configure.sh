@@ -63,7 +63,6 @@ The following flags enable optional packages (disable with --no-<option name>).
   --kissat                 use the Kissat SAT solver
   --lfsc                   use the LFSC proof checker
   --poly                   use the LibPoly library
-  --dlib                   use the dlib library
   --symfpu                 use SymFPU for floating point solver
   --editline               support the editline library
 
@@ -79,7 +78,6 @@ Optional Path to Optional Packages:
   --kissat-dir=PATH        path to top level of Kissat source tree
   --lfsc-dir=PATH          path to top level of LFSC source tree
   --poly-dir=PATH          path to top level of LibPoly source tree
-  --dlib-dir=PATH          path to top level of dlib source tree
   --symfpu-dir=PATH        path to top level of SymFPU source tree
 
 Build limitations:
@@ -133,7 +131,6 @@ gpl=default
 kissat=default
 lfsc=default
 poly=default
-dlib=default
 muzzle=default
 ninja=default
 optimized=default
@@ -257,9 +254,6 @@ do
     --poly) poly=ON;;
     --no-poly) poly=OFF;;
 
-    --dlib) dlib=ON;;
-    --no-dlib) dlib=OFF;;
-
     --muzzle) muzzle=ON;;
     --no-muzzle) muzzle=OFF;;
 
@@ -342,9 +336,6 @@ do
 
     --poly-dir) die "missing argument to $1 (try -h)" ;;
     --poly-dir=*) poly_dir=${1##*=} ;;
-
-    --dlib-dir) die "missing argument to $1 (try -h)" ;;
-    --dlib-dir=*) dlib_dir=${1##*=} ;;
 
     --symfpu-dir) die "missing argument to $1 (try -h)" ;;
     --symfpu-dir=*) symfpu_dir=${1##*=} ;;
@@ -446,8 +437,6 @@ cmake_opts=""
   && cmake_opts="$cmake_opts -DUSE_LFSC=$lfsc"
 [ $poly != default ] \
   && cmake_opts="$cmake_opts -DUSE_POLY=$poly"
-[ $dlib != default ] \
-  && cmake_opts="$cmake_opts -DUSE_DLIB=$dlib"
 [ $symfpu != default ] \
   && cmake_opts="$cmake_opts -DUSE_SYMFPU=$symfpu"
 [ "$abc_dir" != default ] \
@@ -472,8 +461,6 @@ cmake_opts=""
   && cmake_opts="$cmake_opts -DLFSC_DIR=$lfsc_dir"
 [ "$poly_dir" != default ] \
   && cmake_opts="$cmake_opts -DPOLY_DIR=$poly_dir"
-[ "$dlib_dir" != default ] \
-  && cmake_opts="$cmake_opts -DDLIB_DIR=$dlib_dir"
 [ "$symfpu_dir" != default ] \
   && cmake_opts="$cmake_opts -DSYMFPU_DIR=$symfpu_dir"
 [ "$lib_only" != default ] \
