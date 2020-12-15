@@ -2,7 +2,7 @@
 /*! \file miplib_trick.cpp
  ** \verbatim
  ** Top contributors (to current version):
- **   Mathias Preiner, Tim King, Morgan Deters
+ **   Mathias Preiner, Andrew Reynolds, Morgan Deters
  ** This file is part of the CVC4 project.
  ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
  ** in the top-level source directory and their institutional affiliations.
@@ -189,8 +189,9 @@ PreprocessingPassResult MipLibTrick::applyInternal(
       propagator->getBackEdges();
   unordered_set<unsigned long> removeAssertions;
 
-  SubstitutionMap& top_level_substs =
+  theory::TrustSubstitutionMap& tlsm =
       d_preprocContext->getTopLevelSubstitutions();
+  SubstitutionMap& top_level_substs = tlsm.get();
 
   NodeManager* nm = NodeManager::currentNM();
   Node zero = nm->mkConst(Rational(0)), one = nm->mkConst(Rational(1));

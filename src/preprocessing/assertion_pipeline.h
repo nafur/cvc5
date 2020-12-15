@@ -2,7 +2,7 @@
 /*! \file assertion_pipeline.h
  ** \verbatim
  ** Top contributors (to current version):
- **   Andres Noetzli, Andrew Reynolds, Justin Xu
+ **   Andres Noetzli, Andrew Reynolds, Morgan Deters
  ** This file is part of the CVC4 project.
  ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
  ** in the top-level source directory and their institutional affiliations.
@@ -88,7 +88,10 @@ class AssertionPipeline
    * where d_nodes[i] is the assertion at position i prior to this call.
    */
   void replace(size_t i, Node n, ProofGenerator* pg = nullptr);
-  /** Same as above, with TrustNode */
+  /**
+   * Same as above, with TrustNode trn, which is of kind REWRITE and proves
+   * d_nodes[i] = n for some n.
+   */
   void replaceTrusted(size_t i, theory::TrustNode trn);
 
   IteSkolemMap& getIteSkolemMap() { return d_iteSkolemMap; }

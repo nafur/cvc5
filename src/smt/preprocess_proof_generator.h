@@ -2,7 +2,7 @@
 /*! \file preprocess_proof_generator.h
  ** \verbatim
  ** Top contributors (to current version):
- **   Andrew Reynolds
+ **   Andrew Reynolds, Gereon Kremer
  ** This file is part of the CVC4 project.
  ** Copyright (c) 2009-2020 by the authors listed in the file AUTHORS
  ** in the top-level source directory and their institutional affiliations.
@@ -22,7 +22,7 @@
 #include "context/cdhashmap.h"
 #include "context/cdlist.h"
 #include "expr/lazy_proof.h"
-#include "expr/lazy_proof_set.h"
+#include "expr/proof_set.h"
 #include "expr/proof_generator.h"
 #include "expr/proof_node_manager.h"
 #include "theory/eager_proof_generator.h"
@@ -58,10 +58,25 @@ class PreprocessProofGenerator : public ProofGenerator
       NodeTrustNodeMap;
 
  public:
+  /**
+   * @param pnm The proof node manager
+   * @param c The context this class depends on
+   * @param name The name of this generator (for debugging)
+   * @param ra The proof rule to use when no generator is provided for new
+   * assertions
+   * @param rpp The proof rule to use when no generator is provided for
+   * preprocessing steps.
+   */
   PreprocessProofGenerator(ProofNodeManager* pnm,
                            context::Context* c = nullptr,
-                           std::string name = "PreprocessProofGenerator");
+                           std::string name = "PreprocessProofGenerator",
+                           PfRule ra = PfRule::PREPROCESS_LEMMA,
+                           PfRule rpp = PfRule::PREPROCESS);
   ~PreprocessProofGenerator() {}
+  /**
+   * Notify that n is an input (its proof is ASSUME).
+   */
+  void notifyInput(Node n);
   /**
    * Notify that n is a new assertion, where pg can provide a proof of n.
    */
@@ -94,10 +109,17 @@ class PreprocessProofGenerator : public ProofGenerator
   LazyCDProof* allocateHelperProof();
 
  private:
+  /**
+   * Possibly check pedantic failure for null proof generator provided
+   * to this class.
+   */
+  void checkEagerPedantic(PfRule r);
   /** The proof node manager */
   ProofNodeManager* d_pnm;
   /** A dummy context used by this class if none is provided */
   context::Context d_context;
+  /** The context used here */
+  context::Context* d_ctx;
   /**
    * The trust node that was the source of each node constructed during
    * preprocessing. For each n, d_src[n] is a trust node whose node is n. This
@@ -107,9 +129,18 @@ class PreprocessProofGenerator : public ProofGenerator
    */
   NodeTrustNodeMap d_src;
   /** A context-dependent list of LazyCDProof, allocated for conjoin steps */
-  LazyCDProofSet d_helperProofs;
+  CDProofSet<LazyCDProof> d_helperProofs;
+  /**
+   * A cd proof for input assertions, this is an empty proof that intentionally
+   * returns (ASSUME f) for all f.
+   */
+  CDProof d_inputPf;
   /** Name for debugging */
   std::string d_name;
+  /** The trust rule for new assertions with no provided proof generator */
+  PfRule d_ra;
+  /** The trust rule for rewrites with no provided proof generator */
+  PfRule d_rpp;
 };
 
 }  // namespace smt
