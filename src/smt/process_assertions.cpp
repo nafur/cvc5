@@ -399,7 +399,7 @@ bool ProcessAssertions::apply(Assertions& as)
   }
 
   //d_passes["arith-elim-factors"]->apply(&assertions);
-  d_passes["arith-split-zero-equalities"]->apply(&assertions);
+  //d_passes["arith-split-zero-equalities"]->apply(&assertions);
 
   // begin: INVARIANT to maintain: no reordering of assertions or
   // introducing new ones
