@@ -49,7 +49,9 @@ void removeDuplicates(std::vector<T>& v)
 }
 }  // namespace
 
-CDCAC::CDCAC() : d_variableOrdering(), d_debugger(d_variableOrdering) {}
+CDCAC::CDCAC() : d_variableOrdering(), d_debugger(d_variableOrdering) {
+  d_treeNode = d_tree.getRoot();
+}
 
 CDCAC::CDCAC(const std::vector<poly::Variable>& ordering)
     : d_variableOrdering(ordering), d_debugger(d_variableOrdering)
@@ -130,6 +132,7 @@ std::vector<CACInterval> CDCAC::getUnsatIntervals(
       if (!is_plus_infinity(get_upper(i))) u.emplace_back(p);
       m.emplace_back(p);
       res.emplace_back(CACInterval{i, l, u, m, d, {n}});
+      d_treeNode->addChild(poly::Value(), res.back());
     }
   }
   cleanIntervals(res);
@@ -140,6 +143,10 @@ bool CDCAC::sampleOutsideWithInitial(const std::vector<CACInterval>& infeasible,
                                      poly::Value& sample,
                                      std::size_t cur_variable)
 {
+  CDCACTree::TreeNode* next = d_tree.sampleOutside(d_treeNode);
+  if (next != nullptr) {
+    d_treeNode = next;
+  }
   if (options::nlCadUseInitial() && cur_variable < d_initialAssignment.size())
   {
     const poly::Value& suggested = d_initialAssignment[cur_variable];
@@ -379,6 +386,8 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t curVariable,
 
   while (sampleOutsideWithInitial(intervals, sample, curVariable))
   {
+    Trace("cdcac") << d_tree << std::endl;
+    Assert(sample == d_treeNode->sample);
     if (!checkIntegrality(curVariable, sample))
     {
       // the variable is integral, but the sample is not.
@@ -417,6 +426,9 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t curVariable,
         intervalFromCharacterization(characterization, curVariable, sample);
     newInterval.d_origins = collectConstraints(cov);
     intervals.emplace_back(newInterval);
+    d_treeNode->intervals.emplace_back(newInterval);
+    d_treeNode = d_treeNode->parent;
+    Trace("cdcac") << d_tree << std::endl;
 
     if (returnFirstInterval)
     {
@@ -447,6 +459,7 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t curVariable,
       Trace("cdcac") << "-> " << i.d_interval << std::endl;
     }
   }
+  Trace("cdcac") << d_tree << std::endl;
   return intervals;
 }
 

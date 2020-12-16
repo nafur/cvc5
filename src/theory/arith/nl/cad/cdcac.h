@@ -28,6 +28,7 @@
 
 #include <vector>
 
+#include "theory/arith/nl/cad/cdcac_tree.h"
 #include "theory/arith/nl/cad/cdcac_utils.h"
 #include "theory/arith/nl/cad/constraints.h"
 #include "theory/arith/nl/cad/variable_ordering.h"
@@ -185,6 +186,9 @@ class CDCAC
   std::vector<poly::Value> d_initialAssignment;
 
   CDCACDebugger d_debugger;
+
+  CDCACTree d_tree;
+  CDCACTree::TreeNode* d_treeNode;
 
   /**
    * Decides whether we use the model from the linear solver as an initial
