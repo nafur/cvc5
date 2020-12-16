@@ -35,6 +35,8 @@ namespace arith {
 namespace nl {
 namespace cad {
 
+static constexpr bool use_incremental = true;
+
 /**
  * An interval as specified in section 4.1 of
  * https://arxiv.org/pdf/2003.05633.pdf.

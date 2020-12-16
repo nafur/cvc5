@@ -28,17 +28,17 @@ namespace cad {
 
 
 std::ostream& operator<<(std::ostream& os, const CDCACTree::TreeNode& n) {
-    os << n.sample;
+    os << n.sample << " @ " << static_cast<const void*>(&n);
     for (const auto& i: n.intervals) {
-        os << " " << i.d_interval;
+        os << " " << i.d_interval << " {";
+        for (const auto& p: i.d_origins) os << " " << p;
+        os << " }";
     }
     return os;
 }
 inline void print(std::ostream& os, const CDCACTree::TreeNode* n, std::size_t indent) {
     for (std::size_t i = 0; i < indent; ++i) os << '\t';
-    if (indent != 0) {
-        os << *n << std::endl;
-    }
+    os << *n << std::endl;
     for (const auto& child: *n) {
         print(os, child.get(), indent + 1);
     }

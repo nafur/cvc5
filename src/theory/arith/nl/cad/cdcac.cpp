@@ -49,9 +49,7 @@ void removeDuplicates(std::vector<T>& v)
 }
 }  // namespace
 
-CDCAC::CDCAC() : d_variableOrdering(), d_debugger(d_variableOrdering) {
-  d_treeNode = d_tree.getRoot();
-}
+CDCAC::CDCAC() : d_variableOrdering(), d_debugger(d_variableOrdering) {}
 
 CDCAC::CDCAC(const std::vector<poly::Variable>& ordering)
     : d_variableOrdering(ordering), d_debugger(d_variableOrdering)
@@ -67,6 +65,7 @@ void CDCAC::reset(const std::vector<Node>& assertions)
     d_constraints.addConstraint(a);
   }
   d_tree.check_intervals(assertions);
+  d_treeNode = d_tree.getRoot();
 }
 
 void CDCAC::computeVariableOrdering()
@@ -137,7 +136,7 @@ std::vector<CACInterval> CDCAC::getUnsatIntervals(
       if (!is_plus_infinity(get_upper(i))) u.emplace_back(p);
       m.emplace_back(p);
       res.emplace_back(CACInterval{i, l, u, m, d, {n}});
-      d_treeNode->addChild(poly::Value(), res.back());
+      d_treeNode->addDirectConflict(res.back());
     }
   }
   cleanIntervals(res);
@@ -148,9 +147,15 @@ bool CDCAC::sampleOutsideWithInitial(const std::vector<CACInterval>& infeasible,
                                      poly::Value& sample,
                                      std::size_t cur_variable)
 {
-  CDCACTree::TreeNode* next = d_tree.sampleOutside(d_treeNode);
-  if (next != nullptr) {
-    d_treeNode = next;
+  if (use_incremental) {
+    CDCACTree::TreeNode* next = d_tree.sampleOutside(d_treeNode);
+    Trace("cdcac") << "Descending from " << static_cast<const void*>(d_treeNode) << " to " << static_cast<const void*>(next) << std::endl;
+    if (next != nullptr) {
+      d_treeNode = next;
+      sample = d_treeNode->sample;
+      return true;
+    }
+    return false;
   }
   if (options::nlCadUseInitial() && cur_variable < d_initialAssignment.size())
   {
@@ -391,8 +396,6 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t curVariable,
 
   while (sampleOutsideWithInitial(intervals, sample, curVariable))
   {
-    Trace("cdcac") << d_tree << std::endl;
-    Assert(sample == d_treeNode->sample);
     if (!checkIntegrality(curVariable, sample))
     {
       // the variable is integral, but the sample is not.
@@ -407,6 +410,9 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t curVariable,
     }
     d_assignment.set(d_variableOrdering[curVariable], sample);
     Trace("cdcac") << "Sample: " << d_assignment << std::endl;
+    Trace("cdcac") << *d_treeNode << std::endl;
+    Trace("cdcac") << d_tree << std::endl;
+    Assert(sample == d_treeNode->sample);
     if (curVariable == d_variableOrdering.size() - 1)
     {
       // We have a full assignment. SAT!
@@ -433,6 +439,8 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t curVariable,
     intervals.emplace_back(newInterval);
     d_treeNode->intervals.emplace_back(newInterval);
     d_treeNode = d_treeNode->parent;
+    Assert(d_treeNode != nullptr);
+    Trace("cdcac") << *d_treeNode << std::endl;
     Trace("cdcac") << d_tree << std::endl;
 
     if (returnFirstInterval)
@@ -464,6 +472,7 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t curVariable,
       Trace("cdcac") << "-> " << i.d_interval << std::endl;
     }
   }
+  Trace("cdcac") << *d_treeNode << std::endl;
   Trace("cdcac") << d_tree << std::endl;
   return intervals;
 }

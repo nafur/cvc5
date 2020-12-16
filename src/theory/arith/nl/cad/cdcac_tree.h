@@ -61,6 +61,14 @@ public:
             res->intervals.emplace_back(i);
             return res;
         }
+        void addDirectConflict(const CACInterval& i) {
+            for (const auto& c: children) {
+                if (c->sample != poly::Value()) continue;
+                if (c->intervals.size() == 1 && c->intervals[0] == i)
+                    return;
+            }
+            addChild(poly::Value(), i);
+        }
 
         void check_intervals(const std::vector<Node>& a)
         {
@@ -97,6 +105,7 @@ public:
     };
 
     TreeNode* sampleOutside(TreeNode* node) {
+        Assert(node != nullptr);
         std::vector<CACInterval> infeasible;
         for (const auto& child : *node)
         {
@@ -115,9 +124,11 @@ public:
                                    });
           if (free)
           {
+            Trace("nl-cad") << "Use existing " << child.get() << std::endl;
             return child.get();
           }
         }
+        Trace("nl-cad") << "Sampling new value" << std::endl;
         poly::Value sample;
         if (cad::sampleOutside(infeasible, sample)) {
             Trace("nl-cad") << "Sampled " << sample << std::endl;
