@@ -597,3 +597,4 @@ header = "options/arith_options.h"
   type       = "bool"
   default    = "false"
   help       = "whether to use ICP-style propagations for non-linear arithmetic"
+

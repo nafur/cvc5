@@ -69,7 +69,6 @@ void EngineOutputChannel::safePoint(ResourceManager::Resource r)
 
 theory::LemmaStatus EngineOutputChannel::lemma(TNode lemma, LemmaProperty p)
 {
-  //std::cout << "EOC::lemma " << lemma << std::endl;
   Debug("theory::lemma") << "EngineOutputChannel<" << d_theory << ">::lemma("
                          << lemma << ")"
                          << ", properties = " << p << std::endl;
@@ -87,7 +86,6 @@ theory::LemmaStatus EngineOutputChannel::lemma(TNode lemma, LemmaProperty p)
 
 theory::LemmaStatus EngineOutputChannel::splitLemma(TNode lemma, bool removable)
 {
-  //std::cout << "EOC::splitLemma " << lemma << std::endl;
   Debug("theory::lemma") << "EngineOutputChannel<" << d_theory << ">::lemma("
                          << lemma << ")" << std::endl;
   ++d_statistics.lemmas;
@@ -112,7 +110,6 @@ bool EngineOutputChannel::propagate(TNode literal)
 
 void EngineOutputChannel::conflict(TNode conflictNode)
 {
-  //std::cout << "EOC::conflict " << conflictNode << std::endl;
   Trace("theory::conflict")
       << "EngineOutputChannel<" << d_theory << ">::conflict(" << conflictNode
       << ")" << std::endl;
@@ -162,7 +159,6 @@ void EngineOutputChannel::handleUserAttribute(const char* attr,
 
 void EngineOutputChannel::trustedConflict(TrustNode pconf)
 {
-  //std::cout << "EOC::trustedConflict " << pconf << std::endl;
   Assert(pconf.getKind() == TrustNodeKind::CONFLICT);
   Trace("theory::conflict")
       << "EngineOutputChannel<" << d_theory << ">::trustedConflict("
