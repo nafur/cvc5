@@ -58,10 +58,15 @@ CDCAC::CDCAC(const std::vector<poly::Variable>& ordering)
 {
 }
 
-void CDCAC::reset()
+void CDCAC::reset(const std::vector<Node>& assertions)
 {
-  d_constraints.reset();
   d_assignment.clear();
+  d_constraints.reset();
+  for (const Node& a : assertions)
+  {
+    d_constraints.addConstraint(a);
+  }
+  d_tree.check_intervals(assertions);
 }
 
 void CDCAC::computeVariableOrdering()

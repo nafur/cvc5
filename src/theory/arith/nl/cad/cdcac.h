@@ -53,7 +53,7 @@ class CDCAC
   CDCAC(const std::vector<poly::Variable>& ordering);
 
   /** Reset this instance. */
-  void reset();
+  void reset(const std::vector<Node>& assertions);
 
   /** Collect variables from the constraints and compute a variable ordering. */
   void computeVariableOrdering();

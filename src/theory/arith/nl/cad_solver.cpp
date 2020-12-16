@@ -54,11 +54,7 @@ void CadSolver::initLastCall(const std::vector<Node>& assertions)
     }
   }
   // store or process assertions
-  d_CAC.reset();
-  for (const Node& a : assertions)
-  {
-    d_CAC.getConstraints().addConstraint(a);
-  }
+  d_CAC.reset(assertions);
   d_CAC.computeVariableOrdering();
   d_CAC.retrieveInitialAssignment(d_model, d_ranVariable);
 #else
