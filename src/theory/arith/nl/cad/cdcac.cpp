@@ -71,17 +71,23 @@ void CDCAC::reset(const std::vector<Node>& assertions)
 void CDCAC::computeVariableOrdering()
 {
   // Actually compute the variable ordering
-  d_variableOrdering = d_varOrder(d_constraints.getConstraints(),
+  auto newVarOrdering = d_varOrder(d_constraints.getConstraints(),
                                   VariableOrderingStrategy::BROWN);
-  Trace("cdcac") << "Variable ordering is now " << d_variableOrdering
-                 << std::endl;
-
-  // Write variable ordering back to libpoly.
-  lp_variable_order_t* vo = poly::Context::get_context().get_variable_order();
-  lp_variable_order_clear(vo);
-  for (const auto& v : d_variableOrdering)
+  if (newVarOrdering.size() != d_variableOrdering.size())
   {
-    lp_variable_order_push(vo, v.get_internal());
+    d_variableOrdering = newVarOrdering;
+    Trace("cdcac") << "Variable ordering is now " << d_variableOrdering
+                  << std::endl;
+
+    // Write variable ordering back to libpoly.
+    lp_variable_order_t* vo = poly::Context::get_context().get_variable_order();
+    lp_variable_order_clear(vo);
+    for (const auto& v : d_variableOrdering)
+    {
+      lp_variable_order_push(vo, v.get_internal());
+    }
+    d_tree.clear();
+    d_treeNode = d_tree.getRoot();
   }
 }
 

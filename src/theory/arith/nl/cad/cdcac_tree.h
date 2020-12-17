@@ -81,6 +81,9 @@ public:
         return &d_root;
     }
     void check_intervals(std::vector<Node> assertions);
+    void clear() {
+      d_root = TreeNode();
+    }
 private:
     TreeNode d_root;
 };
