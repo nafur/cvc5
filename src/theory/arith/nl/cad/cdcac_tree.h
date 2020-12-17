@@ -70,89 +70,23 @@ public:
             addChild(poly::Value(), i);
         }
 
-        void check_intervals(const std::vector<Node>& a)
-        {
-          std::vector<CACInterval> to_disable;
-          std::remove_if(intervals.begin(),
-                         intervals.end(),
-                         [&to_disable, &a](const CACInterval& i) {
-                           if (!std::includes(a.begin(),
-                                              a.end(),
-                                              i.d_origins.begin(),
-                                              i.d_origins.end()))
-                           {
-                             to_disable.emplace_back(i);
-                             return true;
-                           }
-                           return false;
-                         });
-          std::remove_if(disabled_intervals.begin(),
-                         disabled_intervals.end(),
-                         [this, &a](const CACInterval& i) {
-                           if (std::includes(a.begin(),
-                                             a.end(),
-                                             i.d_origins.begin(),
-                                             i.d_origins.end()))
-                           {
-                             intervals.emplace_back(i);
-                             return true;
-                           }
-                           return false;
-                         });
-          disabled_intervals.insert(
-              disabled_intervals.end(), to_disable.begin(), to_disable.end());
-        }
+        void check_intervals(const std::vector<Node>& a);
     };
 
-    TreeNode* sampleOutside(TreeNode* node) {
-        Assert(node != nullptr);
-        std::vector<CACInterval> infeasible;
-        for (const auto& child : *node)
-        {
-          infeasible.insert(infeasible.end(),
-                            child->intervals.begin(),
-                            child->intervals.end());
-        }
-        cleanIntervals(infeasible);
-        for (const auto& child : *node)
-        {
-          if (!child->intervals.empty()) continue;
-          bool free = std::none_of(infeasible.begin(),
-                                   infeasible.end(),
-                                   [&child](const CACInterval& i) {
-                                     return poly::contains(i.d_interval, child->sample);
-                                   });
-          if (free)
-          {
-            Trace("nl-cad") << "Use existing " << child.get() << std::endl;
-            return child.get();
-          }
-        }
-        Trace("nl-cad") << "Sampling new value" << std::endl;
-        poly::Value sample;
-        if (cad::sampleOutside(infeasible, sample)) {
-            Trace("nl-cad") << "Sampled " << sample << std::endl;
-            return node->addChild(sample);
-        }
-        return nullptr;
-    }
+    TreeNode* sampleOutside(TreeNode* node);
     TreeNode* getRoot() {
         return &d_root;
     }
     const TreeNode* getRoot() const {
         return &d_root;
     }
-    void check_intervals(std::vector<Node> assertions) {
-        std::sort(assertions.begin(), assertions.end());
-        d_root.check_intervals(assertions);
-    }
+    void check_intervals(std::vector<Node> assertions);
 private:
     TreeNode d_root;
 };
 
 std::ostream& operator<<(std::ostream& os, const CDCACTree::TreeNode& n);
 std::ostream& operator<<(std::ostream& os, const CDCACTree& t);
-
 
 }
 }

@@ -135,8 +135,12 @@ std::vector<CACInterval> CDCAC::getUnsatIntervals(
       if (!is_minus_infinity(get_lower(i))) l.emplace_back(p);
       if (!is_plus_infinity(get_upper(i))) u.emplace_back(p);
       m.emplace_back(p);
-      res.emplace_back(CACInterval{i, l, u, m, d, {n}});
-      d_treeNode->addDirectConflict(res.back());
+      CACInterval interval{i, l, u, m, d, {n}};
+      if (use_incremental) {
+        d_treeNode->addDirectConflict(interval);
+      } else {
+        res.emplace_back(interval);
+      }
     }
   }
   cleanIntervals(res);
@@ -381,6 +385,10 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t curVariable,
   Trace("cdcac") << "Looking for unsat cover for "
                  << d_variableOrdering[curVariable] << std::endl;
   std::vector<CACInterval> intervals = getUnsatIntervals(curVariable);
+  if (use_incremental) {
+    // dummy interval
+    intervals.emplace_back();
+  }
 
   if (Trace.isOn("cdcac"))
   {
@@ -406,6 +414,9 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t curVariable,
                      << std::endl;
       intervals.emplace_back(newInterval);
       cleanIntervals(intervals);
+      if (use_incremental) {
+        AlwaysAssert(false) << "Need to handle integrality interval " << newInterval.d_interval << std::endl;
+      }
       continue;
     }
     d_assignment.set(d_variableOrdering[curVariable], sample);
@@ -436,16 +447,19 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t curVariable,
     auto newInterval =
         intervalFromCharacterization(characterization, curVariable, sample);
     newInterval.d_origins = collectConstraints(cov);
-    intervals.emplace_back(newInterval);
-    d_treeNode->intervals.emplace_back(newInterval);
-    d_treeNode = d_treeNode->parent;
+    if (use_incremental) {
+      d_treeNode->intervals.emplace_back(newInterval);
+      d_treeNode = d_treeNode->parent;
+    } else {
+      intervals.emplace_back(newInterval);
+    }
     Assert(d_treeNode != nullptr);
     Trace("cdcac") << *d_treeNode << std::endl;
     Trace("cdcac") << d_tree << std::endl;
 
     if (returnFirstInterval)
     {
-      return intervals;
+      return { newInterval };
     }
 
     Trace("cdcac") << "Added " << intervals.back().d_interval << std::endl;
@@ -460,6 +474,16 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t curVariable,
     Trace("cdcac") << "\torigins: " << intervals.back().d_origins << std::endl;
 
     // Remove redundant intervals
+    if (!use_incremental) {
+      cleanIntervals(intervals);
+    }
+  }
+
+  if (use_incremental) {
+    intervals.clear();
+    for (const auto& child: *d_treeNode) {
+      intervals.insert(intervals.end(), child->intervals.begin(), child->intervals.end());
+    }
     cleanIntervals(intervals);
   }
 
@@ -474,6 +498,7 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t curVariable,
   }
   Trace("cdcac") << *d_treeNode << std::endl;
   Trace("cdcac") << d_tree << std::endl;
+
   return intervals;
 }
 
