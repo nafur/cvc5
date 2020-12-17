@@ -163,7 +163,8 @@ bool CDCAC::sampleOutsideWithInitial(const std::vector<CACInterval>& infeasible,
     Trace("cdcac") << "Descending from " << static_cast<const void*>(d_treeNode) << " to " << static_cast<const void*>(next) << std::endl;
     if (next != nullptr) {
       d_treeNode = next;
-      sample = d_treeNode->sample;
+      Assert(d_treeNode->sample);
+      sample = d_treeNode->sample.value();
       return true;
     }
     return false;
@@ -430,7 +431,7 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t curVariable,
     Trace("cdcac") << "Sample: " << d_assignment << std::endl;
     Trace("cdcac") << *d_treeNode << std::endl;
     Trace("cdcac") << d_tree << std::endl;
-    Assert(sample == d_treeNode->sample);
+    Assert(d_treeNode->sample && d_treeNode->sample.value() == sample);
     if (curVariable == d_variableOrdering.size() - 1)
     {
       // We have a full assignment. SAT!

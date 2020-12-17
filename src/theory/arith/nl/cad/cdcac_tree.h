@@ -40,7 +40,7 @@ class CDCACTree {
 public:
     struct TreeNode {
         TreeNode* parent;
-        poly::Value sample;
+        Maybe<poly::Value> sample;
         std::vector<CACInterval> intervals;
         std::vector<CACInterval> disabled_intervals;
         std::vector<std::unique_ptr<TreeNode>> children;
@@ -63,11 +63,12 @@ public:
         }
         void addDirectConflict(const CACInterval& i) {
             for (const auto& c: children) {
-                if (c->sample != poly::Value()) continue;
+                if (c->sample) continue;
                 if (c->intervals.size() == 1 && c->intervals[0] == i)
                     return;
             }
-            addChild(poly::Value(), i);
+            children.emplace_back(new TreeNode{this, Maybe<poly::Value>(), {}, {}});
+            children.back()->intervals.emplace_back(i);
         }
 
         void check_intervals(const std::vector<Node>& a);

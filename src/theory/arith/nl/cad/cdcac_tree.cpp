@@ -84,8 +84,8 @@ CDCACTree::TreeNode* CDCACTree::sampleOutside(TreeNode* node)
     if (!child->intervals.empty()) continue;
     bool free = std::none_of(
         infeasible.begin(), infeasible.end(), [&child](const CACInterval& i) {
-          if (poly::is_none(child->sample)) return true;
-          return poly::contains(i.d_interval, child->sample);
+          if (child->sample.nothing()) return true;
+          return poly::contains(i.d_interval, child->sample.value());
         });
     if (free)
     {
