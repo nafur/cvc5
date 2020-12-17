@@ -81,6 +81,7 @@ CDCACTree::TreeNode* CDCACTree::sampleOutside(TreeNode* node)
   cleanIntervals(infeasible);
   for (const auto& child : *node)
   {
+    if (child->sample.nothing()) continue;
     if (!child->intervals.empty()) continue;
     bool free = std::none_of(
         infeasible.begin(), infeasible.end(), [&child](const CACInterval& i) {
