@@ -75,9 +75,8 @@ void CDCAC::computeVariableOrdering()
                                   VariableOrderingStrategy::BROWN);
   if (newVarOrdering.size() != d_variableOrdering.size())
   {
+    Trace("cdcac") << "Reset as variable ordering changes" << std::endl;
     d_variableOrdering = newVarOrdering;
-    Trace("cdcac") << "Variable ordering is now " << d_variableOrdering
-                  << std::endl;
 
     // Write variable ordering back to libpoly.
     lp_variable_order_t* vo = poly::Context::get_context().get_variable_order();
@@ -89,6 +88,8 @@ void CDCAC::computeVariableOrdering()
     d_tree.clear();
     d_treeNode = d_tree.getRoot();
   }
+  Trace("cdcac") << "Variable ordering is now " << d_variableOrdering
+                 << std::endl;
 }
 
 void CDCAC::retrieveInitialAssignment(NlModel& model, const Node& ran_variable)
