@@ -56,9 +56,9 @@ CDCAC::CDCAC(const std::vector<poly::Variable>& ordering)
 {
 }
 
-void CDCAC::preRegisterTerm(TNode n) {
-  d_registeredTerms.emplace(n, d_constraints.asConstraint(n));
+std::map<Node, Constraints::Constraint>::iterator CDCAC::preRegisterTerm(TNode n) {
   d_hasNewTerm = true;
+  return d_registeredTerms.emplace(n, d_constraints.asConstraint(n)).first;
 }
 
 void CDCAC::reset(const std::vector<Node>& assertions)
@@ -67,7 +67,12 @@ void CDCAC::reset(const std::vector<Node>& assertions)
   d_constraints.reset();
   for (const Node& a : assertions)
   {
+    Trace("cdcac") << "Adding constraint " << a << std::endl;
     auto it = d_registeredTerms.find(a);
+    if (it == d_registeredTerms.end()) {
+      Trace("cdcac") << "***** Getting surprise term " << a << std::endl;
+      it = preRegisterTerm(a);
+    }
     Assert(it != d_registeredTerms.end());
     d_constraints.addConstraint(it->second);
   }

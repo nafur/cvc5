@@ -52,7 +52,7 @@ class CDCAC
   /** Initialize this method with the given variable ordering. */
   CDCAC(const std::vector<poly::Variable>& ordering);
 
-  void preRegisterTerm(TNode n);
+  std::map<Node, Constraints::Constraint>::iterator preRegisterTerm(TNode n);
 
   /** Reset this instance. */
   void reset(const std::vector<Node>& assertions);
