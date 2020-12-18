@@ -57,8 +57,7 @@ CDCAC::CDCAC(const std::vector<poly::Variable>& ordering)
 }
 
 void CDCAC::preRegisterTerm(TNode n) {
-  auto c = d_constraints.asConstraint(n);
-  d_registeredTerms.emplace(n, c);
+  d_registeredTerms.emplace(n, d_constraints.asConstraint(n));
   d_hasNewTerm = true;
 }
 
@@ -126,10 +125,10 @@ const std::vector<poly::Variable>& CDCAC::getVariableOrdering() const
   return d_variableOrdering;
 }
 
-std::vector<CACInterval> CDCAC::getUnsatIntervals(
+void CDCAC::getUnsatIntervals(
     std::size_t cur_variable) const
 {
-  std::vector<CACInterval> res;
+  Trace("cdcac") << "getUnsatIntervals on level " << cur_variable << std::endl;
   for (const auto& c : d_constraints.getConstraints())
   {
     const poly::Polynomial& p = std::get<0>(c);
@@ -153,32 +152,24 @@ std::vector<CACInterval> CDCAC::getUnsatIntervals(
       if (!is_plus_infinity(get_upper(i))) u.emplace_back(p);
       m.emplace_back(p);
       CACInterval interval{i, l, u, m, d, {n}};
-      if (use_incremental) {
-        d_treeNode->addDirectConflict(interval);
-      } else {
-        res.emplace_back(interval);
-      }
+      d_treeNode->addDirectConflict(interval);
     }
   }
-  cleanIntervals(res);
-  return res;
 }
 
-bool CDCAC::sampleOutsideWithInitial(const std::vector<CACInterval>& infeasible,
-                                     poly::Value& sample,
+bool CDCAC::sampleOutsideWithInitial(poly::Value& sample,
                                      std::size_t cur_variable)
 {
-  if (use_incremental) {
-    CDCACTree::TreeNode* next = d_tree.sampleOutside(d_treeNode);
-    Trace("cdcac") << "Descending from " << static_cast<const void*>(d_treeNode) << " to " << static_cast<const void*>(next) << std::endl;
-    if (next != nullptr) {
-      d_treeNode = next;
-      Assert(d_treeNode->sample);
-      sample = d_treeNode->sample.value();
-      return true;
-    }
-    return false;
+  CDCACTree::TreeNode* next = d_tree.sampleOutside(d_treeNode);
+  Trace("cdcac") << "Descending from " << static_cast<const void*>(d_treeNode) << " to " << static_cast<const void*>(next) << std::endl;
+  if (next != nullptr) {
+    d_treeNode = next;
+    Assert(d_treeNode->sample);
+    sample = d_treeNode->sample.value();
+    return true;
   }
+  return false;
+  /*
   if (options::nlCadUseInitial() && cur_variable < d_initialAssignment.size())
   {
     const poly::Value& suggested = d_initialAssignment[cur_variable];
@@ -195,6 +186,7 @@ bool CDCAC::sampleOutsideWithInitial(const std::vector<CACInterval>& infeasible,
     return true;
   }
   return sampleOutside(infeasible, sample);
+  */
 }
 
 std::vector<poly::Polynomial> CDCAC::requiredCoefficients(
@@ -388,7 +380,7 @@ CACInterval CDCAC::intervalFromCharacterization(
   }
 }
 
-std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t curVariable,
+bool CDCAC::getUnsatCover(std::size_t curVariable,
                                               bool returnFirstInterval)
 {
   if (curVariable == 0)
@@ -402,25 +394,20 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t curVariable,
   }
   Trace("cdcac") << "Looking for unsat cover for "
                  << d_variableOrdering[curVariable] << std::endl;
-  std::vector<CACInterval> intervals = getUnsatIntervals(curVariable);
-  if (use_incremental) {
-    // dummy interval
-    intervals.emplace_back();
-  }
+  getUnsatIntervals(curVariable);
 
   if (Trace.isOn("cdcac"))
   {
     Trace("cdcac") << "Unsat intervals for " << d_variableOrdering[curVariable]
                    << ":" << std::endl;
-    for (const auto& i : intervals)
+    for (const auto& child : d_treeNode->children)
     {
-      Trace("cdcac") << "-> " << i.d_interval << " from " << i.d_origins
-                     << std::endl;
+      Trace("cdcac") << "-> " << *child << std::endl;
     }
   }
   poly::Value sample;
 
-  while (sampleOutsideWithInitial(intervals, sample, curVariable))
+  while (sampleOutsideWithInitial(sample, curVariable))
   {
     if (!checkIntegrality(curVariable, sample))
     {
@@ -430,8 +417,8 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t curVariable,
       auto newInterval = buildIntegralityInterval(curVariable, sample);
       Trace("cdcac") << "Adding integrality interval " << newInterval.d_interval
                      << std::endl;
-      intervals.emplace_back(newInterval);
-      cleanIntervals(intervals);
+      //intervals.emplace_back(newInterval);
+      //cleanIntervals(intervals);
       if (use_incremental) {
         AlwaysAssert(false) << "Need to handle integrality interval " << newInterval.d_interval << std::endl;
       }
@@ -446,78 +433,63 @@ std::vector<CACInterval> CDCAC::getUnsatCover(std::size_t curVariable,
     {
       // We have a full assignment. SAT!
       Trace("cdcac") << "Found full assignment: " << d_assignment << std::endl;
-      return {};
+      return true;
     }
     // Recurse to next variable
-    auto cov = getUnsatCover(curVariable + 1);
-    if (cov.empty())
+    bool isSat = getUnsatCover(curVariable + 1);
+    if (isSat)
     {
       // Found SAT!
       Trace("cdcac") << "SAT!" << std::endl;
-      return {};
+      return true;
     }
     Trace("cdcac") << "Refuting Sample: " << d_assignment << std::endl;
-    auto characterization = constructCharacterization(cov);
+    std::vector<CACInterval> intervals = d_treeNode->collectChildIntervals();
+    if (Trace.isOn("cdcac"))
+    {
+      Trace("cdcac") << "Unsat intervals for " << d_variableOrdering[curVariable]
+                    << ":" << std::endl;
+      for (const auto& child : d_treeNode->children)
+      {
+        Trace("cdcac") << "-> " << *child << std::endl;
+      }
+    }
+    auto characterization = constructCharacterization(intervals);
     Trace("cdcac") << "Characterization: " << characterization << std::endl;
 
     d_assignment.unset(d_variableOrdering[curVariable]);
 
     auto newInterval =
         intervalFromCharacterization(characterization, curVariable, sample);
-    newInterval.d_origins = collectConstraints(cov);
-    if (use_incremental) {
-      d_treeNode->intervals.emplace_back(newInterval);
-      d_treeNode = d_treeNode->parent;
-    } else {
-      intervals.emplace_back(newInterval);
-    }
+    newInterval.d_origins = collectConstraints(intervals);
+    d_treeNode->intervals.emplace_back(newInterval);
+    d_treeNode = d_treeNode->parent;
     Assert(d_treeNode != nullptr);
     Trace("cdcac") << *d_treeNode << std::endl;
     Trace("cdcac") << d_tree << std::endl;
 
     if (returnFirstInterval)
     {
-      return { newInterval };
+      return false;
     }
 
-    Trace("cdcac") << "Added " << intervals.back().d_interval << std::endl;
-    Trace("cdcac") << "\tlower:   " << intervals.back().d_lowerPolys
+    Trace("cdcac") << "Added " << newInterval.d_interval << std::endl;
+    Trace("cdcac") << "\tlower:   " << newInterval.d_lowerPolys
                    << std::endl;
-    Trace("cdcac") << "\tupper:   " << intervals.back().d_upperPolys
+    Trace("cdcac") << "\tupper:   " << newInterval.d_upperPolys
                    << std::endl;
-    Trace("cdcac") << "\tmain:    " << intervals.back().d_mainPolys
+    Trace("cdcac") << "\tmain:    " << newInterval.d_mainPolys
                    << std::endl;
-    Trace("cdcac") << "\tdown:    " << intervals.back().d_downPolys
+    Trace("cdcac") << "\tdown:    " << newInterval.d_downPolys
                    << std::endl;
-    Trace("cdcac") << "\torigins: " << intervals.back().d_origins << std::endl;
+    Trace("cdcac") << "\torigins: " << newInterval.d_origins << std::endl;
 
-    // Remove redundant intervals
-    if (!use_incremental) {
-      cleanIntervals(intervals);
-    }
   }
 
-  if (use_incremental) {
-    intervals.clear();
-    for (const auto& child: *d_treeNode) {
-      intervals.insert(intervals.end(), child->intervals.begin(), child->intervals.end());
-    }
-    cleanIntervals(intervals);
-  }
-
-  if (Trace.isOn("cdcac"))
-  {
-    Trace("cdcac") << "Returning intervals for "
-                   << d_variableOrdering[curVariable] << ":" << std::endl;
-    for (const auto& i : intervals)
-    {
-      Trace("cdcac") << "-> " << i.d_interval << std::endl;
-    }
-  }
   Trace("cdcac") << *d_treeNode << std::endl;
   Trace("cdcac") << d_tree << std::endl;
 
-  return intervals;
+  return false;
 }
 
 bool CDCAC::checkIntegrality(std::size_t cur_variable, const poly::Value& value)

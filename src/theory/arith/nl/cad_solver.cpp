@@ -42,7 +42,19 @@ CadSolver::CadSolver(InferenceManager& im, NlModel& model)
 CadSolver::~CadSolver() {}
 
 void CadSolver::preRegisterTerm(TNode n) {
-  d_CAC.preRegisterTerm(n);
+  Trace("nl-cad") << "CadSolver::preRegisterTerm " << n << std::endl;
+  switch (n.getKind()) {
+    case Kind::EQUAL:
+    case Kind::GT:
+    case Kind::GEQ:
+    case Kind::LEQ:
+    case Kind::LT:
+      Trace("nl-cad") << "registering " << n << std::endl;
+      d_CAC.preRegisterTerm(n);
+      d_CAC.preRegisterTerm(n.notNode());
+      break;
+    default: break;
+  }
 }
 
 void CadSolver::initLastCall(const std::vector<Node>& assertions)
@@ -75,8 +87,8 @@ void CadSolver::checkFull()
     Trace("nl-cad") << "No constraints. Return." << std::endl;
     return;
   }
-  auto covering = d_CAC.getUnsatCover();
-  if (covering.empty())
+  bool isSat = d_CAC.getUnsatCover();
+  if (isSat)
   {
     d_foundSatisfiability = true;
     Trace("nl-cad") << "SAT: " << d_CAC.getModel() << std::endl;
@@ -84,7 +96,7 @@ void CadSolver::checkFull()
   else
   {
     d_foundSatisfiability = false;
-    auto mis = collectConstraints(covering);
+    auto mis = collectConstraints(d_CAC.getCovering());
     Trace("nl-cad") << "Collected MIS: " << mis << std::endl;
     Assert(!mis.empty()) << "Infeasible subset can not be empty";
     Trace("nl-cad") << "UNSAT with MIS: " << mis << std::endl;
@@ -109,8 +121,8 @@ void CadSolver::checkPartial()
     Trace("nl-cad") << "No constraints. Return." << std::endl;
     return;
   }
-  auto covering = d_CAC.getUnsatCover(0, true);
-  if (covering.empty())
+  bool isSat = d_CAC.getUnsatCover(0, true);
+  if (isSat)
   {
     d_foundSatisfiability = true;
     Trace("nl-cad") << "SAT: " << d_CAC.getModel() << std::endl;
@@ -120,7 +132,7 @@ void CadSolver::checkPartial()
     auto* nm = NodeManager::currentNM();
     Node first_var =
         d_CAC.getConstraints().varMapper()(d_CAC.getVariableOrdering()[0]);
-    for (const auto& interval : covering)
+    for (const auto& interval : d_CAC.getCovering())
     {
       Node premise;
       Assert(!interval.d_origins.empty());

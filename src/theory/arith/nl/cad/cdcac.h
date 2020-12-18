@@ -90,7 +90,7 @@ class CDCAC
    * Combines unsatisfiable regions from d_constraints evaluated over
    * d_assignment. Implements Algorithm 2.
    */
-  std::vector<CACInterval> getUnsatIntervals(std::size_t cur_variable) const;
+  void getUnsatIntervals(std::size_t cur_variable) const;
 
   /**
    * Sample outside of the set of intervals.
@@ -98,8 +98,7 @@ class CDCAC
    * Returns whether a sample was found (true) or the infeasible intervals cover
    * the whole real line (false).
    */
-  bool sampleOutsideWithInitial(const std::vector<CACInterval>& infeasible,
-                                poly::Value& sample,
+  bool sampleOutsideWithInitial(poly::Value& sample,
                                 std::size_t cur_variable);
 
   /**
@@ -141,9 +140,13 @@ class CDCAC
    * interval obtained from a recursive call. The result is not (necessarily) an
    * unsat cover, but merely a list of infeasible intervals.
    */
-  std::vector<CACInterval> getUnsatCover(std::size_t curVariable = 0,
+  bool getUnsatCover(std::size_t curVariable = 0,
                                          bool returnFirstInterval = false);
 
+
+    std::vector<CACInterval> getCovering() const {
+        return d_tree.getRoot()->collectChildIntervals();
+    }
  private:
   /**
    * Check whether the current sample satisfies the integrality condition of the

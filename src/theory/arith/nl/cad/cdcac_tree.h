@@ -72,6 +72,15 @@ public:
         }
 
         void check_intervals(const std::vector<Node>& a);
+
+        std::vector<CACInterval> collectChildIntervals() const {
+            std::vector<CACInterval> res;
+            for (const auto& child: *this) {
+                res.insert(res.end(), child->intervals.begin(), child->intervals.end());
+            }
+            cleanIntervals(res);
+            return res;
+        }
     };
 
     TreeNode* sampleOutside(TreeNode* node);
