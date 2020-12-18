@@ -29,19 +29,15 @@ namespace arith {
 namespace nl {
 namespace cad {
 
-void Constraints::addConstraint(const poly::Polynomial& lhs,
-                                poly::SignCondition sc,
-                                Node n)
+void Constraints::addConstraint(const Constraint& c)
 {
-  d_constraints.emplace_back(lhs, sc, n);
+  d_constraints.emplace_back(c);
   sortConstraints();
 }
 
-void Constraints::addConstraint(Node n)
-{
+Constraints::Constraint Constraints::asConstraint(TNode n) {
   auto c = as_poly_constraint(n, d_varMapper);
-  addConstraint(c.first, c.second, n);
-  sortConstraints();
+  return Constraint{c.first, c.second, n};
 }
 
 const Constraints::ConstraintVector& Constraints::getConstraints() const

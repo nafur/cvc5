@@ -41,6 +41,10 @@ CadSolver::CadSolver(InferenceManager& im, NlModel& model)
 
 CadSolver::~CadSolver() {}
 
+void CadSolver::preRegisterTerm(TNode n) {
+  d_CAC.preRegisterTerm(n);
+}
+
 void CadSolver::initLastCall(const std::vector<Node>& assertions)
 {
 #ifdef CVC4_POLY_IMP

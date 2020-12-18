@@ -52,6 +52,8 @@ class CDCAC
   /** Initialize this method with the given variable ordering. */
   CDCAC(const std::vector<poly::Variable>& ordering);
 
+  void preRegisterTerm(TNode n);
+
   /** Reset this instance. */
   void reset(const std::vector<Node>& assertions);
 
@@ -175,6 +177,17 @@ class CDCAC
 
   /** The set of input constraints to be checked for consistency. */
   Constraints d_constraints;
+
+  /**
+   * Flag whether we have a new registered term since the last computation of
+   * the variable ordering
+   */
+  bool d_hasNewTerm = false;
+  /**
+   * Maps input assertions to constraints, used for computing the variable
+   * ordering and caching the conversion process.
+   */
+  std::map<Node, Constraints::Constraint> d_registeredTerms;
 
   /** The computed variable ordering used for this method. */
   std::vector<poly::Variable> d_variableOrdering;

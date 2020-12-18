@@ -27,12 +27,12 @@ namespace nl {
 namespace cad {
 
 std::vector<poly_utils::VariableInformation> collectInformation(
-    const Constraints::ConstraintVector& polys, bool with_totals)
+    const VariableOrdering::Polys& polys, bool with_totals)
 {
   poly::VariableCollector vc;
   for (const auto& c : polys)
   {
-    vc(std::get<0>(c));
+    vc(std::get<0>(c.second));
   }
   std::vector<poly_utils::VariableInformation> res;
   for (const auto& v : vc.get_variables())
@@ -41,7 +41,7 @@ std::vector<poly_utils::VariableInformation> collectInformation(
     res.back().var = v;
     for (const auto& c : polys)
     {
-      poly_utils::getVariableInformation(res.back(), std::get<0>(c));
+      poly_utils::getVariableInformation(res.back(), std::get<0>(c.second));
     }
   }
   if (with_totals)
@@ -49,7 +49,7 @@ std::vector<poly_utils::VariableInformation> collectInformation(
     res.emplace_back();
     for (const auto& c : polys)
     {
-      poly_utils::getVariableInformation(res.back(), std::get<0>(c));
+      poly_utils::getVariableInformation(res.back(), std::get<0>(c.second));
     }
   }
   return res;
@@ -66,7 +66,7 @@ std::vector<poly::Variable> getVariables(
   return res;
 }
 
-std::vector<poly::Variable> sortByid(const Constraints::ConstraintVector& polys)
+std::vector<poly::Variable> sortByid(const VariableOrdering::Polys& polys)
 {
   auto vi = collectInformation(polys);
   std::sort(
@@ -78,7 +78,7 @@ std::vector<poly::Variable> sortByid(const Constraints::ConstraintVector& polys)
 };
 
 std::vector<poly::Variable> sortBrown(
-    const Constraints::ConstraintVector& polys)
+    const VariableOrdering::Polys& polys)
 {
   auto vi = collectInformation(polys);
   std::sort(vi.begin(),
@@ -95,7 +95,7 @@ std::vector<poly::Variable> sortBrown(
 };
 
 std::vector<poly::Variable> sortTriangular(
-    const Constraints::ConstraintVector& polys)
+    const VariableOrdering::Polys& polys)
 {
   auto vi = collectInformation(polys);
   std::sort(vi.begin(),
@@ -115,7 +115,7 @@ VariableOrdering::VariableOrdering() {}
 VariableOrdering::~VariableOrdering() {}
 
 std::vector<poly::Variable> VariableOrdering::operator()(
-    const Constraints::ConstraintVector& polys,
+    const VariableOrdering::Polys& polys,
     VariableOrderingStrategy vos) const
 {
   switch (vos)

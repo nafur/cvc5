@@ -74,6 +74,7 @@ void NonlinearExtension::preRegisterTerm(TNode n)
   // register terms with extended theory, to find extended terms that can be
   // eliminated by context-depedendent simplification.
   d_extTheory.registerTermRec(n);
+  d_cadSlv.preRegisterTerm(n);
 }
 
 void NonlinearExtension::sendLemmas(const std::vector<NlLemma>& out)

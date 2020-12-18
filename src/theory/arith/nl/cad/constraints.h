@@ -49,19 +49,13 @@ class Constraints
   VariableMapper& varMapper() { return d_varMapper; }
 
   /**
-   * Add a constraint (represented by a polynomial and a sign condition) to the
-   * list of constraints.
-   */
-  void addConstraint(const poly::Polynomial& lhs,
-                     poly::SignCondition sc,
-                     Node n);
-
-  /**
    * Add a constraints (represented by a node) to the list of constraints.
    * The given node can either be a negation (NOT) or a suitable relation symbol
    * as checked by is_suitable_relation().
    */
-  void addConstraint(Node n);
+  void addConstraint(const Constraint& c);
+
+  Constraint asConstraint(TNode n);
 
   /**
    * Gives the list of added constraints.

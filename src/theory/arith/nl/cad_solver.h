@@ -38,6 +38,8 @@ class CadSolver
   CadSolver(InferenceManager& im, NlModel& model);
   ~CadSolver();
 
+  void preRegisterTerm(TNode n);
+
   /**
    * This is called at the beginning of last call effort check, where
    * assertions are the set of assertions belonging to arithmetic,

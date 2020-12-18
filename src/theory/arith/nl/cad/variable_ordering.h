@@ -48,10 +48,11 @@ enum class VariableOrderingStrategy
 class VariableOrdering
 {
  public:
+  using Polys = std::map<Node, Constraints::Constraint>;
   VariableOrdering();
   ~VariableOrdering();
   std::vector<poly::Variable> operator()(
-      const Constraints::ConstraintVector& polys,
+      const Polys& polys,
       VariableOrderingStrategy vos) const;
 };
 
@@ -61,7 +62,7 @@ class VariableOrdering
  * computed by get_variable_information if no variable is specified.
  */
 std::vector<poly_utils::VariableInformation> collectInformation(
-    const Constraints::ConstraintVector& polys, bool with_totals = false);
+    const VariableOrdering::Polys& polys, bool with_totals = false);
 
 }  // namespace cad
 }  // namespace nl

@@ -56,13 +56,21 @@ CDCAC::CDCAC(const std::vector<poly::Variable>& ordering)
 {
 }
 
+void CDCAC::preRegisterTerm(TNode n) {
+  auto c = d_constraints.asConstraint(n);
+  d_registeredTerms.emplace(n, c);
+  d_hasNewTerm = true;
+}
+
 void CDCAC::reset(const std::vector<Node>& assertions)
 {
   d_assignment.clear();
   d_constraints.reset();
   for (const Node& a : assertions)
   {
-    d_constraints.addConstraint(a);
+    auto it = d_registeredTerms.find(a);
+    Assert(it != d_registeredTerms.end());
+    d_constraints.addConstraint(it->second);
   }
   d_tree.check_intervals(assertions);
   d_treeNode = d_tree.getRoot();
@@ -70,9 +78,11 @@ void CDCAC::reset(const std::vector<Node>& assertions)
 
 void CDCAC::computeVariableOrdering()
 {
+  if (!d_hasNewTerm) return;
   // Actually compute the variable ordering
-  auto newVarOrdering = d_varOrder(d_constraints.getConstraints(),
+  auto newVarOrdering = d_varOrder(d_registeredTerms,
                                   VariableOrderingStrategy::BROWN);
+  // TODO(Gereon): be more clever about extending the variable order to avoid a full reset
   if (newVarOrdering.size() != d_variableOrdering.size())
   {
     Trace("cdcac") << "Reset as variable ordering changes" << std::endl;
