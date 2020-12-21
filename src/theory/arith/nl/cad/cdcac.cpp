@@ -76,6 +76,7 @@ void CDCAC::reset(const std::vector<Node>& assertions)
     Assert(it != d_registeredTerms.end());
     d_constraints.addConstraint(it->second);
   }
+  d_constraints.finalize();
   d_tree.check_intervals(assertions);
   d_treeNode = d_tree.getRoot();
 }
@@ -101,6 +102,7 @@ void CDCAC::computeVariableOrdering()
     }
     d_tree.clear();
     d_treeNode = d_tree.getRoot();
+    d_constraints.finalize();
   }
   Trace("cdcac") << "Variable ordering is now " << d_variableOrdering
                  << std::endl;

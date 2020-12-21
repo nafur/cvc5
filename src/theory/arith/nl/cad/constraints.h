@@ -55,6 +55,8 @@ class Constraints
    */
   void addConstraint(const Constraint& c);
 
+  void finalize();
+
   Constraint asConstraint(TNode n);
 
   /**

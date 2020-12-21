@@ -32,6 +32,9 @@ namespace cad {
 void Constraints::addConstraint(const Constraint& c)
 {
   d_constraints.emplace_back(c);
+}
+
+void Constraints::finalize() {
   sortConstraints();
 }
 
@@ -49,10 +52,21 @@ void Constraints::reset() { d_constraints.clear(); }
 
 void Constraints::sortConstraints()
 {
+  for (const auto& c: d_constraints) {
+    Trace("nl-cad") << "Sorting " << std::get<2>(c) << " -> " << std::get<0>(c) << std::endl;
+  }
+  for (auto& c : d_constraints)
+  {
+    auto* p = std::get<0>(c).get_internal();
+    // set external and actually trigger reordering
+    lp_polynomial_set_external(p);
+    lp_polynomial_top_variable(p);
+  }
   using Tpl = std::tuple<poly::Polynomial, poly::SignCondition, Node>;
   std::sort(d_constraints.begin(),
             d_constraints.end(),
             [](const Tpl& at, const Tpl& bt) {
+              Trace("nl-cad") << "Compare " << std::get<2>(at) << " vs " << std::get<2>(bt) << std::endl;
               // Check if a is smaller than b
               const poly::Polynomial& a = std::get<0>(at);
               const poly::Polynomial& b = std::get<0>(bt);
@@ -64,10 +78,8 @@ void Constraints::sortConstraints()
               if (tda != tdb) return tda < tdb;
               return degree(a) < degree(b);
             });
-  for (auto& c : d_constraints)
-  {
-    auto* p = std::get<0>(c).get_internal();
-    lp_polynomial_set_external(p);
+  for (const auto& c: d_constraints) {
+    Trace("nl-cad") << std::get<0>(c) << " -> " << poly::main_variable(std::get<0>(c)) << std::endl;
   }
 }
 
