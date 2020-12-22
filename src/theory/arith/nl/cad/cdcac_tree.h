@@ -73,6 +73,8 @@ public:
 
         void check_intervals(const std::vector<Node>& a);
 
+        void clean_children(bool recurse);
+
         std::vector<CACInterval> collectChildIntervals() const {
             std::vector<CACInterval> res;
             for (const auto& child: *this) {

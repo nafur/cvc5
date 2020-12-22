@@ -79,6 +79,7 @@ void CDCAC::reset(const std::vector<Node>& assertions)
   d_constraints.finalize();
   d_tree.check_intervals(assertions);
   d_treeNode = d_tree.getRoot();
+  d_treeNode->clean_children(true);
 }
 
 void CDCAC::computeVariableOrdering()

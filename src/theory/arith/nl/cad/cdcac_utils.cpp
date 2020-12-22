@@ -37,44 +37,6 @@ bool operator<(const CACInterval& lhs, const CACInterval& rhs)
   return lhs.d_interval < rhs.d_interval;
 }
 
-/**
- * Induces an ordering on poly intervals that is suitable for redundancy
- * removal as implemented in clean_intervals.
- */
-inline bool compareForCleanup(const Interval& lhs, const Interval& rhs)
-{
-  const lp_value_t* ll = &(lhs.get_internal()->a);
-  const lp_value_t* lu =
-      lhs.get_internal()->is_point ? ll : &(lhs.get_internal()->b);
-  const lp_value_t* rl = &(rhs.get_internal()->a);
-  const lp_value_t* ru =
-      rhs.get_internal()->is_point ? rl : &(rhs.get_internal()->b);
-
-  int lc = lp_value_cmp(ll, rl);
-  // Lower bound is smaller
-  if (lc < 0) return true;
-  // Lower bound is larger
-  if (lc > 0) return false;
-  // Lower bound type is smaller
-  if (!lhs.get_internal()->a_open && rhs.get_internal()->a_open) return true;
-  // Lower bound type is larger
-  if (lhs.get_internal()->a_open && !rhs.get_internal()->a_open) return false;
-
-  // Attention: Here it differs from the regular interval ordering!
-  int uc = lp_value_cmp(lu, ru);
-  // Upper bound is smaller
-  if (uc < 0) return false;
-  // Upper bound is larger
-  if (uc > 0) return true;
-  // Upper bound type is smaller
-  if (lhs.get_internal()->b_open && !rhs.get_internal()->b_open) return false;
-  // Upper bound type is larger
-  if (!lhs.get_internal()->b_open && rhs.get_internal()->b_open) return true;
-
-  // Identical
-  return false;
-}
-
 bool intervalCovers(const Interval& lhs, const Interval& rhs)
 {
   const lp_value_t* ll = &(lhs.get_internal()->a);
@@ -136,6 +98,44 @@ bool intervalConnect(const Interval& lhs, const Interval& rhs)
         << " touch and the intermediate point is covered." << std::endl;
     return true;
   }
+  return false;
+}
+
+/**
+ * Induces an ordering on poly intervals that is suitable for redundancy
+ * removal as implemented in clean_intervals.
+ */
+inline bool compareForCleanup(const Interval& lhs, const Interval& rhs)
+{
+  const lp_value_t* ll = &(lhs.get_internal()->a);
+  const lp_value_t* lu =
+      lhs.get_internal()->is_point ? ll : &(lhs.get_internal()->b);
+  const lp_value_t* rl = &(rhs.get_internal()->a);
+  const lp_value_t* ru =
+      rhs.get_internal()->is_point ? rl : &(rhs.get_internal()->b);
+
+  int lc = lp_value_cmp(ll, rl);
+  // Lower bound is smaller
+  if (lc < 0) return true;
+  // Lower bound is larger
+  if (lc > 0) return false;
+  // Lower bound type is smaller
+  if (!lhs.get_internal()->a_open && rhs.get_internal()->a_open) return true;
+  // Lower bound type is larger
+  if (lhs.get_internal()->a_open && !rhs.get_internal()->a_open) return false;
+
+  // Attention: Here it differs from the regular interval ordering!
+  int uc = lp_value_cmp(lu, ru);
+  // Upper bound is smaller
+  if (uc < 0) return false;
+  // Upper bound is larger
+  if (uc > 0) return true;
+  // Upper bound type is smaller
+  if (lhs.get_internal()->b_open && !rhs.get_internal()->b_open) return false;
+  // Upper bound type is larger
+  if (!lhs.get_internal()->b_open && rhs.get_internal()->b_open) return true;
+
+  // Identical
   return false;
 }
 

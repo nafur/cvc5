@@ -69,16 +69,41 @@ void CDCACTree::TreeNode::check_intervals(const std::vector<Node>& a)
   }
 }
 
+void CDCACTree::TreeNode::clean_children(bool recurse)
+{
+  std::vector<CACInterval> infeasible = collectChildIntervals();
+  for (std::size_t cur = 0; cur < children.size();)
+  {
+    const TreeNode* child = children[cur].get();
+    if (child->sample.nothing()) continue;
+    bool free = std::none_of(
+        infeasible.begin(), infeasible.end(), [child](const CACInterval& i) {
+          if (child->sample.nothing()) return true;
+          return poly::contains(i.d_interval, child->sample.value());
+        });
+    if (!free)
+    {
+      children[cur] = std::move(children.back());
+      children.pop_back();
+    }
+    else
+    {
+      ++cur;
+    }
+  }
+  if (recurse)
+  {
+    for (auto& c : children)
+    {
+      c->clean_children(true);
+    }
+  }
+}
+
 CDCACTree::TreeNode* CDCACTree::sampleOutside(TreeNode* node)
 {
   Assert(node != nullptr);
-  std::vector<CACInterval> infeasible;
-  for (const auto& child : *node)
-  {
-    infeasible.insert(
-        infeasible.end(), child->intervals.begin(), child->intervals.end());
-  }
-  cleanIntervals(infeasible);
+  std::vector<CACInterval> infeasible = node->collectChildIntervals();
   for (const auto& child : *node)
   {
     if (child->sample.nothing()) continue;
