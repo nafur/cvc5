@@ -29,6 +29,22 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
+      
+      
+    - name: Install Packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          ccache \
+          libcln-dev \
+          libgmp-dev \
+          libgtest-dev \
+          libedit-dev
+        python3 -m pip install toml
+        python3 -m pip install setuptools
+        python3 -m pip install pexpect
+        echo "/usr/lib/ccache" >> $GITHUB_PATH
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
