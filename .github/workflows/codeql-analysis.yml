@@ -41,7 +41,7 @@ jobs:
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
 
     - run: |
-       ./configures.sh debug
+       ./configure.sh debug
        cd build/
        make cvc4-bin
 
