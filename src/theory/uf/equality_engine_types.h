@@ -111,7 +111,7 @@ struct MergeCandidate {
   MergeCandidate(EqualityNodeId x,
                  EqualityNodeId y,
                  unsigned type,
-                 TNode reason)
+                 const Node& reason)
       : d_t1Id(x), d_t2Id(y), d_type(type), d_reason(reason)
   {}
 };

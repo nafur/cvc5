@@ -66,12 +66,12 @@ class SymmetryBreaker : public context::ContextNotifyObj {
     std::unordered_map<TNode, std::set<TNode>, TNodeHashFunction> d_sets;
     std::unordered_map<TNode, TNode, TNodeHashFunction> d_reps;
 
-    TNode find(TNode n);
+    TNode find(const Node& n);
     bool matchRecursive(TNode t, TNode n);
 
   public:
     Template();
-    bool match(TNode n);
+    bool match(const Node& n);
     std::unordered_map<TNode, std::set<TNode>, TNodeHashFunction>& partitions() { return d_sets; }
     Node assertions() {
       switch(d_assertions.getNumChildren()) {
@@ -124,8 +124,8 @@ private:
   void selectTerms(const Permutation& p);
   Terms::iterator selectMostPromisingTerm(Terms& terms);
   void insertUsedIn(Term term, const Permutation& p, std::set<Node>& cts);
-  Node normInternal(TNode phi, size_t level);
-  Node norm(TNode n);
+  Node normInternal(const Node& phi, size_t level);
+  Node norm(const Node& n);
 
   std::string d_name;
   
@@ -161,7 +161,7 @@ private:
  public:
   SymmetryBreaker(context::Context* context, std::string name = "");
 
-  void assertFormula(TNode phi);
+  void assertFormula(const Node& phi);
   void apply(std::vector<Node>& newClauses);
 
 };/* class SymmetryBreaker */

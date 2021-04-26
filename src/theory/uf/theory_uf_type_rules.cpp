@@ -22,7 +22,7 @@ namespace cvc5 {
 namespace theory {
 namespace uf {
 
-TypeNode UfTypeRule::computeType(NodeManager* nodeManager, TNode n, bool check)
+TypeNode UfTypeRule::computeType(NodeManager* nodeManager, const Node& n, bool check)
 {
   TNode f = n.getOperator();
   TypeNode fType = f.getType(check);
@@ -38,8 +38,8 @@ TypeNode UfTypeRule::computeType(NodeManager* nodeManager, TNode n, bool check)
       throw TypeCheckingExceptionPrivate(
           n, "number of arguments does not match the function type");
     }
-    TNode::iterator argument_it = n.begin();
-    TNode::iterator argument_it_end = n.end();
+    Node::const_iterator argument_it = n.begin();
+    Node::const_iterator argument_it_end = n.end();
     TypeNode::iterator argument_type_it = fType.begin();
     for (; argument_it != argument_it_end; ++argument_it, ++argument_type_it)
     {
@@ -62,7 +62,7 @@ TypeNode UfTypeRule::computeType(NodeManager* nodeManager, TNode n, bool check)
 }
 
 TypeNode CardinalityConstraintTypeRule::computeType(NodeManager* nodeManager,
-                                                    TNode n,
+                                                    const Node& n,
                                                     bool check)
 {
   if (check)
@@ -97,7 +97,7 @@ TypeNode CardinalityConstraintTypeRule::computeType(NodeManager* nodeManager,
 }
 
 TypeNode CombinedCardinalityConstraintTypeRule::computeType(
-    NodeManager* nodeManager, TNode n, bool check)
+    NodeManager* nodeManager, const Node& n, bool check)
 {
   if (check)
   {
@@ -128,14 +128,14 @@ TypeNode CombinedCardinalityConstraintTypeRule::computeType(
 }
 
 TypeNode PartialTypeRule::computeType(NodeManager* nodeManager,
-                                      TNode n,
+                                      const Node& n,
                                       bool check)
 {
   return n.getOperator().getType().getRangeType();
 }
 
 TypeNode CardinalityValueTypeRule::computeType(NodeManager* nodeManager,
-                                               TNode n,
+                                               const Node& n,
                                                bool check)
 {
   if (check)
@@ -146,7 +146,7 @@ TypeNode CardinalityValueTypeRule::computeType(NodeManager* nodeManager,
 }
 
 TypeNode HoApplyTypeRule::computeType(NodeManager* nodeManager,
-                                      TNode n,
+                                      const Node& n,
                                       bool check)
 {
   Assert(n.getKind() == kind::HO_APPLY);

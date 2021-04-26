@@ -28,31 +28,31 @@ namespace uf {
 class UfTypeRule
 {
  public:
-  static TypeNode computeType(NodeManager* nodeManager, TNode n, bool check);
+  static TypeNode computeType(NodeManager* nodeManager, const Node& n, bool check);
 };
 
 class CardinalityConstraintTypeRule
 {
  public:
-  static TypeNode computeType(NodeManager* nodeManager, TNode n, bool check);
+  static TypeNode computeType(NodeManager* nodeManager, const Node& n, bool check);
 };
 
 class CombinedCardinalityConstraintTypeRule
 {
  public:
-  static TypeNode computeType(NodeManager* nodeManager, TNode n, bool check);
+  static TypeNode computeType(NodeManager* nodeManager, const Node& n, bool check);
 };
 
 class PartialTypeRule
 {
  public:
-  static TypeNode computeType(NodeManager* nodeManager, TNode n, bool check);
+  static TypeNode computeType(NodeManager* nodeManager, const Node& n, bool check);
 };
 
 class CardinalityValueTypeRule
 {
  public:
-  static TypeNode computeType(NodeManager* nodeManager, TNode n, bool check);
+  static TypeNode computeType(NodeManager* nodeManager, const Node& n, bool check);
 };
 
 // class with the typing rule for HO_APPLY terms
@@ -60,7 +60,7 @@ class HoApplyTypeRule
 {
  public:
   // the typing rule for HO_APPLY terms
-  static TypeNode computeType(NodeManager* nodeManager, TNode n, bool check);
+  static TypeNode computeType(NodeManager* nodeManager, const Node& n, bool check);
 };
 
 }  // namespace uf

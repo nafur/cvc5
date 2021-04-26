@@ -58,7 +58,7 @@ SymmetryBreaker::Template::Template() :
   d_reps() {
 }
 
-TNode SymmetryBreaker::Template::find(TNode n) {
+TNode SymmetryBreaker::Template::find(const Node& n) {
   unordered_map<TNode, TNode, TNodeHashFunction>::iterator i = d_reps.find(n);
   if(i == d_reps.end()) {
     return n;
@@ -147,7 +147,7 @@ bool SymmetryBreaker::Template::matchRecursive(TNode t, TNode n) {
   return true;
 }
 
-bool SymmetryBreaker::Template::match(TNode n) {
+bool SymmetryBreaker::Template::match(const Node& n) {
   // try to "match" n and d_template
   if(d_template.isNull()) {
     Debug("ufsymm") << "UFSYMM setting template " << n << endl;
@@ -206,12 +206,12 @@ void SymmetryBreaker::rerunAssertionsIfNecessary() {
   Debug("ufsymm") << "UFSYMM: DONE rerunning assertions..." << std::endl;
 }
 
-Node SymmetryBreaker::norm(TNode phi) {
+Node SymmetryBreaker::norm(const Node& phi) {
   Node n = Rewriter::rewrite(phi);
   return normInternal(n, 0);
 }
 
-Node SymmetryBreaker::normInternal(TNode n, size_t level) {
+Node SymmetryBreaker::normInternal(const Node& n, size_t level) {
   Node& result = d_normalizationCache[n];
   if(!result.isNull()) {
     return result;
@@ -379,7 +379,7 @@ Node SymmetryBreaker::normInternal(TNode n, size_t level) {
   }
 }
 
-void SymmetryBreaker::assertFormula(TNode phi) {
+void SymmetryBreaker::assertFormula(const Node& phi) {
   rerunAssertionsIfNecessary();
   if(!d_rerunningAssertions) {
     d_assertionsToRerun.push_back(phi);
