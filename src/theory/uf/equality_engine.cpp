@@ -581,7 +581,7 @@ bool EqualityEngine::assertEquality(const Node& eq,
   return true;
 }
 
-TNode EqualityEngine::getRepresentative(TNode t) const {
+TNode EqualityEngine::getRepresentative(const Node& t) const {
   Debug("equality::internal") << d_name << "::eq::getRepresentative(" << t << ")" << std::endl;
   Assert(hasTerm(t));
   EqualityNodeId representativeId = getEqualityNode(t).getFind();
@@ -1085,7 +1085,7 @@ void EqualityEngine::buildEqConclusion(EqualityNodeId id1,
   }
 }
 
-void EqualityEngine::explainEquality(TNode t1, TNode t2, bool polarity,
+void EqualityEngine::explainEquality(const Node& t1, const Node& t2, bool polarity,
                                      std::vector<TNode>& equalities,
                                      EqProof* eqp) const {
   Debug("pf::ee") << d_name << "::eq::explainEquality(" << t1 << ", " << t2
@@ -1207,8 +1207,8 @@ void EqualityEngine::explainEquality(TNode t1, TNode t2, bool polarity,
           // x = c2   c1 != c2
           // ----------------- TRANS
           //     x != c1
-          TNode c1 = t1.isConst() ? t1 : (t2.isConst() ? t2 : TNode::null());
-          TNode nc = t1.isConst() ? t2 : (t2.isConst() ? t1 : TNode::null());
+          Node c1 = t1.isConst() ? t1 : (t2.isConst() ? t2 : Node::null());
+          Node nc = t1.isConst() ? t2 : (t2.isConst() ? t1 : Node::null());
           Node c2;
           // merge constants transitivity
           for (unsigned i = 0; i < 2; i++)
@@ -1247,7 +1247,7 @@ void EqualityEngine::explainEquality(TNode t1, TNode t2, bool polarity,
   }
 }
 
-void EqualityEngine::explainPredicate(TNode p, bool polarity,
+void EqualityEngine::explainPredicate(const Node& p, bool polarity,
                                       std::vector<TNode>& assertions,
                                       EqProof* eqp) const {
   Debug("equality") << d_name << "::eq::explainPredicate(" << p << ")"
@@ -1264,7 +1264,7 @@ void EqualityEngine::explainPredicate(TNode p, bool polarity,
       getNodeId(p), polarity ? d_trueId : d_falseId, assertions, cache, eqp);
 }
 
-void EqualityEngine::explainLit(TNode lit, std::vector<TNode>& assumptions)
+void EqualityEngine::explainLit(const Node& lit, std::vector<TNode>& assumptions)
 {
   Assert(lit.getKind() != kind::AND);
   bool polarity = lit.getKind() != kind::NOT;
@@ -1302,7 +1302,7 @@ void EqualityEngine::explainLit(TNode lit, std::vector<TNode>& assumptions)
   }
 }
 
-Node EqualityEngine::mkExplainLit(TNode lit)
+Node EqualityEngine::mkExplainLit(const Node& lit)
 {
   Assert(lit.getKind() != kind::AND);
   std::vector<TNode> assumptions;
@@ -2090,7 +2090,7 @@ std::string EqualityEngine::debugPrintEqc() const
   return ss.str();
 }
 
-bool EqualityEngine::areEqual(TNode t1, TNode t2) const {
+bool EqualityEngine::areEqual(const Node& t1, const Node& t2) const {
   Debug("equality") << d_name << "::eq::areEqual(" << t1 << "," << t2 << ")";
 
   Assert(hasTerm(t1));
@@ -2101,7 +2101,7 @@ bool EqualityEngine::areEqual(TNode t1, TNode t2) const {
   return result;
 }
 
-bool EqualityEngine::areDisequal(TNode t1, TNode t2, bool ensureProof) const
+bool EqualityEngine::areDisequal(const Node& t1, const Node& t2, bool ensureProof) const
 {
   Debug("equality") << d_name << "::eq::areDisequal(" << t1 << "," << t2 << ")";
 
@@ -2182,7 +2182,7 @@ bool EqualityEngine::areDisequal(TNode t1, TNode t2, bool ensureProof) const
   return false;
 }
 
-size_t EqualityEngine::getSize(TNode t) {
+size_t EqualityEngine::getSize(const Node& t) {
   // Add the term
   addTermInternal(t);
   return getEqualityNode(getEqualityNode(t).getFind()).getSize();
@@ -2190,7 +2190,7 @@ size_t EqualityEngine::getSize(TNode t) {
 
 std::string EqualityEngine::identify() const { return d_name; }
 
-void EqualityEngine::addTriggerTerm(TNode t, TheoryId tag)
+void EqualityEngine::addTriggerTerm(const Node& t, TheoryId tag)
 {
   Debug("equality::trigger") << d_name << "::eq::addTriggerTerm(" << t << ", " << tag << ")" << std::endl;
 
@@ -2277,7 +2277,7 @@ void EqualityEngine::addTriggerTerm(TNode t, TheoryId tag)
   }
 }
 
-bool EqualityEngine::isTriggerTerm(TNode t, TheoryId tag) const {
+bool EqualityEngine::isTriggerTerm(const Node& t, TheoryId tag) const {
   if (!hasTerm(t)) return false;
   EqualityNodeId classId = getEqualityNode(t).getFind();
   TriggerTermSetRef triggerSetRef = d_nodeIndividualTrigger[classId];
@@ -2285,7 +2285,7 @@ bool EqualityEngine::isTriggerTerm(TNode t, TheoryId tag) const {
 }
 
 
-TNode EqualityEngine::getTriggerTermRepresentative(TNode t, TheoryId tag) const {
+TNode EqualityEngine::getTriggerTermRepresentative(const Node& t, TheoryId tag) const {
   Assert(isTriggerTerm(t, tag));
   EqualityNodeId classId = getEqualityNode(t).getFind();
   const TriggerTermSet& triggerSet = getTriggerTermSet(d_nodeIndividualTrigger[classId]);
@@ -2320,7 +2320,7 @@ void EqualityEngine::storeApplicationLookup(FunctionApplication& funNormalized, 
   }
 }
 
-void EqualityEngine::getUseListTerms(TNode t, std::set<TNode>& output) {
+void EqualityEngine::getUseListTerms(const Node& t, std::set<TNode>& output) {
   if (hasTerm(t)) {
     // Get the equivalence class
     EqualityNodeId classId = getEqualityNode(t).getFind();

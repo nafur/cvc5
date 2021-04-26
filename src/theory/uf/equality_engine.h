@@ -738,20 +738,20 @@ private:
   /**
    * Returns the current representative of the term t.
    */
-  TNode getRepresentative(TNode t) const;
+  TNode getRepresentative(const Node& t) const;
 
   /**
    * Add all the terms where the given term appears as a first child
    * (directly or implicitly).
    */
-  void getUseListTerms(TNode t, std::set<TNode>& output);
+  void getUseListTerms(const Node& t, std::set<TNode>& output);
 
   /**
    * Get an explanation of the equality t1 = t2 being true or false.
    * Returns the reasons (added when asserting) that imply it
    * in the assertions vector.
    */
-  void explainEquality(TNode t1, TNode t2, bool polarity,
+  void explainEquality(const Node& t1, const Node& t2, bool polarity,
                        std::vector<TNode>& assertions,
                        EqProof* eqp = nullptr) const;
 
@@ -760,7 +760,7 @@ private:
    * Returns the reasons (added when asserting) that imply imply it
    * in the assertions vector.
    */
-  void explainPredicate(TNode p, bool polarity, std::vector<TNode>& assertions,
+  void explainPredicate(const Node& p, bool polarity, std::vector<TNode>& assertions,
                         EqProof* eqp = nullptr) const;
 
   //--------------------------- standard safe explanation methods
@@ -771,12 +771,12 @@ private:
    * moreover ensures this class is ready to explain it via areDisequal with
    * ensureProof = true.
    */
-  void explainLit(TNode lit, std::vector<TNode>& assumptions);
+  void explainLit(const Node& lit, std::vector<TNode>& assumptions);
   /**
    * Explain literal, return the explanation as a conjunction. This method
    * relies on the above method.
    */
-  Node mkExplainLit(TNode lit);
+  Node mkExplainLit(const Node& lit);
   //--------------------------- end standard safe explanation methods
 
   /**
@@ -789,20 +789,20 @@ private:
    * @param t the trigger term
    * @param theoryTag tag for this trigger (do NOT use THEORY_LAST)
    */
-  void addTriggerTerm(TNode t, TheoryId theoryTag);
+  void addTriggerTerm(const Node& t, TheoryId theoryTag);
 
   /**
    * Returns true if t is a trigger term or in the same equivalence
    * class as some other trigger term.
    */
-  bool isTriggerTerm(TNode t, TheoryId theoryTag) const;
+  bool isTriggerTerm(const Node& t, TheoryId theoryTag) const;
 
   /**
    * Returns the representative trigger term of the given term.
    *
    * @param t the term to check where isTriggerTerm(t) should be true
    */
-  TNode getTriggerTermRepresentative(TNode t, TheoryId theoryTag) const;
+  TNode getTriggerTermRepresentative(const Node& t, TheoryId theoryTag) const;
 
   /**
    * Adds a notify trigger for the predicate p, where notice that p can be
@@ -819,19 +819,19 @@ private:
    * Returns true if the two terms are equal. Requires both terms to
    * be in the database.
    */
-  bool areEqual(TNode t1, TNode t2) const;
+  bool areEqual(const Node& t1, const Node& t2) const;
 
   /**
    * Check whether the two term are dis-equal. Requires both terms to
    * be in the database.
    */
-  bool areDisequal(TNode t1, TNode t2, bool ensureProof) const;
+  bool areDisequal(const Node& t1, const Node& t2, bool ensureProof) const;
 
   /**
    * Return the number of nodes in the equivalence class containing t
    * Adds t if not already there.
    */
-  size_t getSize(TNode t);
+  size_t getSize(const Node& t);
 
   /**
    * Returns true if the engine is in a consistent state.
