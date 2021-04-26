@@ -217,7 +217,7 @@ private:
     EqualityEdge():
       d_nodeId(null_edge), d_nextId(null_edge), d_mergeType(MERGED_THROUGH_CONGRUENCE) {}
 
-    EqualityEdge(EqualityNodeId nodeId, EqualityNodeId nextId, unsigned type, TNode reason):
+    EqualityEdge(EqualityNodeId nodeId, EqualityNodeId nextId, unsigned type, const Node& reason):
       d_nodeId(nodeId), d_nextId(nextId), d_mergeType(type), d_reason(reason) {}
 
     /** Returns the id of the next edge */
@@ -252,13 +252,13 @@ private:
   std::vector<EqualityEdgeId> d_equalityGraph;
 
   /** Add an edge to the equality graph */
-  void addGraphEdge(EqualityNodeId t1, EqualityNodeId t2, unsigned type, TNode reason);
+  void addGraphEdge(EqualityNodeId t1, EqualityNodeId t2, unsigned type, const Node& reason);
 
   /** Returns the equality node of the given node */
-  EqualityNode& getEqualityNode(TNode node);
+  EqualityNode& getEqualityNode(const Node& node);
 
   /** Returns the equality node of the given node */
-  const EqualityNode& getEqualityNode(TNode node) const;
+  const EqualityNode& getEqualityNode(const Node& node) const;
 
   /** Returns the equality node of the given node */
   EqualityNode& getEqualityNode(EqualityNodeId nodeId);
@@ -267,7 +267,7 @@ private:
   const EqualityNode& getEqualityNode(EqualityNodeId nodeId) const;
 
   /** Returns the id of the node */
-  EqualityNodeId getNodeId(TNode node) const;
+  EqualityNodeId getNodeId(const Node& node) const;
 
   /**
    * Merge the class2 into class1
@@ -356,7 +356,7 @@ private:
    * Returns the evaluation of the term when all (direct) children are replaced with
    * the constant representatives.
    */
-  Node evaluateTerm(TNode node);
+  Node evaluateTerm(const Node& node);
 
   /**
    * Returns true if it's a constant
@@ -385,10 +385,10 @@ private:
   Statistics d_stats;
 
   /** Add a new function application node to the database, i.e APP t1 t2 */
-  EqualityNodeId newApplicationNode(TNode original, EqualityNodeId t1, EqualityNodeId t2, FunctionApplicationType type);
+  EqualityNodeId newApplicationNode(const Node& original, EqualityNodeId t1, EqualityNodeId t2, FunctionApplicationType type);
 
   /** Add a new node to the database */
-  EqualityNodeId newNode(TNode t);
+  EqualityNodeId newNode(const Node& t);
 
   /** Propagation queue */
   std::deque<MergeCandidate> d_propagationQueue;
@@ -457,12 +457,12 @@ private:
   /**
    * Adds an equality of terms t1 and t2 to the database.
    */
-  void assertEqualityInternal(TNode t1, TNode t2, TNode reason, unsigned pid = MERGED_THROUGH_EQUALITY);
+  void assertEqualityInternal(const Node& t1, const Node& t2, const Node& reason, unsigned pid = MERGED_THROUGH_EQUALITY);
 
   /**
    * Adds a trigger equality to the database with the trigger node and polarity for notification.
    */
-  void addTriggerEqualityInternal(TNode t1, TNode t2, TNode trigger, bool polarity);
+  void addTriggerEqualityInternal(const Node& t1, const Node& t2, const Node& trigger, bool polarity);
 
   /**
    * This method gets called on backtracks from the context manager.
@@ -653,20 +653,20 @@ private:
   std::string d_name;
 
   /** The internal addTerm */
-  void addTermInternal(TNode t, bool isOperator = false);
+  void addTermInternal(const Node& t, bool isOperator = false);
   /**
    * Adds a notify trigger for equality. When equality becomes true
    * eqNotifyTriggerPredicate will be called with value = true, and when
    * equality becomes false eqNotifyTriggerPredicate will be called with value =
    * false.
    */
-  void addTriggerEquality(TNode equality);
+  void addTriggerEquality(const Node& equality);
 
  public:
   /**
    * Adds a term to the term database.
    */
-  void addTerm(TNode t) {
+  void addTerm(const Node& t) {
     addTermInternal(t, false);
   }
 
@@ -703,7 +703,7 @@ private:
   /**
    * Check whether the node is already in the database.
    */
-  bool hasTerm(TNode t) const;
+  bool hasTerm(const Node& t) const;
 
   /**
    * Adds a predicate p with given polarity. The predicate asserted
@@ -716,9 +716,9 @@ private:
    * @param reason the reason to keep for building explanations
    * @return true if a new fact was asserted, false if this call was a no-op.
    */
-  bool assertPredicate(TNode p,
+  bool assertPredicate(const Node& p,
                        bool polarity,
-                       TNode reason,
+                       const Node& reason,
                        unsigned pid = MERGED_THROUGH_EQUALITY);
 
   /**
@@ -730,9 +730,9 @@ private:
    * @param reason the reason to keep for building explanations
    * @return true if a new fact was asserted, false if this call was a no-op.
    */
-  bool assertEquality(TNode eq,
+  bool assertEquality(const Node& eq,
                       bool polarity,
-                      TNode reason,
+                      const Node& reason,
                       unsigned pid = MERGED_THROUGH_EQUALITY);
 
   /**
@@ -813,7 +813,7 @@ private:
    * Notice that if p is an equality, then we use a separate method for
    * determining when to call eqNotifyTriggerPredicate.
    */
-  void addTriggerPredicate(TNode predicate);
+  void addTriggerPredicate(const Node& predicate);
 
   /**
    * Returns true if the two terms are equal. Requires both terms to

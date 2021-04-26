@@ -84,7 +84,7 @@ class HoExtension
    * Return value is the number of lemmas of this form sent on the output
    * channel.
    */
-  unsigned applyExtensionality(TNode deq);
+  unsigned applyExtensionality(const Node& deq);
 
   /** collect model info
    *
@@ -135,7 +135,7 @@ class HoExtension
    * method with the same deq. If it is false, it creates fresh k and does not
    * cache the result.
    */
-  Node getExtensionalityDeq(TNode deq, bool isCached = true);
+  Node getExtensionalityDeq(const Node& deq, bool isCached = true);
 
   /**
    * Check whether extensionality should be applied for any pair of terms in the
@@ -166,7 +166,7 @@ class HoExtension
    * to equality engine, if not already equal.
    * Return value is the number of equalities added.
    */
-  unsigned applyAppCompletion(TNode n);
+  unsigned applyAppCompletion(const Node& n);
 
   /** check whether app-completion should be applied for any
    * pair of terms in the equality engine.

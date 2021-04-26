@@ -181,7 +181,7 @@ void EqualityEngine::enqueue(const MergeCandidate& candidate, bool back) {
   }
 }
 
-EqualityNodeId EqualityEngine::newApplicationNode(TNode original, EqualityNodeId t1, EqualityNodeId t2, FunctionApplicationType type) {
+EqualityNodeId EqualityEngine::newApplicationNode(const Node& original, EqualityNodeId t1, EqualityNodeId t2, FunctionApplicationType type) {
   Debug("equality") << d_name << "::eq::newApplicationNode(" << original
                     << ", {" << t1 << "} " << d_nodes[t1] << ", {" << t2 << "} "
                     << d_nodes[t2] << ")" << std::endl;
@@ -233,7 +233,7 @@ EqualityNodeId EqualityEngine::newApplicationNode(TNode original, EqualityNodeId
   return funId;
 }
 
-EqualityNodeId EqualityEngine::newNode(TNode node) {
+EqualityNodeId EqualityEngine::newNode(const Node& node) {
 
   Debug("equality") << d_name << "::eq::newNode(" << node << ")" << std::endl;
 
@@ -307,7 +307,7 @@ void EqualityEngine::subtermEvaluates(EqualityNodeId id)  {
   Debug("equality::evaluation") << d_name << "::eq::subtermEvaluates(" << d_nodes[id] << "): new " << d_subtermsToEvaluate[id] << std::endl;
 }
 
-void EqualityEngine::addTermInternal(TNode t, bool isOperator) {
+void EqualityEngine::addTermInternal(const Node& t, bool isOperator) {
 
   Debug("equality") << d_name << "::eq::addTermInternal(" << t << ")" << std::endl;
 
@@ -422,16 +422,16 @@ void EqualityEngine::addTermInternal(TNode t, bool isOperator) {
   Debug("equality") << d_name << "::eq::addTermInternal(" << t << ") => " << result << std::endl;
 }
 
-bool EqualityEngine::hasTerm(TNode t) const {
+bool EqualityEngine::hasTerm(const Node& t) const {
   return d_nodeIds.find(t) != d_nodeIds.end();
 }
 
-EqualityNodeId EqualityEngine::getNodeId(TNode node) const {
+EqualityNodeId EqualityEngine::getNodeId(const Node& node) const {
   Assert(hasTerm(node)) << node;
   return (*d_nodeIds.find(node)).second;
 }
 
-EqualityNode& EqualityEngine::getEqualityNode(TNode t) {
+EqualityNode& EqualityEngine::getEqualityNode(const Node& t) {
   return getEqualityNode(getNodeId(t));
 }
 
@@ -440,7 +440,7 @@ EqualityNode& EqualityEngine::getEqualityNode(EqualityNodeId nodeId) {
   return d_equalityNodes[nodeId];
 }
 
-const EqualityNode& EqualityEngine::getEqualityNode(TNode t) const {
+const EqualityNode& EqualityEngine::getEqualityNode(const Node& t) const {
   return getEqualityNode(getNodeId(t));
 }
 
@@ -449,7 +449,7 @@ const EqualityNode& EqualityEngine::getEqualityNode(EqualityNodeId nodeId) const
   return d_equalityNodes[nodeId];
 }
 
-void EqualityEngine::assertEqualityInternal(TNode t1, TNode t2, TNode reason, unsigned pid) {
+void EqualityEngine::assertEqualityInternal(const Node& t1, const Node& t2, const Node& reason, unsigned pid) {
   Debug("equality") << d_name << "::eq::addEqualityInternal(" << t1 << "," << t2
                     << "), reason = " << reason
                     << ", pid = " << static_cast<MergeReasonType>(pid)
@@ -469,9 +469,9 @@ void EqualityEngine::assertEqualityInternal(TNode t1, TNode t2, TNode reason, un
   enqueue(MergeCandidate(t1Id, t2Id, pid, reason));
 }
 
-bool EqualityEngine::assertPredicate(TNode t,
+bool EqualityEngine::assertPredicate(const Node& t,
                                      bool polarity,
-                                     TNode reason,
+                                     const Node& reason,
                                      unsigned pid)
 {
   Debug("equality") << d_name << "::eq::addPredicate(" << t << "," << (polarity ? "true" : "false") << ")" << std::endl;
@@ -486,9 +486,9 @@ bool EqualityEngine::assertPredicate(TNode t,
   return true;
 }
 
-bool EqualityEngine::assertEquality(TNode eq,
+bool EqualityEngine::assertEquality(const Node& eq,
                                     bool polarity,
-                                    TNode reason,
+                                    const Node& reason,
                                     unsigned pid)
 {
   Debug("equality") << d_name << "::eq::addEquality(" << eq << "," << (polarity ? "true" : "false") << ")" << std::endl;
@@ -976,7 +976,7 @@ void EqualityEngine::backtrack() {
 
 }
 
-void EqualityEngine::addGraphEdge(EqualityNodeId t1, EqualityNodeId t2, unsigned type, TNode reason) {
+void EqualityEngine::addGraphEdge(EqualityNodeId t1, EqualityNodeId t2, unsigned type, const Node& reason) {
   Debug("equality") << d_name << "::eq::addGraphEdge({" << t1 << "} "
                     << d_nodes[t1] << ", {" << t2 << "} " << d_nodes[t2] << ","
                     << reason << ")" << std::endl;
@@ -1706,7 +1706,7 @@ void EqualityEngine::getExplanation(
   }
 }
 
-void EqualityEngine::addTriggerEquality(TNode eq) {
+void EqualityEngine::addTriggerEquality(const Node& eq) {
   Assert(eq.getKind() == kind::EQUAL);
 
   if (d_done) {
@@ -1742,7 +1742,7 @@ void EqualityEngine::addTriggerEquality(TNode eq) {
   addTriggerEqualityInternal(eq, d_false, eq, false);
 }
 
-void EqualityEngine::addTriggerPredicate(TNode predicate) {
+void EqualityEngine::addTriggerPredicate(const Node& predicate) {
   Assert(predicate.getKind() != kind::NOT);
   if (predicate.getKind() == kind::EQUAL)
   {
@@ -1782,7 +1782,7 @@ void EqualityEngine::addTriggerPredicate(TNode predicate) {
   addTriggerEqualityInternal(predicate, d_false, predicate, false);
 }
 
-void EqualityEngine::addTriggerEqualityInternal(TNode t1, TNode t2, TNode trigger, bool polarity) {
+void EqualityEngine::addTriggerEqualityInternal(const Node& t1, const Node& t2, const Node& trigger, bool polarity) {
 
   Debug("equality") << d_name << "::eq::addTrigger(" << t1 << ", " << t2 << ", " << trigger << ")" << std::endl;
 
@@ -1831,7 +1831,7 @@ void EqualityEngine::addTriggerEqualityInternal(TNode t1, TNode t2, TNode trigge
   Debug("equality") << d_name << "::eq::addTrigger(" << t1 << "," << t2 << ") => (" << t1NewTriggerId << ", " << t2NewTriggerId << ")" << std::endl;
 }
 
-Node EqualityEngine::evaluateTerm(TNode node) {
+Node EqualityEngine::evaluateTerm(const Node& node) {
   Debug("equality::evaluation") << d_name << "::eq::evaluateTerm(" << node << ")" << std::endl;
   NodeBuilder builder;
   builder << node.getKind();

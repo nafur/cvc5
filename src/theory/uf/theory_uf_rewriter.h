@@ -41,15 +41,15 @@ class TheoryUfRewriter : public TheoryRewriter
  public:  // conversion between HO_APPLY AND APPLY_UF
   // converts an APPLY_UF to a curried HO_APPLY e.g. (f a b) becomes (@ (@ f a)
   // b)
-  static Node getHoApplyForApplyUf(TNode n);
+  static Node getHoApplyForApplyUf(const Node& n);
   // converts a curried HO_APPLY into an APPLY_UF e.g. (@ (@ f a) b) becomes (f a b)
-  static Node getApplyUfForHoApply(TNode n);
+  static Node getApplyUfForHoApply(const Node& n);
   /**
    * Given a curried HO_APPLY term n, this method adds its arguments into args
    * and returns its operator. If the argument opInArgs is true, then we add
    * its operator to args.
    */
-  static Node decomposeHoApply(TNode n,
+  static Node decomposeHoApply(const Node& n,
                                std::vector<TNode>& args,
                                bool opInArgs = false);
   /** returns true if this node can be used as an operator of an APPLY_UF node.  In higher-order logic,
@@ -60,7 +60,7 @@ class TheoryUfRewriter : public TheoryRewriter
    * forall x : ( Int -> Int ), y : Int. (x y) = (f 0)
    * Then, f and g can be used as APPLY_UF operators, but (ite C f g), (lambda x1. (f x1)) as well as the variable x above are not.
    */
-  static bool canUseAsApplyUfOperator(TNode n);
+  static bool canUseAsApplyUfOperator(const Node& n);
 }; /* class TheoryUfRewriter */
 
 }  // namespace uf

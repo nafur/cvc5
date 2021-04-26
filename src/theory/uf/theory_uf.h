@@ -87,13 +87,13 @@ private:
   SymmetryBreaker d_symb;
 
   /** called when a new equivalance class is created */
-  void eqNotifyNewClass(TNode t);
+  void eqNotifyNewClass(const Node& t);
 
   /** called when two equivalance classes have merged */
-  void eqNotifyMerge(TNode t1, TNode t2);
+  void eqNotifyMerge(const Node& t1, const Node& t2);
 
   /** called when two equivalence classes are made disequal */
-  void eqNotifyDisequal(TNode t1, TNode t2, TNode reason);
+  void eqNotifyDisequal(const Node& t1, const Node& t2, const Node& reason);
 
  public:
 
@@ -156,9 +156,9 @@ private:
   std::string identify() const override { return "THEORY_UF"; }
  private:
   /** Explain why this literal is true by building an explanation */
-  void explain(TNode literal, Node& exp);
+  void explain(const Node& literal, Node& exp);
 
-  bool areCareDisequal(TNode x, TNode y);
+  bool areCareDisequal(const Node& x, const Node& y);
   void addCarePairs(const TNodeTrie* t1,
                     const TNodeTrie* t2,
                     unsigned arity,

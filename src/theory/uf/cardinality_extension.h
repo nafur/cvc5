@@ -72,15 +72,15 @@ class CardinalityExtension
             : d_size( c, 0 ), d_disequalities( c ) {}
           ~DiseqList(){}
 
-          void setDisequal( Node n, bool valid ){
+          void setDisequal( const Node& n, bool valid ){
             Assert((!isSet(n)) || getDisequalityValue(n) != valid);
             d_disequalities[ n ] = valid;
             d_size = d_size + ( valid ? 1 : -1 );
           }
-          bool isSet(Node n) const {
+          bool isSet(const Node& n) const {
             return d_disequalities.find(n) != d_disequalities.end();
           }
-          bool getDisequalityValue(Node n) const {
+          bool getDisequalityValue(const Node& n) const {
             Assert(isSet(n));
             return (*(d_disequalities.find(n))).second;
           }
@@ -143,7 +143,7 @@ class CardinalityExtension
       //total disequality size (internal)
       context::CDO< unsigned > d_total_diseq_internal;
       /** set rep */
-      void setRep( Node n, bool valid );
+      void setRep( const Node& n, bool valid );
       //region node infomation
       std::map< Node, RegionNodeInfo* > d_nodes;
       //whether region is valid
@@ -163,7 +163,7 @@ class CardinalityExtension
       split_iterator end_splits() { return d_splits.end(); }
 
       /** Returns a RegionInfo. */
-      RegionNodeInfo* getRegionInfo(Node n) {
+      RegionNodeInfo* getRegionInfo(const Node& n) {
         Assert(d_nodes.find(n) != d_nodes.end());
         return (* (d_nodes.find(n))).second;
       }
@@ -175,25 +175,25 @@ class CardinalityExtension
       void setValid(bool valid) { d_valid = valid; }
 
       /** add rep */
-      void addRep( Node n );
+      void addRep( const Node& n );
       //take node from region
-      void takeNode( Region* r, Node n );
+      void takeNode( Region* r, const Node& n );
       //merge with other region
       void combine( Region* r );
       /** merge */
-      void setEqual( Node a, Node b );
+      void setEqual( const Node& a, const Node& b );
       //set n1 != n2 to value 'valid', type is whether it is internal/external
-      void setDisequal( Node n1, Node n2, int type, bool valid );
+      void setDisequal( const Node& n1, const Node& n2, int type, bool valid );
       //get num reps
       size_t getNumReps() const { return d_reps_size; }
       //get test clique size
       size_t getTestCliqueSize() const { return d_testCliqueSize; }
       // has representative
-      bool hasRep( Node n ) {
+      bool hasRep( const Node& n ) {
         return d_nodes.find(n) != d_nodes.end() && d_nodes[n]->valid();
       }
       // is disequal
-      bool isDisequal( Node n1, Node n2, int type );
+      bool isDisequal( const Node& n1, const Node& n2, int type );
       /** get must merge */
       bool getMustCombine( int cardinality );
       /** has splits */
@@ -234,7 +234,7 @@ class CardinalityExtension
     context::CDO< unsigned > d_reps;
 
     /** get number of disequalities from node n to region ri */
-    int getNumDisequalitiesToRegion( Node n, int ri );
+    int getNumDisequalitiesToRegion( const Node& n, int ri );
     /** get number of disequalities from Region r to other regions */
     void getDisequalitiesToRegions( int ri, std::map< int, int >& regions_diseq );
     /** is valid */
@@ -242,7 +242,7 @@ class CardinalityExtension
       return ri>=0 && ri<(int)d_regions_index && d_regions[ ri ]->valid();
     }
     /** set split score */
-    void setSplitScore( Node n, int s );
+    void setSplitScore( const Node& n, int s );
     /** check if we need to combine region ri */
     void checkRegion( int ri, bool checkCombine = true );
     /** force combine region */
@@ -250,7 +250,7 @@ class CardinalityExtension
     /** merge regions */
     int combineRegions( int ai, int bi );
     /** move node n to region ri */
-    void moveNode( Node n, int ri );
+    void moveNode( const Node& n, int ri );
     /** allocate cardinality */
     void allocateCardinality();
     /**
@@ -282,7 +282,7 @@ class CardinalityExtension
     void simpleCheckCardinality();
 
    public:
-    SortModel(Node n,
+    SortModel(const Node& n,
               TheoryState& state,
               TheoryInferenceManager& im,
               CardinalityExtension* thss);
@@ -290,13 +290,13 @@ class CardinalityExtension
     /** initialize */
     void initialize();
     /** new node */
-    void newEqClass( Node n );
+    void newEqClass( const Node& n );
     /** merge */
-    void merge( Node a, Node b );
+    void merge( const Node& a, const Node& b );
     /** assert terms are disequal */
-    void assertDisequal( Node a, Node b, Node reason );
+    void assertDisequal( const Node& a, const Node& b, const Node& reason );
     /** are disequal */
-    bool areDisequal( Node a, Node b );
+    bool areDisequal( const Node& a, const Node& b );
     /** check */
     void check(Theory::Effort level);
     /** presolve */
@@ -340,7 +340,7 @@ class CardinalityExtension
     class CardinalityDecisionStrategy : public DecisionStrategyFmf
     {
      public:
-      CardinalityDecisionStrategy(Node t,
+      CardinalityDecisionStrategy(const Node& t,
                                   context::Context* satContext,
                                   Valuation valuation);
       /** make literal (the i^th combined cardinality literal) */
@@ -364,15 +364,15 @@ class CardinalityExtension
   /** get theory */
   TheoryUF* getTheory() { return d_th; }
   /** new node */
-  void newEqClass( Node n );
+  void newEqClass( const Node& n );
   /** merge */
-  void merge( Node a, Node b );
+  void merge( const Node& a, const Node& b );
   /** assert terms are disequal */
-  void assertDisequal( Node a, Node b, Node reason );
+  void assertDisequal( const Node& a, const Node& b, const Node& reason );
   /** assert node */
-  void assertNode( Node n, bool isDecision );
+  void assertNode( const Node& n, bool isDecision );
   /** are disequal */
-  bool areDisequal( Node a, Node b );
+  bool areDisequal( const Node& a, const Node& b );
   /** check */
   void check( Theory::Effort level );
   /** presolve */
@@ -384,11 +384,11 @@ class CardinalityExtension
   //print debug
   void debugPrint( const char* c );
   /** get cardinality for node */
-  int getCardinality( Node n );
+  int getCardinality( const Node& n );
   /** get cardinality for type */
   int getCardinality( TypeNode tn );
   /** has eqc */
-  bool hasEqc(Node a);
+  bool hasEqc(const Node& a);
 
   class Statistics {
    public:
@@ -403,15 +403,15 @@ class CardinalityExtension
 
  private:
   /** get sort model */
-  SortModel* getSortModel(Node n);
+  SortModel* getSortModel(const Node& n);
   /** initialize */
   void initializeCombinedCardinality();
   /** check */
   void checkCombinedCardinality();
   /** ensure eqc */
-  void ensureEqc(SortModel* c, Node a);
+  void ensureEqc(SortModel* c, const Node& a);
   /** ensure eqc for all subterms of n */
-  void ensureEqcRec(Node n);
+  void ensureEqcRec(const Node& n);
 
   /** Reference to the state object */
   TheoryState& d_state;

@@ -157,7 +157,7 @@ RewriteResponse TheoryUfRewriter::preRewrite(TNode node)
   return RewriteResponse(REWRITE_DONE, node);
 }
 
-Node TheoryUfRewriter::getHoApplyForApplyUf(TNode n)
+Node TheoryUfRewriter::getHoApplyForApplyUf(const Node& n)
 {
   Assert(n.getKind() == kind::APPLY_UF);
   Node curr = n.getOperator();
@@ -167,7 +167,7 @@ Node TheoryUfRewriter::getHoApplyForApplyUf(TNode n)
   }
   return curr;
 }
-Node TheoryUfRewriter::getApplyUfForHoApply(TNode n)
+Node TheoryUfRewriter::getApplyUfForHoApply(const Node& n)
 {
   Assert(n.getType().getNumChildren() == 2);
   std::vector<TNode> children;
@@ -181,7 +181,7 @@ Node TheoryUfRewriter::getApplyUfForHoApply(TNode n)
   // standard
   return Node::null();
 }
-Node TheoryUfRewriter::decomposeHoApply(TNode n,
+Node TheoryUfRewriter::decomposeHoApply(const Node& n,
                                         std::vector<TNode>& args,
                                         bool opInArgs)
 {
@@ -198,7 +198,7 @@ Node TheoryUfRewriter::decomposeHoApply(TNode n,
   std::reverse(args.begin(), args.end());
   return curr;
 }
-bool TheoryUfRewriter::canUseAsApplyUfOperator(TNode n) { return n.isVar(); }
+bool TheoryUfRewriter::canUseAsApplyUfOperator(const Node& n) { return n.isVar(); }
 
 }  // namespace uf
 }  // namespace theory

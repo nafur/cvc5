@@ -62,11 +62,11 @@ Region::~Region() {
   d_nodes.clear();
 }
 
-void Region::addRep( Node n ) {
+void Region::addRep( const Node& n ) {
   setRep( n, true );
 }
 
-void Region::takeNode( Region* r, Node n ){
+void Region::takeNode( Region* r, const Node& n ){
   Assert(!hasRep(n));
   Assert(r->hasRep(n));
   //add representative
@@ -131,7 +131,7 @@ void Region::combine( Region* r ){
 }
 
 /** setEqual */
-void Region::setEqual( Node a, Node b ){
+void Region::setEqual( const Node& a, const Node& b ){
   Assert(hasRep(a) && hasRep(b));
   //move disequalities of b over to a
   for( int t=0; t<2; t++ ){
@@ -154,7 +154,7 @@ void Region::setEqual( Node a, Node b ){
   setRep( b, false );
 }
 
-void Region::setDisequal( Node n1, Node n2, int type, bool valid ){
+void Region::setDisequal( const Node& n1, const Node& n2, int type, bool valid ){
   //Debug("uf-ss-region-debug") << "set disequal " << n1 << " " << n2 << " "
   //                            << type << " " << valid << std::endl;
   //debugPrint("uf-ss-region-debug");
@@ -182,7 +182,7 @@ void Region::setDisequal( Node n1, Node n2, int type, bool valid ){
   }
 }
 
-void Region::setRep( Node n, bool valid ) {
+void Region::setRep( const Node& n, bool valid ) {
   Assert(hasRep(n) != valid);
   if( valid && d_nodes.find( n )==d_nodes.end() ){
     d_nodes[n] = new RegionNodeInfo(d_cf->d_state.getSatContext());
@@ -206,14 +206,14 @@ void Region::setRep( Node n, bool valid ) {
   }
 }
 
-bool Region::isDisequal( Node n1, Node n2, int type ) {
+bool Region::isDisequal( const Node& n1, const Node& n2, int type ) {
   RegionNodeInfo::DiseqList* del = d_nodes[ n1 ]->get(type);
   return del->isSet(n2) && del->getDisequalityValue(n2);
 }
 
 struct sortInternalDegree {
   Region* r;
-  bool operator() (Node i, Node j) {
+  bool operator() (const Node& i, const Node& j) {
     return (r->getRegionInfo(i)->getNumInternalDisequalities() >
             r->getRegionInfo(j)->getNumInternalDisequalities());
   }
@@ -221,7 +221,7 @@ struct sortInternalDegree {
 
 struct sortExternalDegree {
   Region* r;
-  bool operator() (Node i,Node j) {
+  bool operator() (const Node& i, const Node& j) {
     return (r->getRegionInfo(i)->getNumExternalDisequalities() >
             r->getRegionInfo(j)->getNumExternalDisequalities());
   }
@@ -446,7 +446,7 @@ void Region::debugPrint( const char* c, bool incClique ) {
 }
 
 SortModel::CardinalityDecisionStrategy::CardinalityDecisionStrategy(
-    Node t, context::Context* satContext, Valuation valuation)
+    const Node& t, context::Context* satContext, Valuation valuation)
     : DecisionStrategyFmf(satContext, valuation), d_cardinality_term(t)
 {
 }
@@ -461,7 +461,7 @@ std::string SortModel::CardinalityDecisionStrategy::identify() const
   return std::string("uf_card");
 }
 
-SortModel::SortModel(Node n,
+SortModel::SortModel(const Node& n,
                      TheoryState& state,
                      TheoryInferenceManager& im,
                      CardinalityExtension* thss)
@@ -515,7 +515,7 @@ void SortModel::initialize()
 }
 
 /** new node */
-void SortModel::newEqClass( Node n ){
+void SortModel::newEqClass( const Node& n ){
   if (!d_state.isInConflict())
   {
     if( d_regions_map.find( n )==d_regions_map.end() ){
@@ -540,7 +540,7 @@ void SortModel::newEqClass( Node n ){
 }
 
 /** merge */
-void SortModel::merge( Node a, Node b ){
+void SortModel::merge( const Node& a, const Node& b ){
   if (d_state.isInConflict())
   {
     return;
@@ -602,25 +602,25 @@ void SortModel::merge( Node a, Node b ){
 }
 
 /** assert terms are disequal */
-void SortModel::assertDisequal( Node a, Node b, Node reason ){
+void SortModel::assertDisequal( const Node& a, const Node& b, const Node& reason ){
   if (d_state.isInConflict())
   {
     return;
   }
   // if they are not already disequal
   eq::EqualityEngine* ee = d_thss->getTheory()->getEqualityEngine();
-  a = ee->getRepresentative(a);
-  b = ee->getRepresentative(b);
-  int ai = d_regions_map[a];
-  int bi = d_regions_map[b];
-  if (d_regions[ai]->isDisequal(a, b, ai == bi))
+  Node ar = ee->getRepresentative(a);
+  Node br = ee->getRepresentative(b);
+  int ai = d_regions_map[ar];
+  int bi = d_regions_map[br];
+  if (d_regions[ai]->isDisequal(ar, br, ai == bi))
   {
     // already disequal
     return;
   }
-  Debug("uf-ss") << "Assert disequal " << a << " != " << b << "..."
+  Debug("uf-ss") << "Assert disequal " << ar << " != " << br << "..."
                  << std::endl;
-  Debug("uf-ss-disequal") << "Assert disequal " << a << " != " << b << "..."
+  Debug("uf-ss-disequal") << "Assert disequal " << ar << " != " << br << "..."
                           << std::endl;
   // add to list of disequalities
   if (d_disequalities_index < d_disequalities.size())
@@ -633,28 +633,28 @@ void SortModel::assertDisequal( Node a, Node b, Node reason ){
   }
   d_disequalities_index = d_disequalities_index + 1;
   // now, add disequalities to regions
-  Assert(d_regions_map.find(a) != d_regions_map.end());
-  Assert(d_regions_map.find(b) != d_regions_map.end());
+  Assert(d_regions_map.find(ar) != d_regions_map.end());
+  Assert(d_regions_map.find(br) != d_regions_map.end());
   Debug("uf-ss") << "   regions: " << ai << " " << bi << std::endl;
   if (ai == bi)
   {
     // internal disequality
-    d_regions[ai]->setDisequal(a, b, 1, true);
-    d_regions[ai]->setDisequal(b, a, 1, true);
+    d_regions[ai]->setDisequal(ar, br, 1, true);
+    d_regions[ai]->setDisequal(br, ar, 1, true);
     // do not need to check if it needs to combine (no new ext. disequalities)
     checkRegion(ai, false);
   }
   else
   {
     // external disequality
-    d_regions[ai]->setDisequal(a, b, 0, true);
-    d_regions[bi]->setDisequal(b, a, 0, true);
+    d_regions[ai]->setDisequal(ar, br, 0, true);
+    d_regions[bi]->setDisequal(br, ar, 0, true);
     checkRegion(ai);
     checkRegion(bi);
   }
 }
 
-bool SortModel::areDisequal( Node a, Node b ) {
+bool SortModel::areDisequal( const Node& a, const Node& b ) {
   Assert(a == d_thss->getTheory()->getEqualityEngine()->getRepresentative(a));
   Assert(b == d_thss->getTheory()->getEqualityEngine()->getRepresentative(b));
   if( d_regions_map.find( a )!=d_regions_map.end() &&
@@ -801,7 +801,7 @@ void SortModel::presolve() {
   d_initialized = false;
 }
 
-int SortModel::getNumDisequalitiesToRegion( Node n, int ri ){
+int SortModel::getNumDisequalitiesToRegion( const Node& n, int ri ){
   int ni = d_regions_map[n];
   int counter = 0;
   DiseqList* del = d_regions[ni]->getRegionInfo(n)->get(0);
@@ -833,7 +833,7 @@ void SortModel::getDisequalitiesToRegions(int ri,
   }
 }
 
-void SortModel::setSplitScore( Node n, int s ){
+void SortModel::setSplitScore( const Node& n, int s ){
   if( d_split_score.find( n )!=d_split_score.end() ){
     int ss = d_split_score[ n ];
     d_split_score[ n ] = s>ss ? s : ss;
@@ -983,7 +983,7 @@ int SortModel::combineRegions( int ai, int bi ){
   return ai;
 }
 
-void SortModel::moveNode( Node n, int ri ){
+void SortModel::moveNode( const Node& n, int ri ){
   Debug("uf-ss-region") << "uf-ss: Move node " << n << " to Region #" << ri << std::endl;
   Assert(isValid(d_regions_map[n]));
   Assert(isValid(ri));
@@ -1259,7 +1259,7 @@ CardinalityExtension::~CardinalityExtension()
 }
 
 /** ensure eqc */
-void CardinalityExtension::ensureEqc(SortModel* c, Node a)
+void CardinalityExtension::ensureEqc(SortModel* c, const Node& a)
 {
   if( !hasEqc( a ) ){
     d_rel_eqc[a] = true;
@@ -1271,7 +1271,7 @@ void CardinalityExtension::ensureEqc(SortModel* c, Node a)
   }
 }
 
-void CardinalityExtension::ensureEqcRec(Node n)
+void CardinalityExtension::ensureEqcRec(const Node& n)
 {
   if( !hasEqc( n ) ){
     SortModel* c = getSortModel( n );
@@ -1285,14 +1285,14 @@ void CardinalityExtension::ensureEqcRec(Node n)
 }
 
 /** has eqc */
-bool CardinalityExtension::hasEqc(Node a)
+bool CardinalityExtension::hasEqc(const Node& a)
 {
   NodeBoolMap::iterator it = d_rel_eqc.find( a );
   return it!=d_rel_eqc.end() && (*it).second;
 }
 
 /** new node */
-void CardinalityExtension::newEqClass(Node a)
+void CardinalityExtension::newEqClass(const Node& a)
 {
   SortModel* c = getSortModel( a );
   if( c ){
@@ -1305,7 +1305,7 @@ void CardinalityExtension::newEqClass(Node a)
 }
 
 /** merge */
-void CardinalityExtension::merge(Node a, Node b)
+void CardinalityExtension::merge(const Node& a, const Node& b)
 {
   //TODO: ensure they are relevant
   SortModel* c = getSortModel( a );
@@ -1318,7 +1318,7 @@ void CardinalityExtension::merge(Node a, Node b)
 }
 
 /** assert terms are disequal */
-void CardinalityExtension::assertDisequal(Node a, Node b, Node reason)
+void CardinalityExtension::assertDisequal(const Node& a, const Node& b, const Node& reason)
 {
   SortModel* c = getSortModel( a );
   if( c ){
@@ -1331,7 +1331,7 @@ void CardinalityExtension::assertDisequal(Node a, Node b, Node reason)
 }
 
 /** assert a node */
-void CardinalityExtension::assertNode(Node n, bool isDecision)
+void CardinalityExtension::assertNode(const Node& n, bool isDecision)
 {
   Trace("uf-ss") << "Assert " << n << " " << isDecision << std::endl;
   bool polarity = n.getKind() != kind::NOT;
@@ -1439,22 +1439,22 @@ void CardinalityExtension::assertNode(Node n, bool isDecision)
   Trace("uf-ss") << "Assert: done " << n << " " << isDecision << std::endl;
 }
 
-bool CardinalityExtension::areDisequal(Node a, Node b)
+bool CardinalityExtension::areDisequal(const Node& a, const Node& b)
 {
   if( a==b ){
     return false;
   }
   eq::EqualityEngine* ee = d_th->getEqualityEngine();
-  a = ee->getRepresentative(a);
-  b = ee->getRepresentative(b);
-  if (ee->areDisequal(a, b, false))
+  Node ar = ee->getRepresentative(a);
+  Node br = ee->getRepresentative(b);
+  if (ee->areDisequal(ar, br, false))
   {
     return true;
   }
-  SortModel* c = getSortModel(a);
+  SortModel* c = getSortModel(ar);
   if (c)
   {
-    return c->areDisequal(a, b);
+    return c->areDisequal(ar, br);
   }
   return false;
 }
@@ -1606,7 +1606,7 @@ void CardinalityExtension::preRegisterTerm(TNode n)
   }
 }
 
-SortModel* CardinalityExtension::getSortModel(Node n)
+SortModel* CardinalityExtension::getSortModel(const Node& n)
 {
   TypeNode tn = n.getType();
   std::map< TypeNode, SortModel* >::iterator it = d_rep_model.find( tn );
@@ -1623,7 +1623,7 @@ SortModel* CardinalityExtension::getSortModel(Node n)
 }
 
 /** get cardinality for sort */
-int CardinalityExtension::getCardinality(Node n)
+int CardinalityExtension::getCardinality(const Node& n)
 {
   SortModel* c = getSortModel( n );
   if( c ){

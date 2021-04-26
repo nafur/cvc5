@@ -51,7 +51,7 @@ Node HoExtension::ppRewrite(Node node)
   return node;
 }
 
-Node HoExtension::getExtensionalityDeq(TNode deq, bool isCached)
+Node HoExtension::getExtensionalityDeq(const Node& deq, bool isCached)
 {
   Assert(deq.getKind() == NOT && deq[0].getKind() == EQUAL);
   Assert(deq[0][0].getType().isFunction());
@@ -97,7 +97,7 @@ Node HoExtension::getExtensionalityDeq(TNode deq, bool isCached)
   return conc;
 }
 
-unsigned HoExtension::applyExtensionality(TNode deq)
+unsigned HoExtension::applyExtensionality(const Node& deq)
 {
   Assert(deq.getKind() == NOT && deq[0].getKind() == EQUAL);
   Assert(deq[0][0].getType().isFunction());
@@ -287,7 +287,7 @@ unsigned HoExtension::checkExtensionality(TheoryModel* m)
   return num_lemmas;
 }
 
-unsigned HoExtension::applyAppCompletion(TNode n)
+unsigned HoExtension::applyAppCompletion(const Node& n)
 {
   Assert(n.getKind() == APPLY_UF);
 

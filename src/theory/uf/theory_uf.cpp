@@ -285,7 +285,7 @@ void TheoryUF::preRegisterTerm(TNode node)
   }
 }
 
-void TheoryUF::explain(TNode literal, Node& exp)
+void TheoryUF::explain(const Node& literal, Node& exp)
 {
   Debug("uf") << "TheoryUF::explain(" << literal << ")" << std::endl;
   std::vector<TNode> assumptions;
@@ -485,15 +485,15 @@ EqualityStatus TheoryUF::getEqualityStatus(TNode a, TNode b) {
   return EQUALITY_FALSE_IN_MODEL;
 }
 
-bool TheoryUF::areCareDisequal(TNode x, TNode y){
+bool TheoryUF::areCareDisequal(const Node& x, const Node& y){
   Assert(d_equalityEngine->hasTerm(x));
   Assert(d_equalityEngine->hasTerm(y));
   if (d_equalityEngine->isTriggerTerm(x, THEORY_UF)
       && d_equalityEngine->isTriggerTerm(y, THEORY_UF))
   {
-    TNode x_shared =
+    Node x_shared =
         d_equalityEngine->getTriggerTermRepresentative(x, THEORY_UF);
-    TNode y_shared =
+    Node y_shared =
         d_equalityEngine->getTriggerTermRepresentative(y, THEORY_UF);
     EqualityStatus eqStatus = d_valuation.getEqualityStatus(x_shared, y_shared);
     if( eqStatus==EQUALITY_FALSE_AND_PROPAGATED || eqStatus==EQUALITY_FALSE || eqStatus==EQUALITY_FALSE_IN_MODEL ){
@@ -647,20 +647,20 @@ void TheoryUF::computeCareGraph() {
                        << std::endl;
 }/* TheoryUF::computeCareGraph() */
 
-void TheoryUF::eqNotifyNewClass(TNode t) {
+void TheoryUF::eqNotifyNewClass(const Node& t) {
   if (d_thss != NULL) {
     d_thss->newEqClass(t);
   }
 }
 
-void TheoryUF::eqNotifyMerge(TNode t1, TNode t2)
+void TheoryUF::eqNotifyMerge(const Node& t1, const Node& t2)
 {
   if (d_thss != NULL) {
     d_thss->merge(t1, t2);
   }
 }
 
-void TheoryUF::eqNotifyDisequal(TNode t1, TNode t2, TNode reason) {
+void TheoryUF::eqNotifyDisequal(const Node& t1, const Node& t2, const Node& reason) {
   if (d_thss != NULL) {
     d_thss->assertDisequal(t1, t2, reason);
   }
