@@ -76,6 +76,7 @@ jobs:
             NAME="${{ github.event.number }}"
             PRREF="${{ github.event.pull_request.head.sha }}"
             echo "Identified PR #$NAME (from $PRREF)"
+            echo "foo"
             NAME="pr$NAME"
             # be careful here, see explanation above!
             git checkout "${PRREF}" -- \
