@@ -66,6 +66,7 @@ jobs:
               `git ls-tree "${PRHASH}" --name-only -r examples/ | grep -E ".*\.(h|cpp|java|py|smt2)"`
           fi
           echo "NAME=$NAME" >> $GITHUB_ENV
+          echo "foo"
 
       - name: Configure
         run: ./configure.sh production --docs
