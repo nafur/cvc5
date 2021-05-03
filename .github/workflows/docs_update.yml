@@ -53,6 +53,7 @@ jobs:
       
       - name: Checkout PR
         run: |
+          echo "foo"
           git config --global user.email "docbot@cvc5"
           git config --global user.name "DocBot"
           if [ "${{ github.event_name }}" == "push" ] ; then
