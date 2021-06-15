@@ -45,6 +45,10 @@ libcvc5_add_sources(
   iand.h
   index.cpp
   index.h
+  interval.cpp
+  interval.h
+  interval_evaluation.cpp
+  interval_evaluation.h
   maybe.h
   ostream_util.cpp
   ostream_util.h
