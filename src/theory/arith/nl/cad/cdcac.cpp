@@ -348,8 +348,8 @@ PolyVector CDCAC::constructCharacterization(std::vector<CACInterval>& intervals)
     }
     bool isProperOpenInterval;
     {
-      const Value& l = get_lower(i.d_interval);
-      const Value& u = get_upper(i.d_interval);
+      const poly::Value& l = get_lower(i.d_interval);
+      const poly::Value& u = get_upper(i.d_interval);
       isProperOpenInterval = (l != u) && !is_minus_infinity(l) && !is_plus_infinity(u);
     }
     bool hasSinglePoly = i.d_mainPolys.size() == 1;
