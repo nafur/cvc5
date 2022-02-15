@@ -346,12 +346,30 @@ PolyVector CDCAC::constructCharacterization(std::vector<CACInterval>& intervals)
       // Add all polynomial from lower levels.
       res.add(p);
     }
+    bool isProperOpenInterval;
+    {
+      const Value& l = get_lower(i.d_interval);
+      const Value& u = get_upper(i.d_interval);
+      isProperOpenInterval = (l != u) && !is_minus_infinity(l) && !is_plus_infinity(u);
+    }
+    bool hasSinglePoly = i.d_mainPolys.size() == 1;
     for (const auto& p : i.d_mainPolys)
     {
       Trace("cdcac::projection")
           << "Discriminant of " << p << " -> " << discriminant(p) << std::endl;
-      // Add all discriminants
-      res.add(discriminant(p));
+      // if i has two distinct endpoints and p is the single defining poly
+      //    and deg(p) == 2 and lc(p)[s] != 0 and 
+      // then drop disc
+
+      if (isProperOpenInterval && hasSinglePoly && degree(p) == 2 && evaluate_constraint(poly::leading_coefficient(p), d_assignment, poly::SignCondition::NE))
+      {
+        // nothing;
+      }
+      else
+      {
+        // Add all discriminants
+        res.add(discriminant(p));
+      }
 
       for (const auto& q : requiredCoefficients(p))
       {
