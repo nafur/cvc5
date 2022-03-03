@@ -87,7 +87,7 @@ struct NaiveGroebnerSimplifier::NGSState
       d_inequalities.emplace_back(input, getPolynomial(a), kind);
       d_vc(std::get<1>(d_inequalities.back()));
       Trace("nl-cov::ngs::debug")
-          << "-> equality " << std::get<1>(d_inequalities.back()) << " " << kind
+          << "-> inequality " << std::get<1>(d_inequalities.back()) << " " << kind
           << " 0" << std::endl;
     }
   }
@@ -107,6 +107,7 @@ struct NaiveGroebnerSimplifier::NGSState
     std::vector<CoCoA::RingElem> cpolys;
     for (const auto& p : d_equalities)
     {
+      Trace("nl-cov::ngs::debug") << "Adding equality " << p << std::endl;
       cpolys.emplace_back(d_converter(p, ring));
     }
     auto ideal = CoCoA::ideal(cpolys);
@@ -121,7 +122,15 @@ NaiveGroebnerSimplifier::NaiveGroebnerSimplifier(
     Env& env, const std::vector<Node>& inputs)
     : EnvObj(env), d_inputs(inputs), d_state(std::make_unique<NGSState>())
 {
-  simplify();
+  try
+  {
+    simplify();
+  }
+  catch (const CoCoA::ErrorInfo& ei)
+  {
+    Trace("nl-cov::ngs") << "CoCoAError: " << ei << std::endl;
+    Assert(false);
+  }
 }
 
 NaiveGroebnerSimplifier::~NaiveGroebnerSimplifier() {}
@@ -130,6 +139,14 @@ void NaiveGroebnerSimplifier::simplify()
 {
   // Initialize the state
   d_state->loadAssertions(d_inputs);
+
+  if (d_state->d_equalities.empty())
+  {
+    Trace("nl-cov::ngs") << "No equalities present, we can't do anything." << std::endl;
+    d_simplified = d_inputs;
+    return;
+  }
+
   auto [ring, ideal, gbasis] = d_state->computeGBasis();
 
   // Now store the simplified equalities. Take all polynomials from the Gröbner
