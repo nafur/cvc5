@@ -338,7 +338,7 @@ std::pair<poly::Polynomial, poly::SignCondition> as_poly_constraint(
     Assert(n.getNumChildren() == 1)
         << "Expect negations to have a single child.";
     negated = true;
-    n = *n.begin();
+    n = n[0];
   }
   Assert((n.getKind() == Kind::EQUAL) || (n.getKind() == Kind::GT)
          || (n.getKind() == Kind::GEQ) || (n.getKind() == Kind::LT)

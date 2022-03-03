@@ -223,10 +223,10 @@ bool NaiveGroebnerSimplifier::addSimplification(TNode simplified, TNode origins)
     d_simplified.emplace_back(simp);
     return true;
   }
-  Trace("nl-cov::ngs") << "Found simplification " << simplified << std::endl;
+  Trace("nl-cov::ngs") << "Found simplification " << simp << std::endl;
   Trace("nl-cov::ngs") << "From " << origins << std::endl;
-  d_simplified.emplace_back(simplified);
-  d_lemmaSubstitutions.emplace(simplified, origins);
+  d_simplified.emplace_back(simp);
+  d_lemmaSubstitutions.emplace(simp, origins);
   return true;
 }
 
