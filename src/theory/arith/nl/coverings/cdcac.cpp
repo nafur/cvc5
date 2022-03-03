@@ -125,11 +125,14 @@ std::vector<CACInterval> CDCAC::getUnsatIntervals(std::size_t cur_variable)
         == options::nlCovLiftingMode::LAZARD)
     {
       intervals = le.infeasibleRegions(p, sc);
-      if (Trace.isOn("cdcac"))
+      if (Trace.isOn("cdcac::lazard"))
       {
         auto reference = poly::infeasible_regions(p, d_assignment, sc);
-        Trace("cdcac") << "Lazard: " << intervals << std::endl;
-        Trace("cdcac") << "Regular: " << reference << std::endl;
+        if (intervals != reference)
+        {
+          Trace("cdcac::lazard") << "Lazard: " << intervals << std::endl;
+          Trace("cdcac::lazard") << "Regular: " << reference << std::endl;
+        }
       }
     }
     else
@@ -456,6 +459,8 @@ CACInterval CDCAC::intervalFromCharacterization(
   }
   Assert(!is_none(lower) && !is_none(upper));
 
+  Trace("cdcac") << "Found bounds " << lower << " <= " << sample << " <= " << upper << std::endl;
+
   if (!is_minus_infinity(lower))
   {
     // Identify polynomials that have a root at the lower bound
@@ -754,7 +759,18 @@ std::vector<poly::Value> CDCAC::isolateRealRoots(
 {
   if (options().arith.nlCovLifting == options::nlCovLiftingMode::LAZARD)
   {
-    return le.isolateRealRoots(p);
+    auto res = le.isolateRealRoots(p);
+    if (Trace.isOn("cdcac::lazard"))
+    {
+      auto ref = poly::isolate_real_roots(p, d_assignment);
+      if (res != ref)
+      {
+        Trace("cdcac::lazard") << "Real root isolation changed with Lazard" << std::endl;
+        Trace("cdcac::lazard") << "Lazard: " << res << std::endl;
+        Trace("cdcac::lazard") << "Regular: " << ref << std::endl;
+      }
+    }
+    return res;
   }
   return poly::isolate_real_roots(p, d_assignment);
 }
