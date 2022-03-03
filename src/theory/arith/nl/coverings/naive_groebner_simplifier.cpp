@@ -243,12 +243,12 @@ struct NaiveGroebnerSimplifier::NGSState
 
 NaiveGroebnerSimplifier::NaiveGroebnerSimplifier(Env& env) : EnvObj(env) {}
 
-NaiveGroebnerSimplifier::reset(const std::vector<Node>& inputs)
+NaiveGroebnerSimplifier::~NaiveGroebnerSimplifier() {}
+
+void NaiveGroebnerSimplifier::reset(const std::vector<Node>& inputs)
 {
   d_simplified = inputs;
 }
-
-NaiveGroebnerSimplifier::~NaiveGroebnerSimplifier() {}
 
 void NaiveGroebnerSimplifier::simplify() {}
 
