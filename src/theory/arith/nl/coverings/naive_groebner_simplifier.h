@@ -56,9 +56,22 @@ class NaiveGroebnerSimplifier: protected EnvObj
   Node postprocessLemma(TNode lemma) { return lemma.substitute(d_lemmaSubstitutions); }
 
  private:
-  std::pair<std::vector<Node>,std::vector<Node>> splitAssertions(const std::vector<Node>& inputs);
-
+  /**
+   * Main simplification method. First identify input equalities and compute their Gröbner basis.
+   * Then store the simplified set of equalities back to d_simplified and d_lemmaSubstitutions.
+   * Finally reduce all inequalities w.r.t. to the Gröbner basis and store the results.
+   */
   void simplify();
+
+  /**
+   * Add a simplified assertion to d_simplified and add `simplified -> origins` to d_lemmaSubstitutions.
+   * `simplified` is assumed to be an atom, while `origins` is assumed to be a conjunction of input assertions.
+   * If `simplified` rewrited to true, it is ignored.
+   * If `simplified` rewrites to false, we set d_conflict = NOT(origins) instead.
+   * If `simplified` is an input assertion (i.e. it was not actually simplified), no substitution is added to d_lemmaSubstitutions.
+   * Return false if a conflict was detected (and we can abort the process immediately), true otherwise.
+   */
+  bool addSimplification(TNode simplified, TNode origins);
 
   /** the list of input assertions */
   std::vector<Node> d_inputs;
