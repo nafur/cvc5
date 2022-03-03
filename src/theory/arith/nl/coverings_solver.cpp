@@ -20,6 +20,7 @@
 #include "smt/env.h"
 #include "theory/arith/inference_manager.h"
 #include "theory/arith/nl/coverings/cdcac.h"
+#include "theory/arith/nl/coverings/naive_groebner_simplifier.h"
 #include "theory/arith/nl/nl_model.h"
 #include "theory/arith/nl/poly_conversion.h"
 #include "theory/inference_id.h"
@@ -70,26 +71,24 @@ void CoveringsSolver::initLastCall(const std::vector<Node>& assertions)
   }
   if (options().arith.nlCovVarElim)
   {
-    d_eqsubs.reset();
-    std::vector<Node> processed = d_eqsubs.eliminateEqualities(assertions);
-    if (d_eqsubs.hasConflict())
+    coverings::NaiveGroebnerSimplifier ngs(d_env, assertions);
+    if (ngs.hasConflict())
     {
-        Node lem = NodeManager::currentNM()->mkAnd(d_eqsubs.getConflict()).negate();
-        d_im.addPendingLemma(lem, InferenceId::ARITH_NL_COVERING_CONFLICT, nullptr);
-        Trace("nl-cov") << "Found conflict: " << lem << std::endl;
-        return;
+      Trace("nl-cov") << "Found conflict: " << ngs.getConflict() << std::endl;
+      d_im.addPendingLemma(ngs.getConflict(), InferenceId::ARITH_NL_COVERING_CONFLICT, nullptr);
+      return;
     }
     if (Trace.isOn("nl-cov"))
     {
       Trace("nl-cov") << "After simplifications" << std::endl;
       Trace("nl-cov") << "* Assertions: " << std::endl;
-      for (const Node& a : processed)
+      for (const Node& a : ngs.getSimplified())
       {
         Trace("nl-cov") << "  " << a << std::endl;
       }
     }
     d_CAC.reset();
-    for (const Node& a : processed)
+    for (const Node& a : ngs.getSimplified())
     {
       Assert(!a.isConst());
       d_CAC.getConstraints().addConstraint(a);
@@ -244,7 +243,7 @@ bool CoveringsSolver::constructModelIfAvailable(std::vector<Node>& assertions)
 
 void CoveringsSolver::addToModel(TNode var, TNode value) const
 {
-  Trace("nl-cov") << "-> " << var << " = " << value << std::endl;
+  Trace("nl-cov") << "addToModel: " << var << " = " << value << std::endl;
   Assert(value.getType().isRealOrInt());
   d_model.addSubstitution(var, value);
 }
