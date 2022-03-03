@@ -56,6 +56,32 @@ class CoCoAConverter
     d_varCP.emplace(cv, pv);
   }
 
+  CoCoA::ring mkPolyRing(
+      const std::vector<poly::Variable>& vars)
+  {
+    std::vector<CoCoA::symbol> symbols;
+    if (Trace.isOn("nl-cov::cocoa"))
+    {
+      for (const auto& v : vars)
+      {
+        std::string vname = lp_variable_db_get_name(
+            poly::Context::get_context().get_variable_db(), v.get_internal());
+        symbols.emplace_back(vname);
+      }
+    }
+    else
+    {
+      symbols = CoCoA::NewSymbols(vars.size());
+    }
+    CoCoA::ring ring = CoCoA::NewPolyRing(CoCoA::RingQQ(), symbols, CoCoA::lex);
+    for (size_t i = 0; i < vars.size(); ++i)
+    {
+        addVar(std::make_pair(CoCoA::RingID(ring), i), vars[i]);
+        addVar(vars[i], CoCoA::indet(ring, i));
+    }
+    return ring;
+  }
+
   /**
    * Converts a libpoly integer to a CoCoA::BigInt.
    */
@@ -103,6 +129,7 @@ class CoCoAConverter
   }
 
  private:
+
   /** Helper class for the conversion of a libpoly polynomial to CoCoA. */
   struct CoCoAPolyConstructor
   {
