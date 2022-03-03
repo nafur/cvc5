@@ -422,6 +422,8 @@ libcvc5_add_sources(
   theory/arith/nl/coverings/constraints.h
   theory/arith/nl/coverings/lazard_evaluation.cpp
   theory/arith/nl/coverings/lazard_evaluation.h
+  theory/arith/nl/coverings/naive_groebner_simplifier.cpp
+  theory/arith/nl/coverings/naive_groebner_simplifier.h
   theory/arith/nl/coverings/projections.cpp
   theory/arith/nl/coverings/projections.h
   theory/arith/nl/coverings/proof_checker.cpp
