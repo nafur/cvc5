@@ -118,10 +118,17 @@ struct NaiveGroebnerSimplifier::NGSState
   }
 };
 
-NaiveGroebnerSimplifier::NaiveGroebnerSimplifier(
-    Env& env, const std::vector<Node>& inputs)
-    : EnvObj(env), d_inputs(inputs), d_state(std::make_unique<NGSState>())
+NaiveGroebnerSimplifier::NaiveGroebnerSimplifier(Env& env) : EnvObj(env) {}
+
+NaiveGroebnerSimplifier::~NaiveGroebnerSimplifier() {}
+
+void NaiveGroebnerSimplifier::reset(const std::vector<Node>& inputs)
 {
+  d_inputs = inputs;
+  d_simplified.clear();
+  d_conflict.reset();
+  d_lemmaSubstitutions.clear();
+  d_state = std::make_unique<NGSState>();
   try
   {
     simplify();
@@ -131,9 +138,8 @@ NaiveGroebnerSimplifier::NaiveGroebnerSimplifier(
     Trace("nl-cov::ngs") << "CoCoAError: " << ei << std::endl;
     Assert(false);
   }
+  d_state.reset();
 }
-
-NaiveGroebnerSimplifier::~NaiveGroebnerSimplifier() {}
 
 void NaiveGroebnerSimplifier::simplify()
 {

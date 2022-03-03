@@ -33,10 +33,12 @@ class NaiveGroebnerSimplifier: protected EnvObj
  public:
   struct NGSState;
 
-  /** Initialize and simplify the inputs */
-  NaiveGroebnerSimplifier(Env& env, const std::vector<Node>& inputs);
+  NaiveGroebnerSimplifier(Env& env);
   ~NaiveGroebnerSimplifier();
- 
+
+  /** Reset and simplify the inputs */
+  void reset(const std::vector<Node>& inputs);
+
   /** Return the simplified list of assertions */
   const std::vector<Node>& getSimplified() const { return d_simplified; }
 
@@ -49,7 +51,11 @@ class NaiveGroebnerSimplifier: protected EnvObj
   /**
    * Postprocess any lemma, replacing any newly created atom by the conjunction of its origins.
    */
-  Node postprocessLemma(TNode lemma) { return lemma.substitute(d_lemmaSubstitutions); }
+  Node postprocessLemma(TNode lemma)
+  {
+    return lemma.substitute(d_lemmaSubstitutions.begin(),
+                            d_lemmaSubstitutions.end());
+  }
 
  private:
   /**
@@ -76,7 +82,7 @@ class NaiveGroebnerSimplifier: protected EnvObj
   /** the conflict, if one has been found */
   std::optional<Node> d_conflict;
   /** the mapping of simplifications, suitable for Node::substitute(). Is used to reformulate lemmas in terms of the original input constraints. */
-  std::unordered_map<TNode, TNode> d_lemmaSubstitutions;
+  std::unordered_map<Node, Node> d_lemmaSubstitutions;
   /** some internal state that abstracts away libpoly related utilities */
   std::unique_ptr<NGSState> d_state;
 };

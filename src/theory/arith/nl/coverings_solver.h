@@ -22,8 +22,8 @@
 #include "expr/node.h"
 #include "smt/env_obj.h"
 #include "theory/arith/nl/coverings/cdcac.h"
+#include "theory/arith/nl/coverings/naive_groebner_simplifier.h"
 #include "theory/arith/nl/coverings/proof_checker.h"
-#include "theory/arith/nl/equality_substitution.h"
 
 namespace cvc5 {
 
@@ -111,9 +111,8 @@ class CoveringsSolver: protected EnvObj
   InferenceManager& d_im;
   /** Reference to the non-linear model object */
   NlModel& d_model;
-  /** Utility to eliminate variables from simple equalities before going into
-   * the actual coverings solver */
-  EqualitySubstitution d_eqsubs;
+  /** Simplifier / preprocessor based on Gröbner basis of equalities */
+  coverings::NaiveGroebnerSimplifier d_gbsimp;
 }; /* class CoveringsSolver */
 
 }  // namespace nl
