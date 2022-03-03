@@ -218,14 +218,13 @@ bool NaiveGroebnerSimplifier::addSimplification(TNode simplified, TNode origins)
       return false;
     }
   }
+  d_simplified.emplace_back(simp);
   if (std::find(d_inputs.begin(), d_inputs.end(), simp) != d_inputs.end())
   {
-    d_simplified.emplace_back(simp);
     return true;
   }
   Trace("nl-cov::ngs") << "Found simplification " << simp << std::endl;
   Trace("nl-cov::ngs") << "From " << origins << std::endl;
-  d_simplified.emplace_back(simp);
   d_lemmaSubstitutions.emplace(simp, origins);
   return true;
 }
