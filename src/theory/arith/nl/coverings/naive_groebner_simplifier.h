@@ -19,10 +19,6 @@
 #ifndef CVC5__THEORY__ARITH__NL__COVERINGS__NAIVE_GROEBNER_SIMPLIFIER_H
 #define CVC5__THEORY__ARITH__NL__COVERINGS__NAIVE_GROEBNER_SIMPLIFIER_H
 
-#ifdef CVC5_POLY_IMP
-
-#include <poly/polyxx.h>
-
 #include <memory>
 #include <optional>
 #include <unordered_map>
@@ -87,5 +83,4 @@ class NaiveGroebnerSimplifier: protected EnvObj
 
 }  // namespace cvc5::theory::arith::nl::coverings
 
-#endif
 #endif

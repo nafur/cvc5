@@ -16,7 +16,7 @@
 
 #include "theory/arith/nl/coverings/cocoa_converter.h"
 
-#ifdef CVC5_POLY_IMP
+#ifdef CVC5_USE_POLY
 #ifdef CVC5_USE_COCOA
 
 namespace cvc5 {

@@ -1,7 +1,5 @@
 #include "theory/arith/nl/coverings/naive_groebner_simplifier.h"
 
-#ifdef CVC5_POLY_IMP
-
 #include "base/check.h"
 #include "base/output.h"
 #include "theory/arith/nl/coverings/cocoa_converter.h"
@@ -9,6 +7,8 @@
 #include "util/bitvector.h"
 
 namespace cvc5::theory::arith::nl::coverings {
+
+#if defined(CVC5_USE_POLY) && defined(CVC5_USE_COCOA)
 
 struct NaiveGroebnerSimplifier::NGSState
 {
@@ -213,6 +213,27 @@ bool NaiveGroebnerSimplifier::addSimplification(TNode simplified, TNode origins)
   return true;
 }
 
-}  // namespace cvc5::theory::arith::nl::coverings
+#else
+
+struct NaiveGroebnerSimplifier::NGSState
+{
+};
+
+NaiveGroebnerSimplifier::NaiveGroebnerSimplifier(
+    Env& env, const std::vector<Node>& inputs)
+    : EnvObj(env), d_simplified(inputs)
+{
+}
+
+NaiveGroebnerSimplifier::~NaiveGroebnerSimplifier() {}
+
+void NaiveGroebnerSimplifier::simplify() {}
+
+bool NaiveGroebnerSimplifier::addSimplification(TNode simplified, TNode origins)
+{
+  return true;
+}
 
 #endif
+
+}  // namespace cvc5::theory::arith::nl::coverings
