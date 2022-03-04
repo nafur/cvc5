@@ -36,17 +36,6 @@ struct NaiveGroebnerSimplifier::NGSState
   std::vector<std::tuple<Node, poly::Polynomial, Kind>> d_inequalities;
 
   /**
-   * Retrieve the libpoly polynomial from an assertion. For any `lhs ~ rhs`
-   * (with `~` being any relational operator) return `lhs - rhs` converted to a
-   * libpoly polynomial.
-   */
-  poly::Polynomial getPolynomial(TNode assertion)
-  {
-    return as_poly_polynomial(assertion[0], d_vm)
-           - as_poly_polynomial(assertion[1], d_vm);
-  }
-
-  /**
    * Initialize the members of this class from the input assertions.
    * Afterwards, d_vc has all the variables, all equalities are in both
    * d_allEqualities and d_equalities and all inequalities are in
@@ -58,36 +47,32 @@ struct NaiveGroebnerSimplifier::NGSState
     {
       Trace("nl-cov::ngs::debug")
           << "Load input assertion " << input << std::endl;
-      if (input.getKind() == Kind::EQUAL)
+      auto polyc = as_poly_constraint(input, d_vm);
+      d_vc(polyc.first);
+      Kind kind = Kind::EQUAL;
+      switch (polyc.second)
+      {
+        case poly::SignCondition::LT: kind = Kind::LT; break;
+        case poly::SignCondition::LE: kind = Kind::LEQ; break;
+        case poly::SignCondition::EQ: kind = Kind::EQUAL; break;
+        case poly::SignCondition::NE: kind = Kind::DISTINCT; break;
+        case poly::SignCondition::GE: kind = Kind::GEQ; break;
+        case poly::SignCondition::GT: kind = Kind::GT; break;
+          default: Assert(false); break;
+      }
+
+      if (kind == Kind::EQUAL)
       {
         // equalities are simple
         d_allEqualities.emplace_back(input);
-        d_equalities.emplace_back(getPolynomial(input));
-        d_vc(d_equalities.back());
+        d_equalities.emplace_back(polyc.first);
         Trace("nl-cov::ngs::debug")
-            << "-> equality " << d_equalities.back() << " = 0" << std::endl;
+            << "-> equality " << polyc.first << " = 0" << std::endl;
         continue;
       }
-      bool negate = input.getKind() == Kind::NOT;
-      TNode a = (negate ? input[0] : input);
-      Kind kind = a.getKind();
-      // push negation into the kind
-      if (negate)
-      {
-        switch (kind)
-        {
-          case Kind::LT: kind = Kind::GEQ; break;
-          case Kind::LEQ: kind = Kind::GT; break;
-          case Kind::EQUAL: kind = Kind::DISTINCT; break;
-          case Kind::GEQ: kind = Kind::LT; break;
-          case Kind::GT: kind = Kind::LEQ; break;
-          default: Assert(false); break;
-        }
-      }
-      d_inequalities.emplace_back(input, getPolynomial(a), kind);
-      d_vc(std::get<1>(d_inequalities.back()));
+      d_inequalities.emplace_back(input, polyc.first, kind);
       Trace("nl-cov::ngs::debug")
-          << "-> inequality " << std::get<1>(d_inequalities.back()) << " " << kind
+          << "-> inequality " << polyc.first << " " << kind
           << " 0" << std::endl;
     }
   }
