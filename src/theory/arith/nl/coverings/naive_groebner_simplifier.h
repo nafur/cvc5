@@ -49,13 +49,9 @@ class NaiveGroebnerSimplifier: protected EnvObj
    */
   const Node& getConflict() const { return *d_conflict; }
   /**
-   * Postprocess any lemma, replacing any newly created atom by the conjunction of its origins.
+   * Postprocess an MIS, replacing any atom by the conjunction of its origins.
    */
-  Node postprocessLemma(TNode lemma)
-  {
-    return lemma.substitute(d_lemmaSubstitutions.begin(),
-                            d_lemmaSubstitutions.end());
-  }
+  std::vector<Node> postprocessMIS(const std::vector<Node>& mis) const;
 
  private:
   /**
@@ -73,7 +69,7 @@ class NaiveGroebnerSimplifier: protected EnvObj
    * If `simplified` is an input assertion (i.e. it was not actually simplified), no substitution is added to d_lemmaSubstitutions.
    * Return false if a conflict was detected (and we can abort the process immediately), true otherwise.
    */
-  bool addSimplification(TNode simplified, TNode origins);
+  bool addSimplification(TNode simplified, const std::vector<Node>& origins);
 
   /** the list of input assertions */
   std::vector<Node> d_inputs;
@@ -81,8 +77,9 @@ class NaiveGroebnerSimplifier: protected EnvObj
   std::vector<Node> d_simplified;
   /** the conflict, if one has been found */
   std::optional<Node> d_conflict;
-  /** the mapping of simplifications, suitable for Node::substitute(). Is used to reformulate lemmas in terms of the original input constraints. */
-  std::unordered_map<Node, Node> d_lemmaSubstitutions;
+  /** the mapping of simplifications. Is used to reformulate lemmas in terms of
+   * the original input constraints. */
+  std::unordered_map<Node, std::vector<Node>> d_lemmaSubstitutions;
   /** some internal state that abstracts away libpoly related utilities */
   std::unique_ptr<NGSState> d_state;
 };

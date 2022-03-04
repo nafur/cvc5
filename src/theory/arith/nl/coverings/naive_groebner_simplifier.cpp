@@ -58,22 +58,22 @@ struct NaiveGroebnerSimplifier::NGSState
         case poly::SignCondition::NE: kind = Kind::DISTINCT; break;
         case poly::SignCondition::GE: kind = Kind::GEQ; break;
         case poly::SignCondition::GT: kind = Kind::GT; break;
-          default: Assert(false); break;
+        default: Assert(false); break;
       }
 
       if (kind == Kind::EQUAL)
       {
-        // equalities are simple
         d_allEqualities.emplace_back(input);
         d_equalities.emplace_back(polyc.first);
         Trace("nl-cov::ngs::debug")
             << "-> equality " << polyc.first << " = 0" << std::endl;
-        continue;
       }
-      d_inequalities.emplace_back(input, polyc.first, kind);
-      Trace("nl-cov::ngs::debug")
-          << "-> inequality " << polyc.first << " " << kind
-          << " 0" << std::endl;
+      else
+      {
+        d_inequalities.emplace_back(input, polyc.first, kind);
+        Trace("nl-cov::ngs::debug") << "-> inequality " << polyc.first << " "
+                                    << kind << " 0" << std::endl;
+      }
     }
   }
 
@@ -109,6 +109,7 @@ NaiveGroebnerSimplifier::~NaiveGroebnerSimplifier() {}
 
 void NaiveGroebnerSimplifier::reset(const std::vector<Node>& inputs)
 {
+  Trace("nl-cov::ngs") << "***** RESET *****" << std::endl;
   d_inputs = inputs;
   d_simplified.clear();
   d_conflict.reset();
@@ -126,6 +127,27 @@ void NaiveGroebnerSimplifier::reset(const std::vector<Node>& inputs)
   d_state.reset();
 }
 
+std::vector<Node> NaiveGroebnerSimplifier::postprocessMIS(
+    const std::vector<Node>& mis) const
+{
+  std::vector<Node> res;
+  for (const auto& a : mis)
+  {
+    auto it = d_lemmaSubstitutions.find(a);
+    if (it != d_lemmaSubstitutions.end())
+    {
+      res.insert(res.end(), it->second.begin(), it->second.end());
+    }
+    else
+    {
+      res.emplace_back(a);
+    }
+  }
+  Trace("nl-cov::ngs") << "Postprocessed " << mis << std::endl;
+  Trace("nl-cov::ngs") << "to " << res << std::endl;
+  return res;
+}
+
 void NaiveGroebnerSimplifier::simplify()
 {
   // Initialize the state
@@ -133,7 +155,8 @@ void NaiveGroebnerSimplifier::simplify()
 
   if (d_state->d_equalities.empty())
   {
-    Trace("nl-cov::ngs") << "No equalities present, we can't do anything." << std::endl;
+    Trace("nl-cov::ngs") << "No equalities present, we can't do anything."
+                         << std::endl;
     d_simplified = d_inputs;
     return;
   }
@@ -143,12 +166,11 @@ void NaiveGroebnerSimplifier::simplify()
   // Now store the simplified equalities. Take all polynomials from the Gröbner
   // basis, construct p = 0 and use it as simplification.
   auto* nm = NodeManager::currentNM();
-  Node allEqs = nm->mkAnd(d_state->d_allEqualities);
   for (const auto& poly : gbasis)
   {
     Node p = as_cvc_polynomial(d_state->d_converter(poly), d_state->d_vm);
     Node eq = nm->mkNode(Kind::EQUAL, p, nm->mkConstReal(0));
-    if (!addSimplification(eq, allEqs))
+    if (!addSimplification(eq, d_state->d_allEqualities))
     {
       // Found a conflict
       return;
@@ -171,6 +193,9 @@ void NaiveGroebnerSimplifier::simplify()
     TNode assertion = std::get<0>(ineq);
     poly::Polynomial poly = std::get<1>(ineq);
     Kind kind = std::get<2>(ineq);
+    Trace("nl-cov::ngs::debug") << "Simplifying " << assertion << std::endl;
+    Trace("nl-cov::ngs::debug")
+        << "Unpacked to " << poly << " " << kind << " 0" << std::endl;
 
     // Convert to CoCoA, map into quotient ring and back
     CoCoA::RingElem p = d_state->d_converter(poly, ring);
@@ -187,11 +212,12 @@ void NaiveGroebnerSimplifier::simplify()
     Node newneq = nm->mkNode(
         kind, as_cvc_polynomial(red, d_state->d_vm), nm->mkConstReal(0));
     origins.back() = assertion;
-    addSimplification(newneq, nm->mkAnd(origins));
+    addSimplification(newneq, origins);
   }
 }
 
-bool NaiveGroebnerSimplifier::addSimplification(TNode simplified, TNode origins)
+bool NaiveGroebnerSimplifier::addSimplification(
+    TNode simplified, const std::vector<Node>& origins)
 {
   Node simp = rewrite(simplified);
   if (simp.isConst())
@@ -204,7 +230,7 @@ bool NaiveGroebnerSimplifier::addSimplification(TNode simplified, TNode origins)
     }
     else
     {
-      d_conflict = origins.notNode();
+      d_conflict = NodeManager::currentNM()->mkAnd(origins).notNode();
       Trace("nl-cov::ngs") << "Found conflict " << *d_conflict << std::endl;
       return false;
     }
