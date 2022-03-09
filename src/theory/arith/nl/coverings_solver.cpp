@@ -20,7 +20,7 @@
 #include "smt/env.h"
 #include "theory/arith/inference_manager.h"
 #include "theory/arith/nl/coverings/cdcac.h"
-#include "theory/arith/nl/coverings/naive_groebner_simplifier.h"
+#include "theory/arith/nl/coverings/equation_simplifier.h"
 #include "theory/arith/nl/nl_model.h"
 #include "theory/arith/nl/poly_conversion.h"
 #include "theory/inference_id.h"
@@ -38,8 +38,7 @@ CoveringsSolver::CoveringsSolver(Env& env, InferenceManager& im, NlModel& model)
 #endif
       d_foundSatisfiability(false),
       d_im(im),
-      d_model(model),
-      d_gbsimp(env)
+      d_model(model)
 {
   NodeManager* nm = NodeManager::currentNM();
   SkolemManager* sm = nm->getSkolemManager();
@@ -70,12 +69,12 @@ void CoveringsSolver::initLastCall(const std::vector<Node>& assertions)
   }
   if (options().arith.nlCovVarElim)
   {
-    d_gbsimp.reset(assertions);
-    if (d_gbsimp.hasConflict())
+    d_gbsimp = std::make_unique<coverings::EquationSimplifier>(d_env, assertions);
+    if (d_gbsimp->hasConflict())
     {
-      Trace("nl-cov") << "Found conflict: " << d_gbsimp.getConflict()
+      Trace("nl-cov") << "Found conflict: " << d_gbsimp->getConflict()
                       << std::endl;
-      d_im.addPendingLemma(d_gbsimp.getConflict(),
+      d_im.addPendingLemma(d_gbsimp->getConflict(),
                            InferenceId::ARITH_NL_COVERING_CONFLICT,
                            nullptr);
       return;
@@ -84,13 +83,13 @@ void CoveringsSolver::initLastCall(const std::vector<Node>& assertions)
     {
       Trace("nl-cov") << "After simplifications" << std::endl;
       Trace("nl-cov") << "* Assertions: " << std::endl;
-      for (const Node& a : d_gbsimp.getSimplified())
+      for (const Node& a : d_gbsimp->getSimplified())
       {
         Trace("nl-cov") << "  " << a << std::endl;
       }
     }
     d_CAC.reset();
-    for (const Node& a : d_gbsimp.getSimplified())
+    for (const Node& a : d_gbsimp->getSimplified())
     {
       Assert(!a.isConst());
       d_CAC.getConstraints().addConstraint(a);
@@ -136,7 +135,7 @@ void CoveringsSolver::checkFull()
     Trace("nl-cov") << "Collected MIS: " << mis << std::endl;
     Assert(!mis.empty()) << "Infeasible subset can not be empty";
     Trace("nl-cov") << "UNSAT with MIS: " << mis << std::endl;
-    mis = d_gbsimp.postprocessMIS(mis);
+    mis = d_gbsimp->postprocessUnsatCore(mis);
     Node lem = NodeManager::currentNM()->mkAnd(mis).notNode();
     Trace("nl-cov") << "After postprocessing: " << lem << std::endl;
     ProofGenerator* proof = d_CAC.closeProof(mis);
@@ -217,6 +216,10 @@ bool CoveringsSolver::constructModelIfAvailable(std::vector<Node>& assertions)
     }
     Node value = value_to_node(d_CAC.getModel().get(v), variable);
     addToModel(variable, value);
+  }
+  if (d_gbsimp)
+  {
+    d_gbsimp->postprocessModel(d_model);
   }
   if (foundNonVariable)
   {

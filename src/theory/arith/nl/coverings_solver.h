@@ -22,7 +22,7 @@
 #include "expr/node.h"
 #include "smt/env_obj.h"
 #include "theory/arith/nl/coverings/cdcac.h"
-#include "theory/arith/nl/coverings/naive_groebner_simplifier.h"
+#include "theory/arith/nl/coverings/equation_simplifier.h"
 #include "theory/arith/nl/coverings/proof_checker.h"
 
 namespace cvc5 {
@@ -112,7 +112,7 @@ class CoveringsSolver: protected EnvObj
   /** Reference to the non-linear model object */
   NlModel& d_model;
   /** Simplifier / preprocessor based on Gröbner basis of equalities */
-  coverings::NaiveGroebnerSimplifier d_gbsimp;
+  std::unique_ptr<coverings::EquationSimplifier> d_gbsimp;
 }; /* class CoveringsSolver */
 
 }  // namespace nl
