@@ -278,6 +278,11 @@ void EquationSimplifier::simplifyByTermElimination(
     }
     ineq = simp;
   }
+  auto it =
+      std::remove_if(inequalities.begin(), inequalities.end(), [](TNode n) {
+        return n.isConst() && n.getConst<bool>();
+      });
+  inequalities.erase(it, inequalities.end());
 }
 
 void EquationSimplifier::simplifyByGroebnerReduction(
