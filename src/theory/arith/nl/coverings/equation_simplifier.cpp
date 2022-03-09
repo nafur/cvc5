@@ -283,19 +283,19 @@ void EquationSimplifier::simplifyByTermElimination(
 void EquationSimplifier::simplifyByGroebnerReduction(
     std::vector<Node>& equalities, std::vector<Node>& inequalities)
 {
+  auto* nm = NodeManager::currentNM();
   d_state->loadAssertions(equalities);
   d_state->loadAssertions(inequalities);
 
   auto [ring, ideal, gbasis] = d_state->computeGBasis();
 
   std::vector<Node> inputEqs;
-  if (options().arith.nlCovSimpEq)
+  if (options().arith.nlCovSimpGBEq)
   {
     std::swap(inputEqs, equalities);
 
-    // Now store the simplified equalities. Take all polynomials from the Gröbner
-    // basis, construct p = 0 and use it as simplification.
-    auto* nm = NodeManager::currentNM();
+    // Now store the simplified equalities. Take all polynomials from the
+    // Gröbner basis, construct p = 0 and use it as simplification.
     for (const auto& poly : gbasis)
     {
       Node p = as_cvc_polynomial(d_state->d_converter(poly), d_state->d_vm);
@@ -314,10 +314,7 @@ void EquationSimplifier::simplifyByGroebnerReduction(
         // only add origins if the equality was actually simplified
         addToAtomOrigins(eq) << inputEqs;
       }
-      if (options().arith.nlCovSimpEq)
-      {
-        equalities.emplace_back(eq);
-      }
+      equalities.emplace_back(eq);
     }
   }
   else
@@ -325,7 +322,7 @@ void EquationSimplifier::simplifyByGroebnerReduction(
     inputEqs = equalities;
   }
 
-  if (!options().arith.nlCovSimpIneq)
+  if (!options().arith.nlCovSimpGBIneq)
   {
     return;
   }
