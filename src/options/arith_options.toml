@@ -500,9 +500,25 @@ name   = "Arithmetic Theory"
   help       = "whether to use the cylindrical algebraic coverings solver for non-linear arithmetic"
 
 [[option]]
-  name       = "nlCovVarElim"
+  name       = "nlCovSimp"
   category   = "regular"
-  long       = "nl-cov-var-elim"
+  long       = "nl-cov-simp"
+  type       = "bool"
+  default    = "false"
+  help       = "whether to eliminate variables using equalities before going into the cylindrical algebraic coverings solver"
+
+[[option]]
+  name       = "nlCovSimpGBEq"
+  category   = "regular"
+  long       = "nl-cov-simp-gbeq"
+  type       = "bool"
+  default    = "false"
+  help       = "whether to eliminate variables using equalities before going into the cylindrical algebraic coverings solver"
+
+[[option]]
+  name       = "nlCovSimpGBIneq"
+  category   = "regular"
+  long       = "nl-cov-simp-gbineq"
   type       = "bool"
   default    = "false"
   help       = "whether to eliminate variables using equalities before going into the cylindrical algebraic coverings solver"

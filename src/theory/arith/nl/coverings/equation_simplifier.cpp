@@ -288,32 +288,47 @@ void EquationSimplifier::simplifyByGroebnerReduction(
   auto [ring, ideal, gbasis] = d_state->computeGBasis();
 
   std::vector<Node> inputEqs;
-  std::swap(inputEqs, equalities);
-  inequalities.clear();
-
-  // Now store the simplified equalities. Take all polynomials from the Gröbner
-  // basis, construct p = 0 and use it as simplification.
-  auto* nm = NodeManager::currentNM();
-  for (const auto& poly : gbasis)
+  if (options().arith.nlCovSimpEq)
   {
-    Node p = as_cvc_polynomial(d_state->d_converter(poly), d_state->d_vm);
-    Node eq = rewrite(nm->mkNode(Kind::EQUAL, p, nm->mkConstReal(0)));
+    std::swap(inputEqs, equalities);
 
-    if (eq.isConst())
+    // Now store the simplified equalities. Take all polynomials from the Gröbner
+    // basis, construct p = 0 and use it as simplification.
+    auto* nm = NodeManager::currentNM();
+    for (const auto& poly : gbasis)
     {
-      // 0 should never be in the gbasis, so const can only be a conflict
-      Assert(!eq.getConst<bool>());
-      addToAtomOrigins(eq) << inputEqs;
-      setConflict();
-      return;
+      Node p = as_cvc_polynomial(d_state->d_converter(poly), d_state->d_vm);
+      Node eq = rewrite(nm->mkNode(Kind::EQUAL, p, nm->mkConstReal(0)));
+
+      if (eq.isConst())
+      {
+        // 0 should never be in the gbasis, so const can only be a conflict
+        Assert(!eq.getConst<bool>());
+        addToAtomOrigins(eq) << inputEqs;
+        setConflict();
+        return;
+      }
+      if (std::find(inputEqs.begin(), inputEqs.end(), eq) == inputEqs.end())
+      {
+        // only add origins if the equality was actually simplified
+        addToAtomOrigins(eq) << inputEqs;
+      }
+      if (options().arith.nlCovSimpEq)
+      {
+        equalities.emplace_back(eq);
+      }
     }
-    if (std::find(inputEqs.begin(), inputEqs.end(), eq) == inputEqs.end())
-    {
-      // only add origins if the equality was actually simplified
-      addToAtomOrigins(eq) << inputEqs;
-    }
-    equalities.emplace_back(eq);
   }
+  else
+  {
+    inputEqs = equalities;
+  }
+
+  if (!options().arith.nlCovSimpIneq)
+  {
+    return;
+  }
+  inequalities.clear();
 
   // Prepare for simplification of inequalities: build quotient ring
   // QQ[...]/<GB>. Simplification is done by mapping polys from QQ[...] into the

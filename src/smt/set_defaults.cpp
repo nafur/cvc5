@@ -800,10 +800,6 @@ void SetDefaults::setDefaultsPost(const LogicInfo& logic, Options& opts) const
     if (!opts.arith.nlCov && !opts.arith.nlCovWasSetByUser)
     {
       opts.arith.nlCov = true;
-      if (!opts.arith.nlCovVarElimWasSetByUser)
-      {
-        opts.arith.nlCovVarElim = true;
-      }
       if (!opts.arith.nlExtWasSetByUser)
       {
         opts.arith.nlExt = options::NlExtMode::LIGHT;
@@ -820,10 +816,6 @@ void SetDefaults::setDefaultsPost(const LogicInfo& logic, Options& opts) const
     if (!opts.arith.nlCov && !opts.arith.nlCovWasSetByUser)
     {
       opts.arith.nlCov = true;
-      if (!opts.arith.nlCovVarElimWasSetByUser)
-      {
-        opts.arith.nlCovVarElim = true;
-      }
       if (!opts.arith.nlExtWasSetByUser)
       {
         opts.arith.nlExt = options::NlExtMode::LIGHT;

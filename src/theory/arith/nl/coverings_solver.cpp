@@ -67,7 +67,7 @@ void CoveringsSolver::initLastCall(const std::vector<Node>& assertions)
       Trace("nl-cov") << "  " << a << std::endl;
     }
   }
-  if (options().arith.nlCovVarElim)
+  if (options().arith.nlCovSimp)
   {
     d_gbsimp = std::make_unique<coverings::EquationSimplifier>(d_env, assertions);
     if (d_gbsimp->hasConflict())
