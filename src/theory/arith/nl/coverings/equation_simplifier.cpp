@@ -288,6 +288,10 @@ void EquationSimplifier::simplifyByTermElimination(
 void EquationSimplifier::simplifyByGroebnerReduction(
     std::vector<Node>& equalities, std::vector<Node>& inequalities)
 {
+  if (equalities.empty())
+  {
+    return;
+  }
   auto* nm = NodeManager::currentNM();
   d_state->loadAssertions(equalities);
   d_state->loadAssertions(inequalities);
