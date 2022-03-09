@@ -3,6 +3,7 @@
 #include "base/check.h"
 #include "base/output.h"
 #include "expr/node_algorithm.h"
+#include "options/arith_options.h"
 #include "smt/env.h"
 #include "theory/arith/arith_utilities.h"
 #include "theory/arith/nl/coverings/cocoa_converter.h"
