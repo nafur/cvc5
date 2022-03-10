@@ -328,6 +328,12 @@ void EquationSimplifier::simplifyByGroebnerReduction(
   }
   else
   {
+    if (gbasis.size() == 1 && CoCoA::IsOne(gbasis[0]))
+    {
+      addToAtomOrigins(nm->mkConst(false)) << equalities;
+      setConflict();
+      return;
+    }
     inputEqs = equalities;
   }
 
