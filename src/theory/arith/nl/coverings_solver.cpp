@@ -135,7 +135,10 @@ void CoveringsSolver::checkFull()
     Trace("nl-cov") << "Collected MIS: " << mis << std::endl;
     Assert(!mis.empty()) << "Infeasible subset can not be empty";
     Trace("nl-cov") << "UNSAT with MIS: " << mis << std::endl;
-    mis = d_gbsimp->postprocessUnsatCore(mis);
+    if (d_gbsimp)
+    {
+      mis = d_gbsimp->postprocessUnsatCore(mis);
+    }
     Node lem = NodeManager::currentNM()->mkAnd(mis).notNode();
     Trace("nl-cov") << "After postprocessing: " << lem << std::endl;
     ProofGenerator* proof = d_CAC.closeProof(mis);
