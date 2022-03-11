@@ -328,12 +328,6 @@ void EquationSimplifier::simplifyByGroebnerReduction(
   }
   else
   {
-    if (gbasis.size() == 1 && CoCoA::IsOne(gbasis[0]))
-    {
-      addToAtomOrigins(nm->mkConst(false)) << equalities;
-      setConflict();
-      return;
-    }
     inputEqs = equalities;
   }
 
@@ -342,6 +336,13 @@ void EquationSimplifier::simplifyByGroebnerReduction(
     return;
   }
   inequalities.clear();
+  
+  if (gbasis.size() == 1 && CoCoA::IsOne(gbasis[0]))
+  {
+    addToAtomOrigins(nm->mkConst(false)) << equalities;
+    setConflict();
+    return;
+  }
 
   // Prepare for simplification of inequalities: build quotient ring
   // QQ[...]/<GB>. Simplification is done by mapping polys from QQ[...] into the
