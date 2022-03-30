@@ -33,7 +33,7 @@
 #include "theory/quantifiers/term_util.h"
 #include "util/statistics_stats.h"
 
-namespace cvc5 {
+namespace cvc5::internal {
 
 template <typename T>
 static Cvc5ostream& operator<<(Cvc5ostream& out, const std::vector<T>& v)
@@ -269,7 +269,7 @@ bool TermTupleEnumeratorBase::hasNext()
 
 void TermTupleEnumeratorBase::failureReason(const std::vector<bool>& mask)
 {
-  if (Trace.isOn("inst-alg"))
+  if (TraceIsOn("inst-alg"))
   {
     traceMaskedVector("inst-alg", "failureReason", mask, d_termIndex);
   }
@@ -557,4 +557,4 @@ TermTupleEnumeratorInterface* mkTermTupleEnumeratorPool(
 
 }  // namespace quantifiers
 }  // namespace theory
-}  // namespace cvc5
+}  // namespace cvc5::internal

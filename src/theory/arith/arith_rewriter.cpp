@@ -39,9 +39,9 @@
 #include "util/iand.h"
 #include "util/real_algebraic_number.h"
 
-using namespace cvc5::kind;
+using namespace cvc5::internal::kind;
 
-namespace cvc5 {
+namespace cvc5::internal {
 namespace theory {
 namespace arith {
 
@@ -117,6 +117,7 @@ RewriteResponse ArithRewriter::preRewriteAtom(TNode atom)
 RewriteResponse ArithRewriter::postRewriteAtom(TNode atom)
 {
   Assert(rewriter::isAtom(atom));
+  Trace("arith-rewriter") << "postRewriteAtom: " << atom << std::endl;
 
   if (atom.getKind() == kind::IS_INTEGER)
   {
@@ -180,8 +181,8 @@ RewriteResponse ArithRewriter::postRewriteAtom(TNode atom)
   rewriter::addToSum(sum, left, negate);
   rewriter::addToSum(sum, right, !negate);
 
-  // Now we have (rsum <kind> 0)
-  if (rewriter::isIntegral(atom))
+  // Now we have (sum <kind> 0)
+  if (rewriter::isIntegral(sum))
   {
     if (kind == Kind::EQUAL)
     {
@@ -303,7 +304,7 @@ RewriteResponse ArithRewriter::postRewriteTerm(TNode t){
                                    NodeManager::currentNM()->mkConstRealOrInt(
                                        t.getType(), Rational(1)));
           }else if(exp.sgn() > 0 && exp.isIntegral()){
-            cvc5::Rational r(expr::NodeValue::MAX_CHILDREN);
+            cvc5::internal::Rational r(expr::NodeValue::MAX_CHILDREN);
             if (exp <= r)
             {
               unsigned num = exp.getNumerator().toUnsignedInt();
@@ -382,9 +383,13 @@ RewriteResponse ArithRewriter::rewriteNeg(TNode t, bool pre)
   auto* nm = NodeManager::currentNM();
   Node noUminus = nm->mkNode(kind::MULT, rewriter::mkConst(Integer(-1)), t[0]);
   if (pre)
+  {
     return RewriteResponse(REWRITE_DONE, noUminus);
+  }
   else
+  {
     return RewriteResponse(REWRITE_AGAIN, noUminus);
+  }
 }
 
 RewriteResponse ArithRewriter::rewriteSub(TNode t)
@@ -1074,4 +1079,4 @@ RewriteResponse ArithRewriter::returnRewrite(TNode t, Node ret, Rewrite r)
 
 }  // namespace arith
 }  // namespace theory
-}  // namespace cvc5
+}  // namespace cvc5::internal

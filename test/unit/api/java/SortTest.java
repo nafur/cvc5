@@ -147,13 +147,6 @@ class SortTest
     assertDoesNotThrow(() -> d_solver.getNullSort().isDatatype());
   }
 
-  @Test void isParametricDatatype() throws CVC5ApiException
-  {
-    Sort param_dt_sort = create_param_datatype_sort();
-    assertTrue(param_dt_sort.isParametricDatatype());
-    assertDoesNotThrow(() -> d_solver.getNullSort().isParametricDatatype());
-  }
-
   @Test void isConstructor() throws CVC5ApiException
   {
     Sort dt_sort = create_datatype_sort();
@@ -245,43 +238,11 @@ class SortTest
     assertDoesNotThrow(() -> d_solver.getNullSort().isUninterpretedSort());
   }
 
-  @Test void isSortConstructor() throws CVC5ApiException
+  @Test void isUninterpretedSortSortConstructor() throws CVC5ApiException
   {
-    Sort sc_sort = d_solver.mkSortConstructorSort("asdf", 1);
-    assertTrue(sc_sort.isSortConstructor());
-    assertDoesNotThrow(() -> d_solver.getNullSort().isSortConstructor());
-  }
-
-  @Test void isFirstClass()
-  {
-    Sort fun_sort = d_solver.mkFunctionSort(d_solver.getRealSort(), d_solver.getIntegerSort());
-    assertTrue(d_solver.getIntegerSort().isFirstClass());
-    assertTrue(fun_sort.isFirstClass());
-    Sort reSort = d_solver.getRegExpSort();
-    assertFalse(reSort.isFirstClass());
-    assertDoesNotThrow(() -> d_solver.getNullSort().isFirstClass());
-  }
-
-  @Test void isFunctionLike() throws CVC5ApiException
-  {
-    Sort fun_sort = d_solver.mkFunctionSort(d_solver.getRealSort(), d_solver.getIntegerSort());
-    assertFalse(d_solver.getIntegerSort().isFunctionLike());
-    assertTrue(fun_sort.isFunctionLike());
-
-    Sort dt_sort = create_datatype_sort();
-    Datatype dt = dt_sort.getDatatype();
-    Sort cons_sort = dt.getConstructor(0).getSelector(1).getSelectorTerm().getSort();
-    assertTrue(cons_sort.isFunctionLike());
-
-    assertDoesNotThrow(() -> d_solver.getNullSort().isFunctionLike());
-  }
-
-  @Test void isSubsortOf()
-  {
-    assertTrue(d_solver.getIntegerSort().isSubsortOf(d_solver.getIntegerSort()));
-    assertTrue(d_solver.getIntegerSort().isSubsortOf(d_solver.getRealSort()));
-    assertFalse(d_solver.getIntegerSort().isSubsortOf(d_solver.getBooleanSort()));
-    assertDoesNotThrow(() -> d_solver.getNullSort().isSubsortOf(d_solver.getNullSort()));
+    Sort sc_sort = d_solver.mkUninterpretedSortConstructorSort("asdf", 1);
+    assertTrue(sc_sort.isUninterpretedSortConstructor());
+    assertDoesNotThrow(() -> d_solver.getNullSort().isUninterpretedSortConstructor());
   }
 
   @Test void getDatatype() throws CVC5ApiException
@@ -350,6 +311,72 @@ class SortTest
     Sort dtypeSort = d_solver.mkDatatypeSort(dtypeSpec);
     assertThrows(CVC5ApiException.class,
         () -> dtypeSort.instantiate(new Sort[] {d_solver.getIntegerSort()}));
+    // instantiate uninterpreted sort constructor
+    Sort sortConsSort = d_solver.mkUninterpretedSortConstructorSort("s", 1);
+    assertDoesNotThrow(() -> sortConsSort.instantiate(new Sort[] {d_solver.getIntegerSort()}));
+  }
+
+  @Test void isInstantiated() throws CVC5ApiException
+  {
+    Sort paramDtypeSort = create_param_datatype_sort();
+    assertFalse(paramDtypeSort.isInstantiated());
+    Sort instParamDtypeSort = paramDtypeSort.instantiate(new Sort[] {d_solver.getIntegerSort()});
+    assertTrue(instParamDtypeSort.isInstantiated());
+
+    Sort sortConsSort = d_solver.mkUninterpretedSortConstructorSort("s", 1);
+    assertFalse(sortConsSort.isInstantiated());
+    Sort instSortConsSort = sortConsSort.instantiate(new Sort[] {d_solver.getIntegerSort()});
+    assertTrue(instSortConsSort.isInstantiated());
+
+    assertFalse(d_solver.getIntegerSort().isInstantiated());
+    assertFalse(d_solver.mkBitVectorSort(32).isInstantiated());
+  }
+
+  @Test void getInstantiatedParameters() throws CVC5ApiException
+  {
+    Sort intSort = d_solver.getIntegerSort();
+    Sort realSort = d_solver.getRealSort();
+    Sort boolSort = d_solver.getBooleanSort();
+    Sort bvSort = d_solver.mkBitVectorSort(8);
+    Sort[] instSorts;
+
+    // parametric datatype instantiation
+    Sort p1 = d_solver.mkParamSort("p1");
+    Sort p2 = d_solver.mkParamSort("p2");
+    DatatypeDecl pspec = d_solver.mkDatatypeDecl("pdtype", new Sort[] {p1, p2});
+    DatatypeConstructorDecl pcons1 = d_solver.mkDatatypeConstructorDecl("cons1");
+    DatatypeConstructorDecl pcons2 = d_solver.mkDatatypeConstructorDecl("cons2");
+    DatatypeConstructorDecl pnil = d_solver.mkDatatypeConstructorDecl("nil");
+    pcons1.addSelector("sel", p1);
+    pcons2.addSelector("sel", p2);
+    pspec.addConstructor(pcons1);
+    pspec.addConstructor(pcons2);
+    pspec.addConstructor(pnil);
+    Sort paramDtypeSort = d_solver.mkDatatypeSort(pspec);
+
+    assertThrows(CVC5ApiException.class, () -> paramDtypeSort.getInstantiatedParameters());
+
+    Sort instParamDtypeSort = paramDtypeSort.instantiate(new Sort[] {realSort, boolSort});
+
+    instSorts = instParamDtypeSort.getInstantiatedParameters();
+    assertEquals(instSorts[0], realSort);
+    assertEquals(instSorts[1], boolSort);
+
+    // uninterpreted sort constructor sort instantiation
+    Sort sortConsSort = d_solver.mkUninterpretedSortConstructorSort("s", 4);
+    assertThrows(CVC5ApiException.class, () -> sortConsSort.getInstantiatedParameters());
+
+    Sort instSortConsSort =
+        sortConsSort.instantiate(new Sort[] {boolSort, intSort, bvSort, realSort});
+
+    instSorts = instSortConsSort.getInstantiatedParameters();
+    assertEquals(instSorts[0], boolSort);
+    assertEquals(instSorts[1], intSort);
+    assertEquals(instSorts[2], bvSort);
+    assertEquals(instSorts[3], realSort);
+
+    assertThrows(CVC5ApiException.class, () -> intSort.getInstantiatedParameters());
+    assertThrows(CVC5ApiException.class, () -> bvSort.getInstantiatedParameters());
   }
 
   @Test void getFunctionArity() throws CVC5ApiException
@@ -427,50 +454,28 @@ class SortTest
     assertThrows(CVC5ApiException.class, () -> bvSort.getSequenceElementSort());
   }
 
-  @Test void getUninterpretedSortName() throws CVC5ApiException
+  @Test void getSymbol() throws CVC5ApiException
   {
     Sort uSort = d_solver.mkUninterpretedSort("u");
-    assertDoesNotThrow(() -> uSort.getUninterpretedSortName());
+    assertDoesNotThrow(() -> uSort.getSymbol());
     Sort bvSort = d_solver.mkBitVectorSort(32);
-    assertThrows(CVC5ApiException.class, () -> bvSort.getUninterpretedSortName());
-  }
-
-  @Test void isUninterpretedSortParameterized() throws CVC5ApiException
-  {
-    Sort uSort = d_solver.mkUninterpretedSort("u");
-    assertFalse(uSort.isUninterpretedSortParameterized());
-    Sort sSort = d_solver.mkSortConstructorSort("s", 1);
-    Sort siSort = sSort.instantiate(new Sort[] {uSort});
-    assertTrue(siSort.isUninterpretedSortParameterized());
-    Sort bvSort = d_solver.mkBitVectorSort(32);
-    assertThrows(CVC5ApiException.class, () -> bvSort.isUninterpretedSortParameterized());
-  }
-
-  @Test void getUninterpretedSortParamSorts() throws CVC5ApiException
-  {
-    Sort uSort = d_solver.mkUninterpretedSort("u");
-    assertDoesNotThrow(() -> uSort.getUninterpretedSortParamSorts());
-    Sort sSort = d_solver.mkSortConstructorSort("s", 2);
-    Sort siSort = sSort.instantiate(new Sort[] {uSort, uSort});
-    assertEquals(siSort.getUninterpretedSortParamSorts().length, 2);
-    Sort bvSort = d_solver.mkBitVectorSort(32);
-    assertThrows(CVC5ApiException.class, () -> bvSort.getUninterpretedSortParamSorts());
+    assertThrows(CVC5ApiException.class, () -> bvSort.getSymbol());
   }
 
   @Test void getUninterpretedSortConstructorName() throws CVC5ApiException
   {
-    Sort sSort = d_solver.mkSortConstructorSort("s", 2);
-    assertDoesNotThrow(() -> sSort.getSortConstructorName());
+    Sort sSort = d_solver.mkUninterpretedSortConstructorSort("s", 2);
+    assertDoesNotThrow(() -> sSort.getSymbol());
     Sort bvSort = d_solver.mkBitVectorSort(32);
-    assertThrows(CVC5ApiException.class, () -> bvSort.getSortConstructorName());
+    assertThrows(CVC5ApiException.class, () -> bvSort.getSymbol());
   }
 
   @Test void getUninterpretedSortConstructorArity() throws CVC5ApiException
   {
-    Sort sSort = d_solver.mkSortConstructorSort("s", 2);
-    assertDoesNotThrow(() -> sSort.getSortConstructorArity());
+    Sort sSort = d_solver.mkUninterpretedSortConstructorSort("s", 2);
+    assertDoesNotThrow(() -> sSort.getUninterpretedSortConstructorArity());
     Sort bvSort = d_solver.mkBitVectorSort(32);
-    assertThrows(CVC5ApiException.class, () -> bvSort.getSortConstructorArity());
+    assertThrows(CVC5ApiException.class, () -> bvSort.getUninterpretedSortConstructorArity());
   }
 
   @Test void getBitVectorSize() throws CVC5ApiException
@@ -495,29 +500,6 @@ class SortTest
     assertDoesNotThrow(() -> fpSort.getFloatingPointSignificandSize());
     Sort setSort = d_solver.mkSetSort(d_solver.getIntegerSort());
     assertThrows(CVC5ApiException.class, () -> setSort.getFloatingPointSignificandSize());
-  }
-
-  @Test void getDatatypeParamSorts() throws CVC5ApiException
-  {
-    // create parametric datatype, check should not fail
-    Sort sort = d_solver.mkParamSort("T");
-    DatatypeDecl paramDtypeSpec = d_solver.mkDatatypeDecl("paramlist", sort);
-    DatatypeConstructorDecl paramCons = d_solver.mkDatatypeConstructorDecl("cons");
-    DatatypeConstructorDecl paramNil = d_solver.mkDatatypeConstructorDecl("nil");
-    paramCons.addSelector("head", sort);
-    paramDtypeSpec.addConstructor(paramCons);
-    paramDtypeSpec.addConstructor(paramNil);
-    Sort paramDtypeSort = d_solver.mkDatatypeSort(paramDtypeSpec);
-    assertDoesNotThrow(() -> paramDtypeSort.getDatatypeParamSorts());
-    // create non-parametric datatype sort, check should fail
-    DatatypeDecl dtypeSpec = d_solver.mkDatatypeDecl("list");
-    DatatypeConstructorDecl cons = d_solver.mkDatatypeConstructorDecl("cons");
-    cons.addSelector("head", d_solver.getIntegerSort());
-    dtypeSpec.addConstructor(cons);
-    DatatypeConstructorDecl nil = d_solver.mkDatatypeConstructorDecl("nil");
-    dtypeSpec.addConstructor(nil);
-    Sort dtypeSort = d_solver.mkDatatypeSort(dtypeSpec);
-    assertThrows(CVC5ApiException.class, () -> dtypeSort.getDatatypeParamSorts());
   }
 
   @Test void getDatatypeArity() throws CVC5ApiException
@@ -565,23 +547,6 @@ class SortTest
     assertTrue(intSort.compareTo(boolSort) > 0 != intSort.compareTo(boolSort) < 0);
     assertTrue((intSort.compareTo(bvSort) > 0 || intSort.equals(bvSort))
         == (intSort.compareTo(bvSort) >= 0));
-  }
-
-  @Test void sortSubtyping()
-  {
-    Sort intSort = d_solver.getIntegerSort();
-    Sort realSort = d_solver.getRealSort();
-    assertTrue(intSort.isSubsortOf(realSort));
-    assertFalse(realSort.isSubsortOf(intSort));
-
-    Sort arraySortII = d_solver.mkArraySort(intSort, intSort);
-    Sort arraySortIR = d_solver.mkArraySort(intSort, realSort);
-
-    Sort setSortI = d_solver.mkSetSort(intSort);
-    Sort setSortR = d_solver.mkSetSort(realSort);
-    // we don't support subtyping for sets
-    assertFalse(setSortI.isSubsortOf(setSortR));
-    assertFalse(setSortR.isSubsortOf(setSortI));
   }
 
   @Test void sortScopedToString() throws CVC5ApiException

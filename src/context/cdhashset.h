@@ -22,7 +22,7 @@
 #include "context/cdinsert_hashmap.h"
 #include "context/context.h"
 
-namespace cvc5 {
+namespace cvc5::internal {
 namespace context {
 
 template <class V, class HashFcn = std::hash<V>>
@@ -149,13 +149,9 @@ public:
     return super::key_end();
   }
 
-  void insertAtContextLevelZero(const V& v) {
-    return super::insertAtContextLevelZero(v, true);
-  }
-
 }; /* class CDHashSet */
 
 }  // namespace context
-}  // namespace cvc5
+}  // namespace cvc5::internal
 
 #endif /* CVC5__CONTEXT__CDHASHSET_H */

@@ -28,7 +28,7 @@
 #include "base/output.h"
 #include "context/context_mm.h"
 
-namespace cvc5 {
+namespace cvc5::internal {
 namespace context {
 
 #ifndef CVC5_DEBUG_CONTEXT_MEMORY_MANAGER
@@ -108,9 +108,6 @@ void* ContextMemoryManager::newData(size_t size) {
     AlwaysAssert(d_nextFree <= d_endChunk)
         << "Request is bigger than memory chunk size";
   }
-  Debug("context") << "ContextMemoryManager::newData(" << size
-                   << ") returning " << res << " at level "
-                   << d_chunkList.size() << std::endl;
 
 #ifdef CVC5_VALGRIND
   VALGRIND_MEMPOOL_ALLOC(this, static_cast<char*>(res), size);
@@ -177,4 +174,4 @@ unsigned ContextMemoryManager::getMaxAllocationSize()
 #endif /* CVC5_DEBUG_CONTEXT_MEMORY_MANAGER */
 
 }  // namespace context
-}  // namespace cvc5
+}  // namespace cvc5::internal

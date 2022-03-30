@@ -56,7 +56,7 @@
 #include "util/result.h"
 #include "util/statistics_stats.h"
 
-namespace cvc5 {
+namespace cvc5::internal {
 
 class EagerProofGenerator;
 
@@ -111,7 +111,7 @@ class TheoryArithPrivate : protected EnvObj
    */
   ConstraintDatabase d_constraintDatabase;
 
-  enum Result::Sat d_qflraStatus;
+  enum Result::Status d_qflraStatus;
   // check()
   //   !done() -> d_qflraStatus = Unknown
   //   fullEffort(e) -> simplex returns either sat or unsat
@@ -773,7 +773,7 @@ private:
   /** Whether there were new facts during preCheck */
   bool d_newFacts;
   /** The previous status, computed during preCheck */
-  Result::Sat d_previousStatus;
+  Result::Status d_previousStatus;
   //---------------- end during check
 
   /** These fields are designed to be accessible to TheoryArith methods. */
@@ -878,4 +878,4 @@ private:
 
 }  // namespace arith
 }  // namespace theory
-}  // namespace cvc5
+}  // namespace cvc5::internal

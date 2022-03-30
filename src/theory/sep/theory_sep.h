@@ -30,7 +30,7 @@
 #include "theory/uf/equality_engine.h"
 #include "util/statistics_stats.h"
 
-namespace cvc5 {
+namespace cvc5::internal {
 namespace theory {
 
 class TheoryModel;
@@ -180,7 +180,7 @@ class TheorySep : public Theory {
 
     bool eqNotifyTriggerPredicate(TNode predicate, bool value) override
     {
-      Debug("sep::propagate")
+      Trace("sep::propagate")
           << "NotifyClass::eqNotifyTriggerPredicate(" << predicate << ", "
           << (value ? "true" : "false") << ")" << std::endl;
       Assert(predicate.getKind() == kind::EQUAL);
@@ -196,7 +196,7 @@ class TheorySep : public Theory {
                                      TNode t2,
                                      bool value) override
     {
-      Debug("sep::propagate")
+      Trace("sep::propagate")
           << "NotifyClass::eqNotifyTriggerTermEquality(" << t1 << ", " << t2
           << ", " << (value ? "true" : "false") << ")" << std::endl;
       if (value)
@@ -209,7 +209,7 @@ class TheorySep : public Theory {
 
     void eqNotifyConstantTermMerge(TNode t1, TNode t2) override
     {
-      Debug("sep::propagate") << "NotifyClass::eqNotifyConstantTermMerge(" << t1
+      Trace("sep::propagate") << "NotifyClass::eqNotifyConstantTermMerge(" << t1
                               << ", " << t2 << ")" << std::endl;
       d_sep.conflict(t1, t2);
     }
@@ -358,6 +358,6 @@ class TheorySep : public Theory {
 
 }  // namespace sep
 }  // namespace theory
-}  // namespace cvc5
+}  // namespace cvc5::internal
 
 #endif /* CVC5__THEORY__SEP__THEORY_SEP_H */

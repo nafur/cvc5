@@ -10,7 +10,7 @@ To enable cvc5's decision procedure for datatypes, include ``DT`` in the logic:
 
 .. code:: smtlib
 
-  (set-logic QF_UFDT)
+  (set-logic QF_DT)
 
 Alternatively, use the ``ALL`` logic:
 
@@ -27,15 +27,14 @@ datatypes in ``*.smt2`` input files in the smt lib 2.6 format:
 .. code:: smtlib
 
   (declare-datatypes ((D1 n1) ... (Dk nk))
-   (((C1 (S1 T1) ... (Si Ti)) ... (Cj ... ))
+   (((C1 (S11 T1) ... (S1i Ti)) ... (Cj ... ))
     ...
     ((...) ... (...)))
 
 where ``D1 ... Dk`` are datatype types, ``C1 ... Cj`` are the constructors for
 datatype ``D1``,
-``S1 ... Si`` are the selectors (or "destructors") of constructor ``C1``, and
+``S11 ... S1i`` are the selectors (or "destructors") of constructor ``C1``, and
 each ``T1 ... Ti`` is a previously declared type or one of ``D1 ... Dk``.
-The symbols ``U1 ... Un`` are type parameters (fresh symbols).
 The numbers ``n1 ... nk`` denote the number of type
 parameters for the datatype, where ``0`` is used for non-parametric datatypes.
 
@@ -145,7 +144,7 @@ For example:
 .. code:: smtlib
 
   (declare-const t (Tuple Int Int))
-  (assert (= ((_ tuple_select 0) t) 3))
+  (assert (= ((_ tuple.select 0) t) 3))
   (assert (not (= t (tuple 3 4))))
 
 
@@ -177,6 +176,42 @@ a `cvc5::api::Solver solver` object.
 +--------------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
 | Logic String       | ``(set-logic QF_DT)``                  | ``solver.setLogic("QF_DT");``                                                                                                   |
 +--------------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
+| Datatype Sort      | ``(declare-datatype ...)``             | ``Sort s = solver.mkDatatypeSort(...);``                                                                                        |
++--------------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
+| Datatype Sorts     | ``(declare-datatypes ...)``            | ``std::vector<Sort> s = solver.mkDatatypeSorts(...);``                                                                          |
++--------------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
+| Constructor        | ``(Ci <Term_1>, ..., <Term_n>)``       | ``Sort s = solver.mkDatatypeSort(...);``                                                                                        |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Datatype dt = s.getDatatype();``                                                                                              |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Term ci = dt[i].getConstructorTerm();``                                                                                       |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Term r = solver.mkTerm(Kind::APPLY_CONSTRUCTOR, {ci, <Term_1>, ..., <Term_n>});``                                             |
++--------------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
+| Selector           | ``(Sij t)``                            | ``Sort s = solver.mkDatatypeSort(...);``                                                                                        |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Datatype dt = s.getDatatype();``                                                                                              |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Term sij = dt[i].getSelector(j).getSelectorTerm();``                                                                          |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Term r = solver.mkTerm(Kind::APPLY_SELECTOR, {sij, t});``                                                                     |
++--------------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
+| Updater            | ``((_ update Sij) t u)``               | ``Sort s = solver.mkDatatypeSort(...);``                                                                                        |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Datatype dt = s.getDatatype();``                                                                                              |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Term upd = dt[i].getSelector(j).getUpdaterTerm();``                                                                           |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Term r = solver.mkTerm(Kind::APPLY_UPDATER, {upd, t, u});``                                                                   |
++--------------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
+| Tester             | ``((_ is Ci) t)``                      | ``Sort s = solver.mkDatatypeSort(...);``                                                                                        |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Datatype dt = s.getDatatype();``                                                                                              |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Term upd = dt[i].getTesterTerm();``                                                                                           |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Term r = solver.mkTerm(Kind::APPLY_TESTER, {upd, t, u});``                                                                    |
++--------------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
 | Tuple Sort         | ``(Tuple <Sort_1>, ..., <Sort_n>)``    | ``std::vector<cvc5::api::Sort> sorts = { ... };``                                                                               |
 |                    |                                        |                                                                                                                                 |
 |                    |                                        | ``Sort s = solver.mkTupleSort(sorts);``                                                                                         |
@@ -187,21 +222,37 @@ a `cvc5::api::Solver solver` object.
 |                    |                                        |                                                                                                                                 |
 |                    |                                        | ``Term t = solver.mkConst(s, "t");``                                                                                            |
 +--------------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
-| Tuple Constructor  | ``(mkTuple <Term_1>, ..., <Term_n>)``  | ``Sort s = solver.mkTupleSort(sorts);``                                                                                         |
+| Tuple Constructor  | ``(tuple  <Term_1>, ..., <Term_n>)``   | ``Sort s = solver.mkTupleSort(sorts);``                                                                                         |
 |                    |                                        |                                                                                                                                 |
 |                    |                                        | ``Datatype dt = s.getDatatype();``                                                                                              |
 |                    |                                        |                                                                                                                                 |
-|                    |                                        | ``Term c = dt[0].getConstructor();``                                                                                            |
+|                    |                                        | ``Term c = dt[0].getConstructorTerm();``                                                                                        |
 |                    |                                        |                                                                                                                                 |
-|                    |                                        | ``Term t = solver.mkTerm(Kind::APPLY_CONSTRUCTOR, {c, <Term_1>, ..., <Term_n>});``                                              |
+|                    |                                        | ``Term r = solver.mkTerm(Kind::APPLY_CONSTRUCTOR, {c, <Term_1>, ..., <Term_n>});``                                              |
 +--------------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
-| Tuple Selector     | ``((_ tuple_select i) t)``             | ``Sort s = solver.mkTupleSort(sorts);``                                                                                         |
+| Tuple Selector     | ``((_ tuple.select i) t)``             | ``Sort s = solver.mkTupleSort(sorts);``                                                                                         |
 |                    |                                        |                                                                                                                                 |
 |                    |                                        | ``Datatype dt = s.getDatatype();``                                                                                              |
 |                    |                                        |                                                                                                                                 |
-|                    |                                        | ``Term c = dt[0].getSelector();``                                                                                               |
+|                    |                                        | ``Term sel = dt[0].getSelector(i).getSelectorTerm();``                                                                          |
 |                    |                                        |                                                                                                                                 |
-|                    |                                        | ``Term t = solver.mkTerm(Kind::APPLY_SELECTOR, {s, t});``                                                                       |
+|                    |                                        | ``Term r = solver.mkTerm(Kind::APPLY_SELECTOR, {sel, t});``                                                                     |
++--------------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
+| Tuple Updater      | ``((_ tuple.update i) t u)``           | ``Sort s = solver.mkTupleSort(sorts);``                                                                                         |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Datatype dt = s.getDatatype();``                                                                                              |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Term upd = dt[0].getSelector(i).getUpdaterTerm();``                                                                           |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Term r = solver.mkTerm(Kind::APPLY_UPDATER, {upd, t, u});``                                                                   |
++--------------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
+| Tuple Projection   | ``((_ tuple.project i1 ... in) t)``    | ``Sort s = solver.mkTupleSort(sorts);``                                                                                         |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Datatype dt = s.getDatatype();``                                                                                              |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Term proj = solver.mkOp(Kind::TUPLE_PROJECT, {i1, ..., in});``                                                                |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Term r = solver.mkTerm(Kind::TUPLE_PROJECT, {proj, t});``                                                                     |
 +--------------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
 | Record Sort        | n/a                                    | ``Sort s = mkRecordSort(const std::vector<std::pair<std::string, Sort>>& fields);``                                             |
 +--------------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
@@ -217,15 +268,23 @@ a `cvc5::api::Solver solver` object.
 |                    |                                        |                                                                                                                                 |
 |                    |                                        | ``Datatype dt = s.getDatatype();``                                                                                              |
 |                    |                                        |                                                                                                                                 |
-|                    |                                        | ``Term c = dt[0].getConstructor();``                                                                                            |
+|                    |                                        | ``Term c = dt[0].getConstructorTerm();``                                                                                        |
 |                    |                                        |                                                                                                                                 |
-|                    |                                        | ``Term t = solver.mkTerm(Kind::APPLY_CONSTRUCTOR, {c, <Term_1>, ..., <Term_n>});``                                              |
+|                    |                                        | ``Term r = solver.mkTerm(Kind::APPLY_CONSTRUCTOR, {c, <Term_1>, ..., <Term_n>});``                                              |
 +--------------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
 | Record Selector    | n/a                                    | ``Sort s = mkRecordSort(fields);``                                                                                              |
 |                    |                                        |                                                                                                                                 |
 |                    |                                        | ``Datatype dt = s.getDatatype();``                                                                                              |
 |                    |                                        |                                                                                                                                 |
-|                    |                                        | ``Term c = dt[0].getSelector();``                                                                                               |
+|                    |                                        | ``Term sel = dt[0].getSelector(name).getSelectorTerm();``                                                                       |
 |                    |                                        |                                                                                                                                 |
-|                    |                                        | ``Term t = solver.mkTerm(Kind::APPLY_CONSTRUCTOR, {s, <Term_1>, ..., <Term_n>});``                                              |
+|                    |                                        | ``Term r = solver.mkTerm(Kind::APPLY_SELECTOR, {sel, t});``                                                                     |
++--------------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
+| Record Updater     | n/a                                    | ``Sort s = solver.mkRecordSort(sorts);``                                                                                        |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Datatype dt = s.getDatatype();``                                                                                              |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Term upd = dt[0].getSelector(name).getUpdaterTerm();``                                                                        |
+|                    |                                        |                                                                                                                                 |
+|                    |                                        | ``Term r = solver.mkTerm(Kind::APPLY_UPDATER, {upd, t, u});``                                                                   |
 +--------------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+

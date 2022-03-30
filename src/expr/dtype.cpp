@@ -22,9 +22,9 @@
 #include "expr/type_matcher.h"
 #include "util/rational.h"
 
-using namespace cvc5::kind;
+using namespace cvc5::internal::kind;
 
-namespace cvc5 {
+namespace cvc5::internal {
 
 DType::DType(std::string name, bool isCo)
     : d_name(name),
@@ -363,7 +363,7 @@ bool DType::isRecursiveSingleton(TypeNode t) const
     if (computeCardinalityRecSingleton(t, processing, d_cardUAssume[t]))
     {
       d_cardRecSingleton[t] = 1;
-      if (Trace.isOn("dt-card"))
+      if (TraceIsOn("dt-card"))
       {
         Trace("dt-card") << "DType " << getName()
                          << " is recursive singleton, dependent upon "
@@ -446,7 +446,7 @@ bool DType::computeCardinalityRecSingleton(
       TypeNode tc = d_constructors[0]->getArgType(i);
       // if it is an uninterpreted sort, then we depend on it having cardinality
       // one
-      if (tc.isSort())
+      if (tc.isUninterpretedSort())
       {
         if (std::find(u_assume.begin(), u_assume.end(), tc) == u_assume.end())
         {
@@ -712,7 +712,7 @@ bool DType::hasNestedRecursion() const
   std::unordered_set<TypeNode> types;
   std::map<TypeNode, bool> processed;
   getAlienSubfieldTypes(types, processed, false);
-  if (Trace.isOn("datatypes-init"))
+  if (TraceIsOn("datatypes-init"))
   {
     Trace("datatypes-init") << "Alien subfield types: " << std::endl;
     for (const TypeNode& t : types)
@@ -833,7 +833,7 @@ TypeNode DType::getTypeNode(const std::vector<TypeNode>& params) const
 {
   Assert(isResolved());
   Assert(!d_self.isNull() && d_self.isParametricDatatype());
-  return d_self.instantiateParametricDatatype(params);
+  return d_self.instantiate(params);
 }
 
 const DTypeConstructor& DType::operator[](size_t index) const
@@ -948,4 +948,4 @@ std::ostream& operator<<(std::ostream& out, const DTypeIndexConstant& dic)
   return out << "index_" << dic.getIndex();
 }
 
-}  // namespace cvc5
+}  // namespace cvc5::internal

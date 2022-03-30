@@ -27,10 +27,10 @@
 #include "util/uninterpreted_sort_value.h"
 
 using namespace std;
-using namespace cvc5::kind;
-using namespace cvc5::context;
+using namespace cvc5::internal::kind;
+using namespace cvc5::internal::context;
 
-namespace cvc5 {
+namespace cvc5::internal {
 namespace theory {
 
 TheoryEngineModelBuilder::TheoryEngineModelBuilder(Env& env) : EnvObj(env) {}
@@ -79,6 +79,9 @@ Node TheoryEngineModelBuilder::evaluateEqc(TheoryModel* m, TNode r)
     {
       Trace("model-builder-debug") << "...try to normalize" << std::endl;
       Node normalized = normalize(m, n, true);
+      Trace("model-builder-debug")
+          << "...return " << normalized
+          << ", isValue=" << m->isValue(normalized) << std::endl;
       if (m->isValue(normalized))
       {
         return normalized;
@@ -127,7 +130,7 @@ bool TheoryEngineModelBuilder::isAssignerActive(TheoryModel* tm, Assigner& a)
 
 bool TheoryEngineModelBuilder::isAssignable(TNode n)
 {
-  if (n.getKind() == kind::SELECT || n.getKind() == kind::APPLY_SELECTOR_TOTAL
+  if (n.getKind() == kind::SELECT || n.getKind() == kind::APPLY_SELECTOR
       || n.getKind() == kind::SEQ_NTH_TOTAL || n.getKind() == kind::SEQ_NTH)
   {
     // selectors are always assignable (where we guarantee that they are not
@@ -279,7 +282,7 @@ bool TheoryEngineModelBuilder::isCdtValueMatch(Node v, Node r)
 
 bool TheoryEngineModelBuilder::involvesUSort(TypeNode tn) const
 {
-  if (tn.isSort())
+  if (tn.isUninterpretedSort())
   {
     return true;
   }
@@ -313,7 +316,7 @@ bool TheoryEngineModelBuilder::isExcludedUSortValue(
   {
     visited[v] = true;
     TypeNode tn = v.getType();
-    if (tn.isSort())
+    if (tn.isUninterpretedSort())
     {
       Trace("model-builder-debug") << "Is excluded usort value : " << v << " "
                                    << tn << std::endl;
@@ -605,7 +608,7 @@ bool TheoryEngineModelBuilder::buildModel(TheoryModel* tm)
     // count the number of equivalence classes of sorts in finite model finding
     if (options().quantifiers.finiteModelFind)
     {
-      if (eqct.isSort())
+      if (eqct.isUninterpretedSort())
       {
         eqc_usort_count[eqct]++;
       }
@@ -801,9 +804,10 @@ bool TheoryEngineModelBuilder::buildModel(TheoryModel* tm)
             Assert(assertedReps.find(*i) != assertedReps.end());
             Node rep = assertedReps[*i];
             Node normalized = normalize(tm, rep, false);
-            Trace("model-builder") << "    Normalizing rep (" << rep
-                                   << "), normalized to (" << normalized << ")"
-                                   << endl;
+            Trace("model-builder")
+                << "    Normalizing rep (" << rep << "), normalized to ("
+                << normalized << ")"
+                << ", isValue=" << tm->isValue(normalized) << std::endl;
             if (tm->isValue(normalized))
             {
               changed = true;
@@ -885,7 +889,7 @@ bool TheoryEngineModelBuilder::buildModel(TheoryModel* tm)
       bool isUSortFiniteRestricted = false;
       if (options().quantifiers.finiteModelFind)
       {
-        isUSortFiniteRestricted = !t.isSort() && involvesUSort(t);
+        isUSortFiniteRestricted = !t.isUninterpretedSort() && involvesUSort(t);
       }
 #endif
 
@@ -956,7 +960,7 @@ bool TheoryEngineModelBuilder::buildModel(TheoryModel* tm)
             n = itAssigner->second.getNextAssignment();
             Assert(!n.isNull());
           }
-          else if (t.isSort() || !d_env.isFiniteType(t))
+          else if (t.isUninterpretedSort() || !d_env.isFiniteType(t))
           {
             // If its interpreted as infinite, we get a fresh value that does
             // not occur in the model.
@@ -1200,8 +1204,7 @@ Node TheoryEngineModelBuilder::normalize(TheoryModel* m, TNode r, bool evalOnly)
     {
       children.push_back(r.getOperator());
     }
-    bool childrenConst = true;
-    for (size_t i = 0; i < r.getNumChildren(); ++i)
+    for (size_t i = 0, nchild = r.getNumChildren(); i < nchild; ++i)
     {
       Node ri = r[i];
       bool recurse = true;
@@ -1231,18 +1234,11 @@ Node TheoryEngineModelBuilder::normalize(TheoryModel* m, TNode r, bool evalOnly)
         {
           ri = normalize(m, ri, evalOnly);
         }
-        if (!m->isValue(ri))
-        {
-          childrenConst = false;
-        }
       }
       children.push_back(ri);
     }
     retNode = NodeManager::currentNM()->mkNode(r.getKind(), children);
-    if (childrenConst)
-    {
-      retNode = rewrite(retNode);
-    }
+    retNode = rewrite(retNode);
   }
   d_normalizedCache[r] = retNode;
   return retNode;
@@ -1441,7 +1437,7 @@ void TheoryEngineModelBuilder::assignFunctions(TheoryModel* m)
     std::sort(funcs_to_assign.begin(), funcs_to_assign.end(), sts);
   }
 
-  if (Trace.isOn("model-builder"))
+  if (TraceIsOn("model-builder"))
   {
     Trace("model-builder") << "...have " << funcs_to_assign.size()
                            << " functions to assign:" << std::endl;
@@ -1477,4 +1473,4 @@ void TheoryEngineModelBuilder::assignFunctions(TheoryModel* m)
 }
 
 }  // namespace theory
-}  // namespace cvc5
+}  // namespace cvc5::internal

@@ -17,7 +17,7 @@
 #include "util/rational.h"
 #include "util/real_algebraic_number.h"
 
-namespace cvc5 {
+namespace cvc5::internal {
 
 using namespace kind;
 using namespace context;
@@ -294,4 +294,4 @@ TEST_F(TestTheoryArithRewriterBlack, leq)
 }
 
 }  // namespace test
-}  // namespace cvc5
+}  // namespace cvc5::internal

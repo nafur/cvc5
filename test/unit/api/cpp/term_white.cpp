@@ -15,9 +15,7 @@
 
 #include "test_api.h"
 
-namespace cvc5 {
-
-using namespace api;
+namespace cvc5::internal {
 
 namespace test {
 
@@ -36,16 +34,16 @@ TEST_F(TestApiWhiteTerm, getOp)
   Term a = d_solver.mkConst(arrsort, "a");
   Term b = d_solver.mkConst(bvsort, "b");
 
-  Term ab = d_solver.mkTerm(SELECT, a, b);
-  Op ext = d_solver.mkOp(BITVECTOR_EXTRACT, 4, 0);
-  Term extb = d_solver.mkTerm(ext, b);
+  Term ab = d_solver.mkTerm(SELECT, {a, b});
+  Op ext = d_solver.mkOp(BITVECTOR_EXTRACT, {4, 0});
+  Term extb = d_solver.mkTerm(ext, {b});
 
   ASSERT_EQ(ab.getOp(), Op(&d_solver, SELECT));
   // can compare directly to a Kind (will invoke Op constructor)
   ASSERT_EQ(ab.getOp(), Op(&d_solver, SELECT));
 
   Term f = d_solver.mkConst(funsort, "f");
-  Term fx = d_solver.mkTerm(APPLY_UF, f, x);
+  Term fx = d_solver.mkTerm(APPLY_UF, {f, x});
 
   ASSERT_EQ(fx.getOp(), Op(&d_solver, APPLY_UF));
   // testing rebuild from op and children
@@ -70,11 +68,11 @@ TEST_F(TestApiWhiteTerm, getOp)
   Term headOpTerm = list["cons"].getSelectorTerm("head");
   Term tailOpTerm = list["cons"].getSelectorTerm("tail");
 
-  Term nilTerm = d_solver.mkTerm(APPLY_CONSTRUCTOR, nilOpTerm);
-  Term consTerm = d_solver.mkTerm(
-      APPLY_CONSTRUCTOR, consOpTerm, d_solver.mkInteger(0), nilTerm);
-  Term headTerm = d_solver.mkTerm(APPLY_SELECTOR, headOpTerm, consTerm);
-  Term tailTerm = d_solver.mkTerm(APPLY_SELECTOR, tailOpTerm, consTerm);
+  Term nilTerm = d_solver.mkTerm(APPLY_CONSTRUCTOR, {nilOpTerm});
+  Term consTerm = d_solver.mkTerm(APPLY_CONSTRUCTOR,
+                                  {consOpTerm, d_solver.mkInteger(0), nilTerm});
+  Term headTerm = d_solver.mkTerm(APPLY_SELECTOR, {headOpTerm, consTerm});
+  Term tailTerm = d_solver.mkTerm(APPLY_SELECTOR, {tailOpTerm, consTerm});
 
   ASSERT_EQ(nilTerm.getOp(), Op(&d_solver, APPLY_CONSTRUCTOR));
   ASSERT_EQ(consTerm.getOp(), Op(&d_solver, APPLY_CONSTRUCTOR));
@@ -82,4 +80,4 @@ TEST_F(TestApiWhiteTerm, getOp)
   ASSERT_EQ(tailTerm.getOp(), Op(&d_solver, APPLY_SELECTOR));
 }
 }  // namespace test
-}  // namespace cvc5
+}  // namespace cvc5::internal

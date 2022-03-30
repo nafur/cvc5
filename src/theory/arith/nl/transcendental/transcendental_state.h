@@ -25,7 +25,7 @@
 #include "theory/arith/nl/transcendental/proof_checker.h"
 #include "theory/arith/nl/transcendental/taylor_generator.h"
 
-namespace cvc5 {
+namespace cvc5::internal {
 class CDProof;
 namespace theory {
 namespace arith {
@@ -167,6 +167,8 @@ class TranscendentalState : protected EnvObj
    * Is term t purified? (See d_trPurify below).
    */
   bool isPurified(TNode n) const;
+  /** get the purified form of node n */
+  Node getPurifiedForm(TNode n);
   /**
    * Add bound for n, and for what (if anything) it purifies
    */
@@ -279,6 +281,6 @@ class TranscendentalState : protected EnvObj
 }  // namespace nl
 }  // namespace arith
 }  // namespace theory
-}  // namespace cvc5
+}  // namespace cvc5::internal
 
 #endif /* CVC5__THEORY__ARITH__NL__TRANSCENDENTAL__TRANSCENDENTAL_STATE_H */

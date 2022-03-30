@@ -24,7 +24,7 @@
 #include "theory/arith/nl/nl_model.h"
 #include "util/rational.h"
 
-namespace cvc5 {
+namespace cvc5::internal {
 namespace theory {
 namespace arith {
 namespace nl {
@@ -77,7 +77,7 @@ void MonomialCheck::checkSign()
     if (d_ms_proc.find(a) == d_ms_proc.end())
     {
       std::vector<Node> exp;
-      if (Trace.isOn("nl-ext-debug"))
+      if (TraceIsOn("nl-ext-debug"))
       {
         Node cmva = d_data->d_model.computeConcreteModelValue(a);
         Trace("nl-ext-debug")
@@ -760,4 +760,4 @@ void MonomialCheck::setMonomialFactor(Node a,
 }  // namespace nl
 }  // namespace arith
 }  // namespace theory
-}  // namespace cvc5
+}  // namespace cvc5::internal

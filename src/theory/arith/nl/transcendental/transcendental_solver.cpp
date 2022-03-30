@@ -20,7 +20,6 @@
 
 #include "expr/node_algorithm.h"
 #include "expr/node_builder.h"
-#include "expr/skolem_manager.h"
 #include "options/arith_options.h"
 #include "theory/arith/arith_msum.h"
 #include "theory/arith/arith_state.h"
@@ -30,9 +29,9 @@
 #include "theory/arith/nl/transcendental/taylor_generator.h"
 #include "theory/rewriter.h"
 
-using namespace cvc5::kind;
+using namespace cvc5::internal::kind;
 
-namespace cvc5 {
+namespace cvc5::internal {
 namespace theory {
 namespace arith {
 namespace nl {
@@ -70,27 +69,25 @@ void TranscendentalSolver::initLastCall(const std::vector<Node>& xts)
     return;
   }
 
-  NodeManager* nm = NodeManager::currentNM();
-  SkolemManager* sm = nm->getSkolemManager();
   for (const Node& a : needsMaster)
   {
-    // should not have processed this already
-    Assert(d_tstate.d_trPurify.find(a) == d_tstate.d_trPurify.end());
     Kind k = a.getKind();
     Assert(k == Kind::SINE || k == Kind::EXPONENTIAL);
-    Node y = sm->mkSkolemFunction(
-        SkolemFunId::TRANSCENDENTAL_PURIFY_ARG, nm->realType(), a);
-    Node new_a = nm->mkNode(k, y);
-    Assert(d_tstate.d_trPurify.find(new_a) == d_tstate.d_trPurify.end());
-    Assert(d_tstate.d_trPurifies.find(new_a) == d_tstate.d_trPurifies.end());
-    d_tstate.d_trPurify[a] = new_a;
-    d_tstate.d_trPurify[new_a] = new_a;
-    d_tstate.d_trPurifies[new_a] = a;
-    d_tstate.d_trPurifyVars.insert(y);
+    Node new_a = d_tstate.getPurifiedForm(a);
+    // Check if the transcental function application is equal to its purified
+    // form, if so, we already processed the lemma. In rare cases, note that
+    // we may require sending a lemma here even if the purified form above had
+    // already been allocated, e.g. in the case that the purification lemma
+    // below was dropped.
+    if (d_astate.areEqual(a, new_a))
+    {
+      // already processed
+      continue;
+    }
     switch (k)
     {
-      case Kind::SINE: d_sineSlv.doPhaseShift(a, new_a, y); break;
-      case Kind::EXPONENTIAL: d_expSlv.doPurification(a, new_a, y); break;
+      case Kind::SINE: d_sineSlv.doPhaseShift(a, new_a); break;
+      case Kind::EXPONENTIAL: d_expSlv.doPurification(a, new_a); break;
       default: AlwaysAssert(false) << "Unexpected Kind " << k;
     }
   }
@@ -207,7 +204,7 @@ void TranscendentalSolver::checkTranscendentalMonotonic()
 
 void TranscendentalSolver::checkTranscendentalTangentPlanes()
 {
-  if (Trace.isOn("nl-ext"))
+  if (TraceIsOn("nl-ext"))
   {
     if (!d_tstate.d_funcMap.empty())
     {
@@ -363,7 +360,7 @@ bool TranscendentalSolver::checkTfTangentPlanesFun(Node tf, unsigned d)
           is_tangent = concavity == -1;
           is_secant = concavity == 1;
         }
-        if (Trace.isOn("nl-ext-tftp"))
+        if (TraceIsOn("nl-ext-tftp"))
         {
           Trace("nl-ext-tftp") << "*** Outside boundary point (";
           Trace("nl-ext-tftp") << (r == 0 ? "low" : "high") << ") ";
@@ -513,4 +510,4 @@ void TranscendentalSolver::postProcessModel(std::map<Node, Node>& arithModel,
 }  // namespace nl
 }  // namespace arith
 }  // namespace theory
-}  // namespace cvc5
+}  // namespace cvc5::internal

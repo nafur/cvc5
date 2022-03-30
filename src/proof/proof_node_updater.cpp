@@ -20,7 +20,7 @@
 #include "proof/proof_node_algorithm.h"
 #include "proof/proof_node_manager.h"
 
-namespace cvc5 {
+namespace cvc5::internal {
 
 ProofNodeUpdaterCallback::ProofNodeUpdaterCallback() {}
 ProofNodeUpdaterCallback::~ProofNodeUpdaterCallback() {}
@@ -51,7 +51,7 @@ void ProofNodeUpdater::process(std::shared_ptr<ProofNode> pf)
 {
   if (d_debugFreeAssumps)
   {
-    if (Trace.isOn("pfnu-debug"))
+    if (TraceIsOn("pfnu-debug"))
     {
       Trace("pfnu-debug2") << "Initial proof: " << *pf.get() << std::endl;
       Trace("pfnu-debug") << "ProofNodeUpdater::process" << std::endl;
@@ -285,4 +285,4 @@ void ProofNodeUpdater::setDebugFreeAssumptions(
   d_debugFreeAssumps = true;
 }
 
-}  // namespace cvc5
+}  // namespace cvc5::internal

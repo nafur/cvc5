@@ -29,7 +29,7 @@
 
 using namespace std;
 
-namespace cvc5 {
+namespace cvc5::internal {
 namespace theory {
 
 // Note that this function is a simplified version of Theory::theoryOf for
@@ -331,7 +331,8 @@ Node Rewriter::rewriteTo(theory::TheoryId theoryId,
 #ifdef CVC5_ASSERTIONS
           RewriteResponse r2 =
               d_theoryRewriters[newTheoryId]->postRewrite(newNode);
-          Assert(r2.d_node == newNode) << r2.d_node << " != " << newNode;
+          Assert(r2.d_node == newNode)
+              << "Non-idempotent rewriting: " << r2.d_node << " != " << newNode;
 #endif
           rewriteStackTop.d_node = newNode;
           break;
@@ -395,6 +396,8 @@ Node Rewriter::rewriteTo(theory::TheoryId theoryId,
     if (rewriteStack.size() == 1) {
       Assert(!isEquality || rewriteStackTop.d_node.getKind() == kind::EQUAL
              || rewriteStackTop.d_node.isConst());
+      Assert(rewriteStackTop.d_node.getType().isSubtypeOf(node.getType()))
+          << "Rewriting " << node << " does not preserve type";
       return rewriteStackTop.d_node;
     }
 
@@ -486,4 +489,4 @@ bool Rewriter::hasRewrittenWithProofs(TNode n) const
 }
 
 }  // namespace theory
-}  // namespace cvc5
+}  // namespace cvc5::internal

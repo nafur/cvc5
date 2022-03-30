@@ -10,7 +10,7 @@
  * directory for licensing information.
  * ****************************************************************************
  *
- * Black box testing of cvc5::context::CDMap<>.
+ * Black box testing of context::CDMap<>.
  */
 
 #include <map>
@@ -20,11 +20,11 @@
 #include "context/cdlist.h"
 #include "test_context.h"
 
-namespace cvc5 {
+namespace cvc5::internal {
 namespace test {
 
-using cvc5::context::CDHashMap;
-using cvc5::context::Context;
+using context::CDHashMap;
+using context::Context;
 
 class TestContextBlackCDHashMap : public TestContext
 {
@@ -75,11 +75,10 @@ TEST_F(TestContextBlackCDHashMap, simple_sequence)
         d_context->push();
         ASSERT_TRUE(elements_are(map, {{1, 2}, {3, 4}, {5, 6}, {9, 8}}));
 
-        map.insertAtContextLevelZero(23, 317);
         map.insert(1, 45);
 
         ASSERT_TRUE(
-            elements_are(map, {{1, 45}, {3, 4}, {5, 6}, {9, 8}, {23, 317}}));
+            elements_are(map, {{1, 45}, {3, 4}, {5, 6}, {9, 8}}));
         map.insert(23, 324);
 
         ASSERT_TRUE(
@@ -88,15 +87,15 @@ TEST_F(TestContextBlackCDHashMap, simple_sequence)
       }
 
       ASSERT_TRUE(
-          elements_are(map, {{1, 2}, {3, 4}, {5, 6}, {9, 8}, {23, 317}}));
+          elements_are(map, {{1, 2}, {3, 4}, {5, 6}, {9, 8}}));
       d_context->pop();
     }
 
-    ASSERT_TRUE(elements_are(map, {{3, 4}, {5, 6}, {9, 8}, {23, 317}}));
+    ASSERT_TRUE(elements_are(map, {{3, 4}, {5, 6}, {9, 8}}));
     d_context->pop();
   }
 
-  ASSERT_TRUE(elements_are(map, {{3, 4}, {23, 317}}));
+  ASSERT_TRUE(elements_are(map, {{3, 4}}));
 }
 
 TEST_F(TestContextBlackCDHashMap, simple_sequence_fewer_finds)
@@ -155,15 +154,9 @@ TEST_F(TestContextBlackCDHashMap, insert_at_context_level_zero)
 
       ASSERT_TRUE(elements_are(map, {{1, 2}, {3, 4}, {5, 6}, {9, 8}}));
 
-      map.insertAtContextLevelZero(23, 317);
-
       ASSERT_TRUE(
-          elements_are(map, {{1, 2}, {3, 4}, {5, 6}, {9, 8}, {23, 317}}));
+          elements_are(map, {{1, 2}, {3, 4}, {5, 6}, {9, 8}}));
 
-      ASSERT_DEATH(map.insertAtContextLevelZero(23, 317),
-                   "insertAtContextLevelZero");
-      ASSERT_DEATH(map.insertAtContextLevelZero(23, 472),
-                   "insertAtContextLevelZero");
       map.insert(23, 472);
 
       ASSERT_TRUE(
@@ -174,8 +167,6 @@ TEST_F(TestContextBlackCDHashMap, insert_at_context_level_zero)
         ASSERT_TRUE(
             elements_are(map, {{1, 2}, {3, 4}, {5, 6}, {9, 8}, {23, 472}}));
 
-        ASSERT_DEATH(map.insertAtContextLevelZero(23, 0),
-                     "insertAtContextLevelZero");
         map.insert(23, 1024);
 
         ASSERT_TRUE(
@@ -187,19 +178,15 @@ TEST_F(TestContextBlackCDHashMap, insert_at_context_level_zero)
       d_context->pop();
     }
 
-    ASSERT_TRUE(elements_are(map, {{3, 4}, {5, 6}, {9, 8}, {23, 317}}));
+    ASSERT_TRUE(elements_are(map, {{3, 4}, {5, 6}, {9, 8}}));
 
-    ASSERT_DEATH(map.insertAtContextLevelZero(23, 0),
-                 "insertAtContextLevelZero");
     map.insert(23, 477);
 
     ASSERT_TRUE(elements_are(map, {{3, 4}, {5, 6}, {9, 8}, {23, 477}}));
     d_context->pop();
   }
 
-  ASSERT_DEATH(map.insertAtContextLevelZero(23, 0), "insertAtContextLevelZero");
-
-  ASSERT_TRUE(elements_are(map, {{3, 4}, {23, 317}}));
+  ASSERT_TRUE(elements_are(map, {{3, 4}}));
 }
 }  // namespace test
-}  // namespace cvc5
+}  // namespace cvc5::internal

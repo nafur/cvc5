@@ -15,9 +15,7 @@
 
 #include "test_api.h"
 
-namespace cvc5 {
-
-using namespace api;
+namespace cvc5::internal {
 
 namespace test {
 
@@ -27,6 +25,7 @@ class TestApiBlackGrammar : public TestApi
 
 TEST_F(TestApiBlackGrammar, addRule)
 {
+  d_solver.setOption("sygus", "true");
   Sort boolean = d_solver.getBooleanSort();
   Sort integer = d_solver.getIntegerSort();
 
@@ -52,6 +51,7 @@ TEST_F(TestApiBlackGrammar, addRule)
 
 TEST_F(TestApiBlackGrammar, addRules)
 {
+  d_solver.setOption("sygus", "true");
   Sort boolean = d_solver.getBooleanSort();
   Sort integer = d_solver.getIntegerSort();
 
@@ -78,6 +78,7 @@ TEST_F(TestApiBlackGrammar, addRules)
 
 TEST_F(TestApiBlackGrammar, addAnyConstant)
 {
+  d_solver.setOption("sygus", "true");
   Sort boolean = d_solver.getBooleanSort();
 
   Term nullTerm;
@@ -99,6 +100,7 @@ TEST_F(TestApiBlackGrammar, addAnyConstant)
 
 TEST_F(TestApiBlackGrammar, addAnyVariable)
 {
+  d_solver.setOption("sygus", "true");
   Sort boolean = d_solver.getBooleanSort();
 
   Term nullTerm;
@@ -121,4 +123,4 @@ TEST_F(TestApiBlackGrammar, addAnyVariable)
   ASSERT_THROW(g1.addAnyVariable(start), CVC5ApiException);
 }
 }  // namespace test
-}  // namespace cvc5
+}  // namespace cvc5::internal

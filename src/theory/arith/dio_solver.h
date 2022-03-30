@@ -31,7 +31,7 @@
 #include "util/rational.h"
 #include "util/statistics_stats.h"
 
-namespace cvc5 {
+namespace cvc5::internal {
 namespace context {
 class Context;
 }
@@ -298,7 +298,7 @@ private:
   /** Solves the index at ti for the value in minimumMonomial. */
   std::pair<SubIndex, TrailIndex> solveIndex(TrailIndex ti);
 
-  /** Prints the queue for debugging purposes to Debug("arith::dio"). */
+  /** Prints the queue for debugging purposes to Trace("arith::dio"). */
   void printQueue();
 
   /**
@@ -420,6 +420,6 @@ public:
 
 }  // namespace arith
 }  // namespace theory
-}  // namespace cvc5
+}  // namespace cvc5::internal
 
 #endif /* CVC5__THEORY__ARITH__DIO_SOLVER_H */

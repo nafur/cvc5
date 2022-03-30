@@ -274,23 +274,6 @@ class DatatypeTest
     assertNotEquals(pairIntInt, pairIntReal);
     assertNotEquals(pairIntInt, pairRealInt);
     assertNotEquals(pairIntReal, pairRealInt);
-
-    assertTrue(pairRealReal.isSubsortOf(pairRealReal));
-    assertFalse(pairIntReal.isSubsortOf(pairRealReal));
-    assertFalse(pairRealInt.isSubsortOf(pairRealReal));
-    assertFalse(pairIntInt.isSubsortOf(pairRealReal));
-    assertFalse(pairRealReal.isSubsortOf(pairRealInt));
-    assertFalse(pairIntReal.isSubsortOf(pairRealInt));
-    assertTrue(pairRealInt.isSubsortOf(pairRealInt));
-    assertFalse(pairIntInt.isSubsortOf(pairRealInt));
-    assertFalse(pairRealReal.isSubsortOf(pairIntReal));
-    assertTrue(pairIntReal.isSubsortOf(pairIntReal));
-    assertFalse(pairRealInt.isSubsortOf(pairIntReal));
-    assertFalse(pairIntInt.isSubsortOf(pairIntReal));
-    assertFalse(pairRealReal.isSubsortOf(pairIntInt));
-    assertFalse(pairIntReal.isSubsortOf(pairIntInt));
-    assertFalse(pairRealInt.isSubsortOf(pairIntInt));
-    assertTrue(pairIntInt.isSubsortOf(pairIntInt));
   }
 
   @Test void datatypeIsFinite() throws CVC5ApiException
@@ -481,7 +464,7 @@ class DatatypeTest
      *   END;
      */
     unresTypes.clear();
-    Sort unresList5 = d_solver.mkSortConstructorSort("list5", 1);
+    Sort unresList5 = d_solver.mkUninterpretedSortConstructorSort("list5", 1);
     unresTypes.add(unresList5);
 
     List<Sort> v = new ArrayList<>();
@@ -521,7 +504,7 @@ class DatatypeTest
      */
     // Make unresolved types as placeholders
     Set<Sort> unresTypes = new HashSet<>();
-    Sort unresList = d_solver.mkSortConstructorSort("plist", 1);
+    Sort unresList = d_solver.mkUninterpretedSortConstructorSort("plist", 1);
     unresTypes.add(unresList);
 
     List<Sort> v = new ArrayList<>();
@@ -558,12 +541,10 @@ class DatatypeTest
 
     AtomicReference<Term> atomicTerm = new AtomicReference<>();
     // get the specialized constructor term for list[Int]
-    assertDoesNotThrow(
-        () -> atomicTerm.set(nilc.getInstantiatedConstructorTerm(listInt)));
+    assertDoesNotThrow(() -> atomicTerm.set(nilc.getInstantiatedConstructorTerm(listInt)));
     Term testConsTerm = atomicTerm.get();
     assertNotEquals(testConsTerm, nilc.getConstructorTerm());
     // error to get the specialized constructor term for Int
-    assertThrows(CVC5ApiException.class,
-        () -> nilc.getInstantiatedConstructorTerm(isort));
+    assertThrows(CVC5ApiException.class, () -> nilc.getInstantiatedConstructorTerm(isort));
   }
 }

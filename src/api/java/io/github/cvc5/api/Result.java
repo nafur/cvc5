@@ -35,53 +35,8 @@ public class Result extends AbstractPointer
 
   // endregion
 
-  public enum UnknownExplanation {
-    REQUIRES_FULL_CHECK(0),
-    INCOMPLETE(1),
-    TIMEOUT(2),
-    RESOURCEOUT(3),
-    MEMOUT(4),
-    INTERRUPTED(5),
-    NO_STATUS(6),
-    UNSUPPORTED(7),
-    OTHER(8),
-    UNKNOWN_REASON(9);
-
-    /* the int value of the UnknownExplanation */
-    private int value;
-    private static Map<Integer, UnknownExplanation> explanationMap = new HashMap<>();
-    private UnknownExplanation(int value)
-    {
-      this.value = value;
-    }
-
-    static
-    {
-      for (UnknownExplanation explanation : UnknownExplanation.values())
-      {
-        explanationMap.put(explanation.getValue(), explanation);
-      }
-    }
-
-    public static UnknownExplanation fromInt(int value) throws CVC5ApiException
-    {
-      if (value < REQUIRES_FULL_CHECK.value || value > UNKNOWN_REASON.value)
-      {
-        throw new CVC5ApiException("UnknownExplanation value " + value
-            + " is outside the valid range [" + REQUIRES_FULL_CHECK.value + ","
-            + UNKNOWN_REASON.value + "]");
-      }
-      return explanationMap.get(value);
-    }
-
-    public int getValue()
-    {
-      return value;
-    }
-  }
-
   /**
-   * Return true if Result is empty, i.e., a nullary Result, and not an actual
+   * @return true if Result is empty, i.e., a nullary Result, and not an actual
    * result returned from a checkSat() (and friends) query.
    */
   public boolean isNull()
@@ -92,7 +47,7 @@ public class Result extends AbstractPointer
   private native boolean isNull(long pointer);
 
   /**
-   * Return true if query was a satisfiable checkSat() or checkSatAssuming()
+   * @return true if query was a satisfiable checkSat() or checkSatAssuming()
    * query.
    */
   public boolean isSat()
@@ -103,7 +58,7 @@ public class Result extends AbstractPointer
   private native boolean isSat(long pointer);
 
   /**
-   * Return true if query was an unsatisfiable checkSat() or
+   * @return true if query was an unsatisfiable checkSat() or
    * checkSatAssuming() query.
    */
   public boolean isUnsat()
@@ -114,47 +69,15 @@ public class Result extends AbstractPointer
   private native boolean isUnsat(long pointer);
 
   /**
-   * Return true if query was a checkSat() or checkSatAssuming() query and
+   * @return true if query was a checkSat() or checkSatAssuming() query and
    * cvc5 was not able to determine (un)satisfiability.
    */
-  public boolean isSatUnknown()
+  public boolean isUnknown()
   {
-    return isSatUnknown(pointer);
+    return isUnknown(pointer);
   }
 
-  private native boolean isSatUnknown(long pointer);
-
-  /**
-   * Return true if corresponding query was an entailed checkEntailed() query.
-   */
-  public boolean isEntailed()
-  {
-    return isEntailed(pointer);
-  }
-
-  private native boolean isEntailed(long pointer);
-
-  /**
-   * Return true if corresponding query was a checkEntailed() query that is
-   * not entailed.
-   */
-  public boolean isNotEntailed()
-  {
-    return isNotEntailed(pointer);
-  }
-
-  private native boolean isNotEntailed(long pointer);
-
-  /**
-   * Return true if query was a checkEntailed() query and cvc5 was not able to
-   * determine if it is entailed.
-   */
-  public boolean isEntailmentUnknown()
-  {
-    return isEntailmentUnknown(pointer);
-  }
-
-  private native boolean isEntailmentUnknown(long pointer);
+  private native boolean isUnknown(long pointer);
 
   /**
    * Operator overloading for equality of two results.

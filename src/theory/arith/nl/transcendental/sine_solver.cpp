@@ -30,9 +30,9 @@
 #include "theory/arith/nl/transcendental/transcendental_state.h"
 #include "theory/rewriter.h"
 
-using namespace cvc5::kind;
+using namespace cvc5::internal::kind;
 
-namespace cvc5 {
+namespace cvc5::internal {
 namespace theory {
 namespace arith {
 namespace nl {
@@ -138,13 +138,14 @@ void SineSolver::doReductions()
         else
         {
           // remember that the argument is equal to the boundary point
+          Trace("nl-ext") << "SineSolver::doReductions: substitution: " << tf[0]
+                          << " -> " << itv->second << std::endl;
           d_data->d_model.addSubstitution(tf[0], itv->second);
           // all congruent transcendental functions are exactly equal to its
           // value
           d_data->addModelBoundForPurifyTerm(tf, mvs, mvs);
         }
         reduced = true;
-        break;
       }
     }
     if (!reduced)
@@ -158,8 +159,9 @@ void SineSolver::doReductions()
   }
 }
 
-void SineSolver::doPhaseShift(TNode a, TNode new_a, TNode y)
+void SineSolver::doPhaseShift(TNode a, TNode new_a)
 {
+  TNode y = new_a[0];
   NodeManager* nm = NodeManager::currentNM();
   SkolemManager* sm = nm->getSkolemManager();
   Assert(a.getKind() == Kind::SINE);
@@ -606,4 +608,4 @@ bool SineSolver::hasExactModelValue(TNode n) const
 }  // namespace nl
 }  // namespace arith
 }  // namespace theory
-}  // namespace cvc5
+}  // namespace cvc5::internal

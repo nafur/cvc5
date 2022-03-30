@@ -15,9 +15,7 @@
 
 #include "test_api.h"
 
-namespace cvc5 {
-
-using namespace api;
+namespace cvc5::internal {
 
 namespace test {
 
@@ -301,23 +299,6 @@ TEST_F(TestApiBlackDatatype, parametricDatatype)
   ASSERT_NE(pairIntInt, pairIntReal);
   ASSERT_NE(pairIntInt, pairRealInt);
   ASSERT_NE(pairIntReal, pairRealInt);
-
-  ASSERT_TRUE(pairRealReal.isSubsortOf(pairRealReal));
-  ASSERT_FALSE(pairIntReal.isSubsortOf(pairRealReal));
-  ASSERT_FALSE(pairRealInt.isSubsortOf(pairRealReal));
-  ASSERT_FALSE(pairIntInt.isSubsortOf(pairRealReal));
-  ASSERT_FALSE(pairRealReal.isSubsortOf(pairRealInt));
-  ASSERT_FALSE(pairIntReal.isSubsortOf(pairRealInt));
-  ASSERT_TRUE(pairRealInt.isSubsortOf(pairRealInt));
-  ASSERT_FALSE(pairIntInt.isSubsortOf(pairRealInt));
-  ASSERT_FALSE(pairRealReal.isSubsortOf(pairIntReal));
-  ASSERT_TRUE(pairIntReal.isSubsortOf(pairIntReal));
-  ASSERT_FALSE(pairRealInt.isSubsortOf(pairIntReal));
-  ASSERT_FALSE(pairIntInt.isSubsortOf(pairIntReal));
-  ASSERT_FALSE(pairRealReal.isSubsortOf(pairIntInt));
-  ASSERT_FALSE(pairIntReal.isSubsortOf(pairIntInt));
-  ASSERT_FALSE(pairRealInt.isSubsortOf(pairIntInt));
-  ASSERT_TRUE(pairIntInt.isSubsortOf(pairIntInt));
 }
 
 TEST_F(TestApiBlackDatatype, isFinite)
@@ -500,7 +481,7 @@ TEST_F(TestApiBlackDatatype, datatypeSimplyRec)
    *   END;
    */
   unresTypes.clear();
-  Sort unresList5 = d_solver.mkSortConstructorSort("list5", 1);
+  Sort unresList5 = d_solver.mkUninterpretedSortConstructorSort("list5", 1);
   unresTypes.insert(unresList5);
 
   std::vector<Sort> v;
@@ -539,7 +520,7 @@ TEST_F(TestApiBlackDatatype, datatypeSpecializedCons)
    */
   // Make unresolved types as placeholders
   std::set<Sort> unresTypes;
-  Sort unresList = d_solver.mkSortConstructorSort("plist", 1);
+  Sort unresList = d_solver.mkUninterpretedSortConstructorSort("plist", 1);
   unresTypes.insert(unresList);
 
   std::vector<Sort> v;
@@ -585,4 +566,4 @@ TEST_F(TestApiBlackDatatype, datatypeSpecializedCons)
   ASSERT_THROW(nilc.getInstantiatedConstructorTerm(isort), CVC5ApiException);
 }
 }  // namespace test
-}  // namespace cvc5
+}  // namespace cvc5::internal

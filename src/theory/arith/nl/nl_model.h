@@ -25,7 +25,7 @@
 #include "expr/subs.h"
 #include "smt/env_obj.h"
 
-namespace cvc5 {
+namespace cvc5::internal {
 
 namespace context {
 class Context;
@@ -176,6 +176,9 @@ class NlModel : protected EnvObj
    */
   void getModelValueRepair(std::map<Node, Node>& arithModel);
 
+  /** Return the substituted form of s */
+  Node getSubstitutedForm(TNode s) const;
+
  private:
   /** Cache for concrete model values */
   std::map<Node, Node> d_concreteModelCache;
@@ -301,6 +304,6 @@ class NlModel : protected EnvObj
 }  // namespace nl
 }  // namespace arith
 }  // namespace theory
-}  // namespace cvc5
+}  // namespace cvc5::internal
 
 #endif /* CVC5__THEORY__ARITH__NONLINEAR_EXTENSION_H */

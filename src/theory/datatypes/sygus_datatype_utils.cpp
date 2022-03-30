@@ -25,10 +25,10 @@
 #include "theory/evaluator.h"
 #include "theory/rewriter.h"
 
-using namespace cvc5;
-using namespace cvc5::kind;
+using namespace cvc5::internal;
+using namespace cvc5::internal::kind;
 
-namespace cvc5 {
+namespace cvc5::internal {
 namespace theory {
 namespace datatypes {
 namespace utils {
@@ -554,7 +554,7 @@ TypeNode substituteAndGeneralizeSygusType(TypeNode sdt,
   std::vector<TypeNode> datatypeTypes = nm->mkMutualDatatypeTypes(
       datatypes, unres, NodeManager::DATATYPE_FLAG_PLACEHOLDER);
   TypeNode sdtS = datatypeTypes[0];
-  if (Trace.isOn("dtsygus-gen-debug"))
+  if (TraceIsOn("dtsygus-gen-debug"))
   {
     Trace("dtsygus-gen-debug") << "Made datatype types:" << std::endl;
     for (unsigned j = 0, ndts = datatypeTypes.size(); j < ndts; j++)
@@ -622,4 +622,4 @@ Node getExpandedDefinitionForm(Node op)
 }  // namespace utils
 }  // namespace datatypes
 }  // namespace theory
-}  // namespace cvc5
+}  // namespace cvc5::internal

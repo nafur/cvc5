@@ -22,7 +22,7 @@
 #include "theory/bv/theory_bv_utils.h"
 #include "theory/theory_model.h"
 
-namespace cvc5 {
+namespace cvc5::internal {
 namespace theory {
 namespace bv {
 
@@ -224,7 +224,7 @@ void BVSolverBitblast::postCheck(Theory::Effort level)
       for (const prop::SatLiteral& lit : unsat_assumptions)
       {
         conf.push_back(d_literalFactCache[lit]);
-        Debug("bv-bitblast")
+        Trace("bv-bitblast")
             << "unsat assumption (" << lit << "): " << conf.back() << std::endl;
       }
       conflict = nm->mkAnd(conf);
@@ -265,7 +265,7 @@ bool BVSolverBitblast::preNotifyFact(
 
 TrustNode BVSolverBitblast::explain(TNode n)
 {
-  Debug("bv-bitblast") << "explain called on " << n << std::endl;
+  Trace("bv-bitblast") << "explain called on " << n << std::endl;
   return d_im.explainLit(n);
 }
 
@@ -411,4 +411,4 @@ void BVSolverBitblast::handleEagerAtom(TNode fact, bool assertFact)
 
 }  // namespace bv
 }  // namespace theory
-}  // namespace cvc5
+}  // namespace cvc5::internal

@@ -61,7 +61,7 @@
 #include "util/dense_map.h"
 #include "util/statistics_stats.h"
 
-namespace cvc5 {
+namespace cvc5::internal {
 namespace theory {
 namespace arith {
 
@@ -73,7 +73,7 @@ public:
                          RaiseConflict conflictChannel,
                          TempVarMalloc tvmalloc);
 
- Result::Sat findModel(bool exactResult) override;
+ Result::Status findModel(bool exactResult) override;
 
  // other error variables are dropping
  WitnessImprovement dualLikeImproveError(ArithVar evar);
@@ -86,7 +86,7 @@ private:
   // dual like
   // - found conflict
   // - satisfied error set
-  Result::Sat sumOfInfeasibilities();
+  Result::Status sumOfInfeasibilities();
 
   int32_t d_pivotBudget;
 
@@ -224,4 +224,4 @@ private:
 
 }  // namespace arith
 }  // namespace theory
-}  // namespace cvc5
+}  // namespace cvc5::internal

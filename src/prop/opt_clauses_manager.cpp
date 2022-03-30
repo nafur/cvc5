@@ -17,7 +17,7 @@
 
 #include "proof/proof_node.h"
 
-namespace cvc5 {
+namespace cvc5::internal {
 namespace prop {
 
 OptimizedClausesManager::OptimizedClausesManager(
@@ -67,7 +67,7 @@ void OptimizedClausesManager::contextNotifyPop()
       ++it;
       continue;
     }
-    if (Trace.isOn("sat-proof"))
+    if (TraceIsOn("sat-proof"))
     {
       Trace("sat-proof") << "Should remove from map pfs of [" << it->first
                          << "]:\n";
@@ -82,4 +82,4 @@ void OptimizedClausesManager::contextNotifyPop()
 }
 
 }  // namespace prop
-}  // namespace cvc5
+}  // namespace cvc5::internal
